@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 维修工单系统</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/style.css">       
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+<body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div class="container" style="max-width: 400px; width: 100%;">
+        <div class="card">
+            <div class="card-header text-center" style="display: block; text-align: center;">
+                <h2 class="card-title" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.3); letter-spacing: -0.5px;">维修工单系统</h2>
+                <p class="text-muted" style="font-size: 0.95rem; color: #6c757d; margin-bottom: 0;">请登录您的账号</p>
+            </div>
+            <div class="card-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i>
+                            用户名 *
+                        </label>
+                        <div class="input-group">
+                            <input type="text" id="username" name="username" class="form-control" required>
+                            <button type="button" class="input-clear-btn" onclick="clearInput('username')" title="清除用户名">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            密码 *
+                        </label>
+                        <div class="input-group">
+                            <input type="password" id="password" name="password" class="form-control" required>
+                            <button type="button" class="input-clear-btn" onclick="clearInput('password')" title="清除密码">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberPassword" name="rememberPassword">
+                            <span class="checkmark"></span>
+                            记住密码
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="loginBtn" style="width: auto; padding: 0.75rem 3rem; margin: 0 auto; display: block;">
+                    登录
+                </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p>还没有账号？ <a href="/register.html" class="text-primary">立即注册</a></p>
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <style>
+        /* 表单并行布局样式 */
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            margin-bottom: 0;
+            font-size: 14px;
+            color: #333;
+            min-width: 80px;
+            white-space: nowrap;
+            justify-content: flex-start;
+        }
+        
+        .form-label i {
+            color: #667eea;
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .input-group {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        /* 复选框图标样式 */
+        .checkbox-label i {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked ~ i {
+            color: #667eea;
+        }
+        
+        /* 输入框清除按钮样式 */
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .input-group .form-control {
+            padding-right: 40px;
+        }
+        
+        .input-clear-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .input-clear-btn:hover {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.1);
+            transform: scale(1.1);
+        }
+        
+        .input-clear-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 根据输入内容显示/隐藏清除按钮 */
+        .input-group:not(.has-value) .input-clear-btn {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .input-group.has-value .input-clear-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* 复选框样式 */
+        .form-group:last-child {
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #6c757d;
+            user-select: none;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            margin-right: 8px;
+            position: relative;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        
+        .checkbox-label:hover .checkmark {
+            border-color: #667eea;
+        }
+        
+        /* 小屏强制并排布局 */
+        @media (max-width: 480px) {
+            .form-group {
+                align-items: flex-start !important;
+                gap: 10px !important;
+                margin-bottom: 20px !important;
+            }
+            
+            .form-label {
+                min-width: 60px !important;
+                font-size: 13px !important;
+                gap: 4px !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+                align-self: center !important;
+            }
+            
+            .form-label i {
+                font-size: 12px !important;
+                width: 12px !important;
+            }
+            
+            .input-group {
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+            
+            .checkbox-label {
+                font-size: 13px;
+            }
+            
+            .checkbox-label i {
+                font-size: 11px;
+                margin-left: 2px;
+            }
+            
+            .checkmark {
+                width: 16px;
+                height: 16px;
+                margin-right: 6px;
+            }
+            
+            .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+                left: 4px;
+                top: 1px;
+                width: 4px;
+                height: 8px;
+            }
+            
+            .input-clear-btn {
+                right: 8px !important;
+                width: 18px !important;
+                height: 18px !important;
+                font-size: 11px !important;
+            }
+            
+            .input-group .form-control {
+                padding-right: 30px !important;
+            }
+        }
+        
+        /* 超小屏优化 - 保持并排 */
+        @media (max-width: 380px) {
+            .form-group {
+                gap: 8px !important;
+                margin-bottom: 16px !important;
+                align-items: flex-start !important;
+            }
+            
+            .form-label {
+                min-width: 55px !important;
+                font-size: 12px !important;
+                gap: 3px !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+                align-self: center !important;
+            }
+            
+            .form-label i {
+                font-size: 11px !important;
+                width: 10px !important;
+            }
+            
+            .input-clear-btn {
+                right: 6px !important;
+                width: 16px !important;
+                height: 16px !important;
+                font-size: 10px !important;
+            }
+            
+            .input-group .form-control {
+                padding-right: 28px !important;
+            }
+        }
+    </style>
+    <script>
+        // 清除输入框内容
+        function clearInput(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = '';
+                input.focus();
+                updateClearButton(inputId);
+                
+                // 触发input事件以更新其他可能的监听器
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // 添加清除动画效果
+                const inputGroup = input.closest('.input-group');
+                if (inputGroup) {
+                    inputGroup.classList.remove('has-value');
+                }
+            }
+        }
+        
+        // 更新清除按钮显示状态
+        function updateClearButton(inputId) {
+            const input = document.getElementById(inputId);
+            const inputGroup = input ? input.closest('.input-group') : null;
+            
+            if (inputGroup) {
+                if (input.value.trim()) {
+                    inputGroup.classList.add('has-value');
+                } else {
+                    inputGroup.classList.remove('has-value');
+                }
+            }
+        }
+        
+        // 检查是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否已登录
+            if (Utils.getToken()) {
+                window.location.href = '/';
+                return;
+            }
+
+            // 填充记住的用户名和密码
+            if (Utils.isPasswordRemembered()) {
+                const rememberedUsername = Utils.getRememberedUsername();
+                const rememberedPassword = Utils.getRememberedPassword();
+                
+                document.getElementById('username').value = rememberedUsername;
+                document.getElementById('password').value = rememberedPassword;
+                document.getElementById('rememberPassword').checked = true;
+                
+                // 更新清除按钮状态
+                setTimeout(() => {
+                    updateClearButton('username');
+                    updateClearButton('password');
+                }, 100);
+            }
+            
+            // 添加输入事件监听器
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            
+            usernameInput.addEventListener('input', function() {
+                updateClearButton('username');
+            });
+            
+            passwordInput.addEventListener('input', function() {
+                updateClearButton('password');
+            });
+            
+            // 初始化清除按钮状态
+            updateClearButton('username');
+            updateClearButton('password');
+            
+            // 标记页面已初始化完成，防止意外触发自动登录
+            window.loginPageInitialized = true;
+        });
+
+        // 登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.textContent;
+            const rememberPassword = document.getElementById('rememberPassword').checked;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            try {
+                // 禁用登录按钮
+                loginBtn.disabled = true;
+                loginBtn.textContent = '登录中...';
+                
+                // 表单验证
+                const { isValid, errors } = Utils.validateForm(this);
+                if (!isValid) {
+                    Utils.showError(errors[0]);
+                    return;
+                }
+                
+                // 获取表单数据
+                const formData = Utils.serializeForm(this);
+                
+                // 发送登录请求
+                const response = await Utils.post('/auth/login', formData);
+                
+                // 处理记住密码 - 使用与注册一致的数据
+                if (rememberPassword) {
+                    Utils.saveRememberedCredentials(formData.username, formData.password);
+                } else {
+                    // 如果没有勾选记住密码，清除之前记住的凭据
+                    Utils.clearRememberedCredentials();
+                }
+                
+                // 保存token和用户信息
+                Utils.setToken(response.token);
+                Utils.setUser(response.user);
+                
+                Utils.showSuccess('登录成功，正在跳转...');
+                
+                // 延迟跳转到首页
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('登录失败:', error);
+                Utils.showError(error.message || '登录失败，请检查用户名和密码');
+            } finally {
+                // 恢复登录按钮
+                loginBtn.disabled = false;
+                loginBtn.textContent = originalText;
+            }
+        });
+
+        // 回车键提交 - 只有在页面完全初始化后才生效
+        document.addEventListener('keypress', function(e) {
+            // 检查页面是否已完全初始化，并且当前焦点在输入框中
+            if (e.key === 'Enter' && 
+                e.target.tagName !== 'BUTTON' && 
+                window.loginPageInitialized &&
+                (e.target.id === 'username' || e.target.id === 'password')) {
+                
+                // 确保用户名和密码都有内容才允许提交
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                
+                // 只有在用户实际输入内容时才允许提交（排除自动填充）
+                const isUserInput = e.target.matches(':focus') && 
+                                  (document.activeElement === e.target);
+                
+                if (username && password && isUserInput) {
+                    console.log('用户主动提交登录');
+                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                } else {
+                    console.log('阻止自动提交 - 用户名:', username ? '有值' : '空', '密码:', password ? '有值' : '空', '用户焦点:', isUserInput);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

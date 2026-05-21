@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>客户通讯录 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        /* 客户通讯录样式 */
+   
+         
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 15px;
+            border: 1px solid #667eea;
+            border-radius: 20px;
+            background-color: white;
+            color: #667eea;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .contacts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 0 15px;
+            overflow-y: auto;
+            height: calc(100vh - 200px);
+        }
+        
+        .contact-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .contact-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        
+        .contact-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .contact-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .contact-info i {
+            color: #667eea;
+            width: 16px;
+        }
+        
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .call-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .call-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .message-btn {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        .message-btn:hover {
+            background-color: #1976d2;
+        }
+        
+        .orders-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .orders-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .no-contacts {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .no-contacts i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">客户通讯录</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+   
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区域 -->
+    <main class="main-content" >
+        <div class="contacts-container">
+            <!-- 搜索区域 -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" id="searchInput" placeholder="搜索客户姓名或联系方式" oninput="searchContacts()">
+                </div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all" onclick="filterContacts('all')">全部客户</button>
+                    <button class="filter-btn" data-filter="recent" onclick="filterContacts('recent')">最近联系</button>
+                    <button class="filter-btn" data-filter="frequent" onclick="filterContacts('frequent')">频繁联系</button>
+                </div>
+            </div>
+
+            <!-- 客户列表 -->
+            <div class="contacts-list" id="contactsList">
+                <!-- 加载动画 -->
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>加载客户信息中...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script>
+        // 全局变量
+        let customers = [];
+        let filteredCustomers = [];
+        let currentFilter = 'all';
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCustomers();
+             // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+           MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+        });
+
+        // 加载客户信息
+        async function loadCustomers() {
+            try {
+                // 从工单系统获取所有工单
+                const response = await fetch('/api/work-orders', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                
+                if (!response.ok) {
+                    throw new Error('获取工单数据失败');
+                }
+
+                const result = await response.json();
+                const workOrders = result.workOrders || [];
+                console.log('工单系统响应:', workOrders);
+                // 从工单中提取客户信息并去重
+                const customerMap = new Map();
+                
+                workOrders.forEach(order => {
+                    if (order.customer_name && order.customer_phone) {
+                        const customerKey = order.customer_phone; // 使用电话号码作为唯一标识
+                        
+                        if (!customerMap.has(customerKey)) {
+                            // 确保order.createdAt和order.updatedAt有值
+                            const orderTime = order.updated_at || order.created_at;
+                            
+                            customerMap.set(customerKey, {
+                                id: customerKey,
+                                name: order.customer_name,
+                                phone: order.customer_phone,
+                                address: order.customer_address || '',
+                                recentOrder: order.id,
+                                recentOrderDate: orderTime,
+                                orderCount: 1,
+                                lastContact: orderTime
+                            });
+                        } else {
+                            // 更新已有客户信息
+                            const existingCustomer = customerMap.get(customerKey);
+                            existingCustomer.orderCount++;
+                            
+                            // 更新最近联系时间
+                            const orderDate = new Date(order.updated_at || order.created_at);
+                            const lastContactDate =new Date(existingCustomer.lastContact);
+                            
+                            if (orderDate > lastContactDate) {
+                                existingCustomer.lastContact = order.updated_at || order.created_at;
+                                existingCustomer.recentOrder = order.id;
+                                existingCustomer.recentOrderDate = order.updated_at || order.created_at;
+                            }
+                        }
+                    }
+                });
+
+                // 转换为数组
+                customers = Array.from(customerMap.values());
+                filteredCustomers = [...customers];
+
+                // 按最近联系时间排序
+                filteredCustomers.sort((a, b) => new Date(b.lastContact) - new Date(a.lastContact));
+
+                renderContacts();
+            } catch (error) {
+                console.error('加载客户信息失败:', error);
+                document.getElementById('contactsList').innerHTML = `
+                    <div class="no-contacts">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败，请重试</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染客户列表
+        function renderContacts() {
+            const contactsList = document.getElementById('contactsList');
+
+            if (filteredCustomers.length === 0) {
+                contactsList.innerHTML = `
+                    <div class="no-contacts">
+                        <i class="fas fa-address-book"></i>
+                        <p>没有找到客户信息</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const contactsHTML = filteredCustomers.map(customer => {
+                return `
+                    <div class="contact-card">
+                        <div class="contact-header">
+                            <div class="contact-name">${customer.name}</div>
+                            <span class="order-count-badge">${customer.orderCount}个工单</span>
+                        </div>
+                        <div class="contact-info">
+                            <i class="fas fa-phone"></i>
+                            <span>${customer.phone}</span>
+                        </div>
+                        ${customer.address ? `
+                            <div class="contact-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${customer.address}</span>
+                            </div>
+                        ` : ''}
+                        <div class="contact-info">
+                                <i class="fas fa-clock"></i>
+                                <span>最近联系: ${formatDate(customer.lastContact)}</span>
+                            </div>
+                        <div class="contact-actions">
+                            <button class="btn-xs call-btn" onclick="makePhoneCall('${customer.phone}')">
+                                <i class="fas fa-phone-alt"></i>
+                                拨打
+                            </button>
+                            <button class="btn-xs message-btn" onclick="sendMessage('${customer.phone}')">
+                                <i class="fas fa-comment"></i>
+                                短信
+                            </button>
+                            <button class="btn-xs orders-btn" onclick="viewCustomerOrders('${customer.id}')">
+                                <i class="fas fa-tasks"></i>
+                                工单
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            contactsList.innerHTML = contactsHTML;
+        }
+
+        // 搜索客户
+        function searchContacts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                filteredCustomers = [...customers];
+            } else {
+                filteredCustomers = customers.filter(customer => {
+                    return customer.name.toLowerCase().includes(searchTerm) || 
+                           customer.phone.includes(searchTerm);
+                });
+            }
+
+            // 应用当前筛选条件
+            filterContacts(currentFilter);
+        }
+
+        // 筛选客户
+        function filterContacts(filter) {
+            currentFilter = filter;
+            
+            // 更新筛选按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+            let tempCustomers = [...customers];
+            
+            // 如果有搜索词，先应用搜索
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm !== '') {
+                tempCustomers = tempCustomers.filter(customer => {
+                    return customer.name.toLowerCase().includes(searchTerm) || 
+                           customer.phone.includes(searchTerm);
+                });
+            }
+
+            // 应用筛选条件
+            switch (filter) {
+                case 'recent':
+                    // 最近30天联系的客户
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    filteredCustomers = tempCustomers.filter(customer => 
+                        new Date(customer.lastContact) >= thirtyDaysAgo
+                    );
+                    break;
+                case 'frequent':
+                    // 工单数量大于等于2的客户
+                    filteredCustomers = tempCustomers.filter(customer => 
+                        customer.orderCount >= 2
+                    );
+                    break;
+                default:
+                    // 全部客户
+                    filteredCustomers = tempCustomers;
+            }
+
+            // 排序
+            filteredCustomers.sort((a, b) => new Date(b.lastContact) - new Date(a.lastContact));
+            
+            renderContacts();
+        }
+
+        // 拨打电话
+        function makePhoneCall(phone) {
+            window.location.href = `tel:${phone}`;
+        }
+
+        // 发送短信
+        function sendMessage(phone) {
+            window.location.href = `sms:${phone}`;
+        }
+
+        // 查看客户工单
+        function viewCustomerOrders(customerId) {
+            // 跳转到工单列表并筛选该客户的工单
+            window.location.href = `/mobile-orders.html?customerPhone=${customerId}`;
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            // 检查日期字符串是否有效
+            if (!dateString) {
+                return '未知时间';
+            }
+            
+            // 尝试将日期字符串转换为Date对象
+            const date = new Date(dateString);
+            
+            // 检查Date对象是否有效
+            if (isNaN(date.getTime())) {
+                return '未知时间';
+            }
+            
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>

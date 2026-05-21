@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>数据备份 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        .backup-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 16px;
+            background: #fff;
+            margin-bottom: 12px;
+        }
+
+        .backup-stat-item {
+            text-align: center;
+            padding: 12px 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .backup-stat-item:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .backup-stat-item:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .backup-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .backup-stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .backup-action-section {
+            padding: 16px;
+            background: #fff;
+            margin-bottom: 12px;
+        }
+
+        .backup-action-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .backup-action-title i {
+            color: #667eea;
+        }
+
+        .backup-progress-container {
+            margin-top: 16px;
+            display: none;
+        }
+
+        .backup-progress-container.active {
+            display: block;
+        }
+
+        .backup-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .backup-progress-text {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .backup-progress-percent {
+            font-size: 13px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .backup-progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .backup-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .backup-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .backup-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .backup-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .backup-btn.primary:active {
+            transform: translateY(0);
+        }
+
+        .backup-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .backup-btn i {
+            font-size: 18px;
+        }
+
+        .backup-list-section {
+            background: #fff;
+            padding: 16px;
+        }
+
+        .backup-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .backup-list-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .backup-list-title i {
+            color: #667eea;
+        }
+
+        .backup-list-count {
+            font-size: 13px;
+            color: #999;
+            background: #f8f9fa;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .backup-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .backup-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .backup-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .backup-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .backup-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .backup-filename {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .backup-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .backup-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .backup-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .backup-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .backup-action-btn.download {
+            background: #e8f4fd;
+            color: #2196f3;
+        }
+
+        .backup-action-btn.download:hover {
+            background: #2196f3;
+            color: white;
+        }
+
+        .backup-action-btn.delete {
+            background: #fef2f2;
+            color: #dc3545;
+        }
+
+        .backup-action-btn.delete:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .backup-action-btn.restore {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .backup-action-btn.restore:hover {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .empty-backup {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-backup-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-backup-text {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .empty-backup-subtitle {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .loading-backup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+        }
+
+        .loading-backup .spinner {
+            width: 40px;
+            height: 40px;
+            border-width: 3px;
+            margin-bottom: 16px;
+        }
+
+        .loading-backup-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .backup-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .backup-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .backup-toast.success {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .backup-toast.error {
+            background: #dc3545;
+        }
+
+        @media (max-width: 360px) {
+            .backup-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .backup-item {
+                flex-wrap: wrap;
+            }
+
+            .backup-actions {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 12px;
+                justify-content: flex-end;
+            }
+        }
+
+        .restore-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .restore-modal-overlay.active {
+            display: flex;
+        }
+
+        .restore-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 340px;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .restore-modal-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .restore-modal-header i {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .restore-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .restore-modal-body {
+            padding: 20px;
+        }
+
+        .restore-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .restore-warning i {
+            color: #ffc107;
+            margin-right: 6px;
+        }
+
+        .restore-file-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .restore-file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .restore-file-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .restore-file-info-item span:first-child {
+            color: #666;
+        }
+
+        .restore-file-info-item span:last-child {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .restore-verification {
+            margin-bottom: 16px;
+        }
+
+        .restore-verification label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .restore-verification input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 4px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .restore-verification input:focus {
+            border-color: #dc3545;
+        }
+
+        .restore-verification input.error {
+            border-color: #dc3545;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .restore-verification-hint {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .restore-verification-hint strong {
+            color: #dc3545;
+        }
+
+        .restore-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .restore-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .restore-btn.cancel {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .restore-btn.cancel:hover {
+            background: #dee2e6;
+        }
+
+        .restore-btn.confirm {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .restore-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+        }
+
+        .restore-btn.confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .restore-btn.restore {
+            background: #fff3cd;
+            color: #856404;
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #ffc107;
+        }
+
+        .restore-btn.restore:hover {
+            background: #ffeeba;
+        }
+
+        .restore-progress-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .restore-progress-modal.active {
+            display: flex;
+        }
+
+        .restore-progress-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .restore-progress-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .restore-progress-icon i {
+            font-size: 28px;
+            color: white;
+        }
+
+        .restore-progress-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .restore-progress-filename {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+
+        .restore-progress-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .restore-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .restore-progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .restore-progress-percent {
+            font-weight: 600;
+            color: #dc3545;
+        }
+
+        .restore-progress-status {
+            color: #666;
+        }
+
+        .restore-success-icon {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        }
+
+        .delete-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .delete-modal-overlay.active {
+            display: flex;
+        }
+
+        .delete-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 340px;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .delete-modal-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .delete-modal-header i {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .delete-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .delete-modal-body {
+            padding: 20px;
+        }
+
+        .delete-warning {
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #cc3300;
+        }
+
+        .delete-warning i {
+            color: #ff6b6b;
+            margin-right: 6px;
+        }
+
+        .delete-file-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .delete-file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .delete-file-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .delete-file-info-item span:first-child {
+            color: #666;
+        }
+
+        .delete-file-info-item span:last-child {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .delete-verification {
+            margin-bottom: 16px;
+        }
+
+        .delete-verification label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .delete-verification input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 4px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .delete-verification input:focus {
+            border-color: #dc3545;
+        }
+
+        .delete-verification input.error {
+            border-color: #dc3545;
+            animation: shake 0.5s ease;
+        }
+
+        .delete-verification-hint {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .delete-verification-hint strong {
+            color: #dc3545;
+        }
+
+        .delete-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .delete-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn.cancel {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .delete-btn.cancel:hover {
+            background: #dee2e6;
+        }
+
+        .delete-btn.confirm {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .delete-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+        }
+
+        .delete-btn.confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .backup-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .backup-modal-overlay.active {
+            display: flex;
+        }
+
+        .backup-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 340px;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .backup-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .backup-modal-header i {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .backup-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .backup-modal-body {
+            padding: 20px;
+        }
+
+        .backup-warning {
+            background: #e7f3ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #004085;
+        }
+
+        .backup-warning i {
+            color: #667eea;
+            margin-right: 6px;
+        }
+
+        .backup-file-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .backup-file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .backup-file-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .backup-file-info-item span:first-child {
+            color: #666;
+        }
+
+        .backup-file-info-item span:last-child {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .backup-verification {
+            margin-bottom: 16px;
+        }
+
+        .backup-verification label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .backup-verification input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 4px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .backup-verification input:focus {
+            border-color: #667eea;
+        }
+
+        .backup-verification input.error {
+            border-color: #dc3545;
+            animation: shake 0.5s ease;
+        }
+
+        .backup-verification-hint {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .backup-verification-hint strong {
+            color: #667eea;
+        }
+
+        .backup-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .backup-btn-modal {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .backup-btn-modal.cancel {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .backup-btn-modal.cancel:hover {
+            background: #dee2e6;
+        }
+
+        .backup-btn-modal.confirm {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .backup-btn-modal.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .backup-btn-modal.confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .backup-progress-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .backup-progress-modal.active {
+            display: flex;
+        }
+
+        .backup-progress-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .backup-progress-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .backup-progress-icon i {
+            font-size: 28px;
+            color: white;
+        }
+
+        .backup-progress-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .backup-progress-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .backup-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .backup-progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .backup-progress-percent {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .backup-progress-status {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header class="mobile-header">
+        <div class="header-left">
+             <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">数据备份</h1>
+        </div>
+          <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+ <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>            
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>           
+            <a href="/mobile-admin.html" class="nav-item active" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <main class="main-content" style="margin-top: 60px;">
+        <div class="backup-stats">
+            <div class="backup-stat-item">
+                <div class="backup-stat-value" id="totalBackups">-</div>
+                <div class="backup-stat-label">备份总数</div>
+            </div>
+            <div class="backup-stat-item">
+                <div class="backup-stat-value" id="totalSize">-</div>
+                <div class="backup-stat-label">占用空间</div>
+            </div>
+            <div class="backup-stat-item">
+                <div class="backup-stat-value" id="latestBackup">-</div>
+                <div class="backup-stat-label">最近备份</div>
+            </div>
+        </div>
+
+        <div class="backup-action-section">
+            <div class="backup-action-title">
+                <i class="fas fa-database"></i>
+                <span>立即备份</span>
+            </div>
+            <button class="backup-btn primary" id="backupBtn" onclick="createBackup()">
+                <i class="fas fa-download"></i>
+                <span>开始备份数据库</span>
+            </button>
+        </div>
+
+        <div class="backup-list-section">
+            <div class="backup-list-header">
+                <div class="backup-list-title">
+                    <i class="fas fa-list"></i>
+                    <span>备份历史</span>
+                </div>
+                <div class="backup-list-count" id="backupCount">0 个备份</div>
+            </div>
+            <div id="backupListContainer">
+                <div class="loading-backup">
+                    <div class="spinner"></div>
+                    <div class="loading-backup-text">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="backup-toast" id="backupToast"></div>
+    
+    <div class="restore-modal-overlay" id="restoreModal">
+        <div class="restore-modal">
+            <div class="restore-modal-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>危险！数据库还原</h3>
+            </div>
+            <div class="restore-modal-body">
+                <div class="restore-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>警告：</strong>此操作将覆盖当前数据库中的所有数据，且无法撤销！
+                </div>
+                <div class="restore-file-info" id="restoreFileInfo">
+                    <div class="restore-file-info-item">
+                        <span>备份文件</span>
+                        <span id="restoreFilename">-</span>
+                    </div>
+                    <div class="restore-file-info-item">
+                        <span>备份时间</span>
+                        <span id="restoreFileDate">-</span>
+                    </div>
+                    <div class="restore-file-info-item">
+                        <span>文件大小</span>
+                        <span id="restoreFileSize">-</span>
+                    </div>
+                </div>
+                <div class="restore-verification">
+                    <label>请输入 <strong>RESTORE</strong> 确认操作</label>
+                    <input type="text" id="restoreVerification" placeholder="输入 RESTORE" autocomplete="off">
+                    <div class="restore-verification-hint">请输入 <strong>RESTORE</strong> 以确认您了解此操作的风险</div>
+                </div>
+                <div class="restore-modal-actions">
+                    <button class="restore-btn cancel" onclick="closeRestoreModal()">取消</button>
+                    <button class="restore-btn confirm" id="restoreConfirmBtn" onclick="confirmRestore()" disabled>确认还原</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="backup-modal-overlay" id="backupModal">
+        <div class="backup-modal">
+            <div class="backup-modal-header">
+                <i class="fas fa-database"></i>
+                <h3>确认备份数据库</h3>
+            </div>
+            <div class="backup-modal-body">
+                <div class="backup-warning">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>提示：</strong>备份操作不会影响当前数据库中的数据。
+                </div>
+                <div class="backup-file-info">
+                    <div class="backup-file-info-item">
+                        <span>备份时间</span>
+                        <span id="backupTime">-</span>
+                    </div>
+                    <div class="backup-file-info-item">
+                        <span>预计文件大小</span>
+                        <span id="backupSize">-</span>
+                    </div>
+                </div>
+                <div class="backup-verification">
+                    <label>请输入 <strong>BACKUP</strong> 确认操作</label>
+                    <input type="text" id="backupVerification" placeholder="输入 BACKUP" autocomplete="off">
+                    <div class="backup-verification-hint">请输入 <strong>BACKUP</strong> 以确认执行备份操作</div>
+                </div>
+                <div class="backup-modal-actions">
+                    <button class="backup-btn-modal cancel" onclick="closeBackupModal()">取消</button>
+                    <button class="backup-btn-modal confirm" id="backupConfirmBtn" onclick="confirmBackup()" disabled>确认备份</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="backup-progress-modal" id="backupProgressModal">
+        <div class="backup-progress-content">
+            <div class="backup-progress-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="backup-progress-title">正在备份数据库</div>
+            <div class="backup-progress-bar">
+                <div class="backup-progress-fill" id="backupProgressFill"></div>
+            </div>
+            <div class="backup-progress-info">
+                <span class="backup-progress-status" id="backupProgressStatus">准备中...</span>
+                <span class="backup-progress-percent" id="backupProgressPercent">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="restore-progress-modal" id="restoreProgressModal">
+        <div class="restore-progress-content">
+            <div class="restore-progress-icon" id="restoreProgressIcon">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="restore-progress-title">正在还原数据库</div>
+            <div class="restore-progress-filename" id="restoreProgressFilename">-</div>
+            <div class="restore-progress-bar">
+                <div class="restore-progress-fill" id="restoreProgressFill"></div>
+            </div>
+            <div class="restore-progress-info">
+                <span class="restore-progress-status" id="restoreProgressStatus">准备中...</span>
+                <span class="restore-progress-percent" id="restoreProgressPercent">0%</span>
+            </div>
+        </div>
+    </div>
+   <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        let currentUser = null;
+        let isCreatingBackup = false;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+            await MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+            await loadStats();
+            await loadBackupList();
+        });
+
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+            currentUser = user;
+
+            if (user.account_type !== 'admin' && user.accountType !== 'admin') {
+                showToast('只有管理员可以访问此页面', 'error');
+                setTimeout(() => {
+                    window.location.href = '/mobile-admin.html';
+                }, 1500);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await Utils.get('/backup/stats');
+                document.getElementById('totalBackups').textContent = response.totalBackups || 0;
+                document.getElementById('totalSize').textContent = response.totalSizeText || '0 MB';
+
+                if (response.latestBackup) {
+                    const date = new Date(response.latestBackup);
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    document.getElementById('latestBackup').textContent = `${month}-${day} ${hours}:${minutes}`;
+                } else {
+                    document.getElementById('latestBackup').textContent = '暂无';
+                }
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+                document.getElementById('totalBackups').textContent = '0';
+                document.getElementById('totalSize').textContent = '0 MB';
+                document.getElementById('latestBackup').textContent = '暂无';
+            }
+        }
+
+        async function loadBackupList() {
+            const container = document.getElementById('backupListContainer');
+            
+            try {
+                const response = await Utils.get('/backup/list');
+                const backups = response.backups || [];
+
+                document.getElementById('backupCount').textContent = `${backups.length} 个备份`;
+
+                if (backups.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-backup">
+                            <div class="empty-backup-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="empty-backup-text">暂无备份记录</div>
+                            <div class="empty-backup-subtitle">点击上方按钮开始备份数据库</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                backups.forEach(backup => {
+                    const date = new Date(backup.createdAt);
+                    const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+                    html += `
+                        <div class="backup-item" data-filename="${backup.filename}">
+                            <div class="backup-icon">
+                                <i class="fas fa-file-export"></i>
+                            </div>
+                            <div class="backup-info">
+                                <div class="backup-filename">${backup.filename}</div>
+                                <div class="backup-meta">
+                                    <span><i class="fas fa-hdd"></i> ${backup.sizeText}</span>
+                                    <span><i class="fas fa-clock"></i> ${dateStr}</span>
+                                </div>
+                            </div>
+                            <div class="backup-actions">
+                                <button class="backup-action-btn download" onclick="downloadBackup('${backup.filename}')" title="下载">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="backup-action-btn restore" onclick="showRestoreModal('${backup.filename}', '${backup.sizeText}', '${backup.createdAt}')" title="还原">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button class="backup-action-btn delete" onclick="showDeleteModal('${backup.filename}', '${backup.sizeText}', '${backup.createdAt}')" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('加载备份列表失败:', error);
+                container.innerHTML = `
+                    <div class="empty-backup">
+                        <div class="empty-backup-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="empty-backup-text">加载失败</div>
+                        <div class="empty-backup-subtitle">请点击重试</div>
+                    </div>
+                `;
+            }
+        }
+
+        function createBackup() {
+            if (isCreatingBackup) return;
+            showBackupModal();
+        }
+
+        function downloadBackup(filename) {
+            const token = Utils.getToken();
+            
+            fetch(`/api/backup/download/${filename}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('下载失败，请确认权限');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                showToast('下载开始', 'success');
+            })
+            .catch(error => {
+                console.error('下载失败:', error);
+                showToast(error.message || '下载失败，请重试', 'error');
+            });
+        }
+
+        let currentDeleteFile = null;
+
+        function showDeleteModal(filename, size, date) {
+            currentDeleteFile = { filename, size, date };
+            
+            document.getElementById('deleteFilename').textContent = filename;
+            document.getElementById('deleteFileSize').textContent = size;
+            document.getElementById('deleteFileDate').textContent = new Date(date).toLocaleString('zh-CN');
+            
+            const verifyInput = document.getElementById('deleteVerification');
+            verifyInput.value = '';
+            verifyInput.classList.remove('error');
+            document.getElementById('deleteConfirmBtn').disabled = true;
+            
+            document.getElementById('deleteModal').classList.add('active');
+            
+            setTimeout(() => {
+                verifyInput.focus();
+            }, 300);
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            currentDeleteFile = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('deleteVerification').addEventListener('input', function(e) {
+                const value = e.target.value.toUpperCase();
+                const confirmBtn = document.getElementById('deleteConfirmBtn');
+                
+                if (value === 'DELETE') {
+                    confirmBtn.disabled = false;
+                    e.target.classList.remove('error');
+                } else {
+                    confirmBtn.disabled = true;
+                }
+            });
+
+            document.getElementById('deleteVerification').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const value = e.target.value.toUpperCase();
+                    if (value === 'DELETE') {
+                        confirmDelete();
+                    }
+                }
+            });
+        });
+
+        async function confirmDelete() {
+            if (!currentDeleteFile) {
+                showToast('未选择要删除的备份文件', 'error');
+                return;
+            }
+            
+            const verifyInput = document.getElementById('deleteVerification');
+            const value = verifyInput.value.toUpperCase();
+            
+            if (value !== 'DELETE') {
+                verifyInput.classList.add('error');
+                showToast('请输入 DELETE 确认删除', 'error');
+                return;
+            }
+
+            const filenameToDelete = currentDeleteFile.filename;
+            closeDeleteModal();
+            
+            try {
+                await Utils.delete(`/backup/${filenameToDelete}`);
+                showToast('删除成功', 'success');
+                await loadStats();
+                await loadBackupList();
+            } catch (error) {
+                console.error('删除失败:', error);
+                showToast(error.message || '删除失败，请重试', 'error');
+            }
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('backupToast');
+            toast.textContent = message;
+            toast.className = 'backup-toast show';
+            if (type) {
+                toast.classList.add(type);
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        let currentRestoreFile = null;
+
+        function showRestoreModal(filename, size, date) {
+            currentRestoreFile = { filename, size, date };
+            
+            document.getElementById('restoreFilename').textContent = filename;
+            document.getElementById('restoreFileSize').textContent = size;
+            document.getElementById('restoreFileDate').textContent = new Date(date).toLocaleString('zh-CN');
+            
+            const verifyInput = document.getElementById('restoreVerification');
+            verifyInput.value = '';
+            verifyInput.classList.remove('error');
+            document.getElementById('restoreConfirmBtn').disabled = true;
+            
+            document.getElementById('restoreModal').classList.add('active');
+            
+            setTimeout(() => {
+                verifyInput.focus();
+            }, 300);
+        }
+
+        function closeRestoreModal() {
+            document.getElementById('restoreModal').classList.remove('active');
+            currentRestoreFile = null;
+        }
+
+        document.getElementById('restoreVerification').addEventListener('input', function(e) {
+            const value = e.target.value.toUpperCase();
+            const confirmBtn = document.getElementById('restoreConfirmBtn');
+            
+            if (value === 'RESTORE') {
+                confirmBtn.disabled = false;
+                e.target.classList.remove('error');
+            } else {
+                confirmBtn.disabled = true;
+            }
+        });
+
+        document.getElementById('restoreVerification').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const value = e.target.value.toUpperCase();
+                if (value === 'RESTORE') {
+                    confirmRestore();
+                }
+            }
+        });
+
+        document.getElementById('backupVerification').addEventListener('input', function(e) {
+            const value = e.target.value.toUpperCase();
+            const confirmBtn = document.getElementById('backupConfirmBtn');
+            
+            if (value === 'BACKUP') {
+                confirmBtn.disabled = false;
+                e.target.classList.remove('error');
+            } else {
+                confirmBtn.disabled = true;
+            }
+        });
+
+        document.getElementById('backupVerification').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const value = e.target.value.toUpperCase();
+                if (value === 'BACKUP') {
+                    confirmBackup();
+                }
+            }
+        });
+
+        function showBackupModal() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('zh-CN', { 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            document.getElementById('backupTime').textContent = timeStr;
+            document.getElementById('backupSize').textContent = '根据数据量自动计算';
+            
+            const verifyInput = document.getElementById('backupVerification');
+            verifyInput.value = '';
+            verifyInput.classList.remove('error');
+            document.getElementById('backupConfirmBtn').disabled = true;
+            
+            document.getElementById('backupModal').classList.add('active');
+            
+            setTimeout(() => {
+                verifyInput.focus();
+            }, 300);
+        }
+
+        function closeBackupModal() {
+            document.getElementById('backupModal').classList.remove('active');
+        }
+
+        async function confirmBackup() {
+            const verifyInput = document.getElementById('backupVerification');
+            const value = verifyInput.value.toUpperCase();
+            
+            if (value !== 'BACKUP') {
+                verifyInput.classList.add('error');
+                showToast('请输入 BACKUP 确认操作', 'error');
+                return;
+            }
+
+            closeBackupModal();
+            
+            const btn = document.getElementById('backupBtn');
+            const progressModal = document.getElementById('backupProgressModal');
+            const progressFill = document.getElementById('backupProgressFill');
+            const progressPercent = document.getElementById('backupProgressPercent');
+            const progressStatus = document.getElementById('backupProgressStatus');
+            
+            isCreatingBackup = true;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>正在备份中...</span>';
+            
+            progressModal.classList.add('active');
+            progressFill.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStatus.textContent = '正在连接数据库...';
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = progress + '%';
+                    progressPercent.textContent = Math.round(progress) + '%';
+                    
+                    if (progress < 30) {
+                        progressStatus.textContent = '正在连接数据库...';
+                    } else if (progress < 60) {
+                        progressStatus.textContent = '正在导出表结构...';
+                    } else if (progress < 80) {
+                        progressStatus.textContent = '正在导出表数据...';
+                    } else {
+                        progressStatus.textContent = '正在保存备份文件...';
+                    }
+                }
+            }, 500);
+
+            try {
+                const response = await Utils.post('/backup/create');
+                
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = '备份完成！';
+                
+                showToast('备份成功！', 'success');
+                await loadStats();
+                await loadBackupList();
+            } catch (error) {
+                clearInterval(progressInterval);
+                progressFill.style.width = '0%';
+                progressPercent.textContent = '0%';
+                progressStatus.textContent = '备份失败';
+                console.error('备份失败:', error);
+                showToast(error.message || '备份失败，请重试', 'error');
+            } finally {
+                isCreatingBackup = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i><span>开始备份数据库</span>';
+                
+                setTimeout(() => {
+                    progressModal.classList.remove('active');
+                }, 1500);
+            }
+        }
+
+        async function confirmRestore() {
+            if (!currentRestoreFile) {
+                showToast('未选择要还原的备份文件', 'error');
+                return;
+            }
+            
+            const verifyInput = document.getElementById('restoreVerification');
+            const value = verifyInput.value.toUpperCase();
+            
+            if (value !== 'RESTORE') {
+                verifyInput.classList.add('error');
+                showToast('请输入 RESTORE 确认操作', 'error');
+                return;
+            }
+
+            const filenameToRestore = currentRestoreFile.filename;
+            closeRestoreModal();
+            
+            const progressModal = document.getElementById('restoreProgressModal');
+            const progressFill = document.getElementById('restoreProgressFill');
+            const progressPercent = document.getElementById('restoreProgressPercent');
+            const progressStatus = document.getElementById('restoreProgressStatus');
+            const progressFilename = document.getElementById('restoreProgressFilename');
+            const progressIcon = document.getElementById('restoreProgressIcon');
+            
+            progressModal.classList.add('active');
+            progressFill.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStatus.textContent = '准备中...';
+            progressFilename.textContent = filenameToRestore;
+            progressIcon.className = 'restore-progress-icon';
+            progressIcon.innerHTML = '<i class="fas fa-database"></i>';
+            
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 85) {
+                    progress += Math.random() * 8;
+                    if (progress > 85) progress = 85;
+                    progressFill.style.width = progress + '%';
+                    progressPercent.textContent = Math.round(progress) + '%';
+                    
+                    if (progress < 20) {
+                        progressStatus.textContent = '正在连接数据库...';
+                    } else if (progress < 40) {
+                        progressStatus.textContent = '正在读取备份文件...';
+                    } else if (progress < 60) {
+                        progressStatus.textContent = '正在解析SQL语句...';
+                    } else if (progress < 80) {
+                        progressStatus.textContent = '正在执行还原...';
+                    } else {
+                        progressStatus.textContent = '正在保存数据...';
+                    }
+                }
+            }, 300);
+
+            try {
+                const token = Utils.getToken();
+                const response = await fetch(`/api/backup/restore/${encodeURIComponent(filenameToRestore)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = '还原完成！';
+                
+                progressIcon.className = 'restore-progress-icon restore-success-icon';
+                progressIcon.innerHTML = '<i class="fas fa-check"></i>';
+                
+                if (result.success) {
+                    showToast('数据库还原成功！', 'success');
+                } else {
+                    showToast(result.message || '还原失败', 'error');
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('还原失败:', error);
+                progressStatus.textContent = '还原失败';
+                showToast(error.message || '还原失败，请重试', 'error');
+            }
+
+            setTimeout(() => {
+                progressModal.classList.remove('active');
+            }, 2000);
+        }
+    </script>
+
+    <div class="delete-modal-overlay" id="deleteModal">
+        <div class="delete-modal">
+            <div class="delete-modal-header">
+                <i class="fas fa-trash-alt"></i>
+                <h3>确认删除备份</h3>
+            </div>
+            <div class="delete-modal-body">
+                <div class="delete-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>警告：</strong>删除备份文件后无法恢复，请确认操作！
+                </div>
+                <div class="delete-file-info" id="deleteFileInfo">
+                    <div class="delete-file-info-item">
+                        <span>备份文件</span>
+                        <span id="deleteFilename">-</span>
+                    </div>
+                    <div class="delete-file-info-item">
+                        <span>备份时间</span>
+                        <span id="deleteFileDate">-</span>
+                    </div>
+                    <div class="delete-file-info-item">
+                        <span>文件大小</span>
+                        <span id="deleteFileSize">-</span>
+                    </div>
+                </div>
+                <div class="delete-verification">
+                    <label>请输入 <strong>DELETE</strong> 确认删除</label>
+                    <input type="text" id="deleteVerification" placeholder="输入 DELETE" autocomplete="off">
+                    <div class="delete-verification-hint">请输入 <strong>DELETE</strong> 以确认您了解此操作的风险</div>
+                </div>
+                <div class="delete-modal-actions">
+                    <button class="delete-btn cancel" onclick="closeDeleteModal()">取消</button>
+                    <button class="delete-btn confirm" id="deleteConfirmBtn" onclick="confirmDelete()" disabled>确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

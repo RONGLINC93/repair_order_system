@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>地址管理 - 工单管理</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+             <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">地址管理</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>            
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+            
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content" id="mainContent">
+        <!-- 地址管理面板 -->
+        <div class="tab-panel active" id="addressesPanel">
+            <!-- 搜索和批量操作 -->
+            <section class="search-section">
+                <div class="search-container">
+                <input type="text" id="addressSearch" class="search-input" placeholder="搜索地址...">
+                <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="search-btn" onclick="loadAddresses()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            </section>
+
+            <!-- 批量操作栏 -->
+            <div class="batch-actions-bar" id="batchActionsBar" style="display: none;">
+                <div class="batch-actions-left">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        <span class="checkmark"></span>
+                        <span id="selectedCount">全选</span>
+                    </label>
+                </div>
+                <div class="batch-actions-right">
+                    <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="batchDeleteBtn">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelBatchMode()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+
+            <!-- 悬浮按钮组 -->
+            <div class="fab-group" id="fabGroup">
+                <!-- 列表数量选择框 -->
+                <div class="limit-selector" id="limitSelector">
+                    <select class="limit-select" id="limitSelect" onchange="changeLimit()">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+
+                <!-- 批量操作模式切换按钮 -->
+                <button class="fab-batch-mode" onclick="enterBatchMode()" id="batchModeBtn" style="display: none;">
+                    <i class="fas fa-check-square"></i>
+                </button>
+
+                <!-- 添加地址按钮 - 仅有权限时显示 -->
+                <button class="fab-create-order" onclick="showAddAddressModal()" id="addAddressBtn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <!-- 地址列表 -->
+            <div class="card-list" id="addressesList"  style="overflow: auto; height: calc(100vh - 180px);">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 添加/编辑地址模态框 -->
+    <div id="addressModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="addressModalTitle">添加地址</h3>
+                <button type="button" class="close-btn" onclick="Utils.hideModal('addressModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <input type="hidden" id="addressId">
+                    
+                    <div class="form-group">
+                        <label for="addressName" class="form-label">地址 *</label>
+                        <input type="text" id="addressName" name="address" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="Utils.hideModal('addressModal')">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveAddress()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <style>
+        /* 批量操作栏样式 */
+        .batch-actions-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            color: #333;
+            border-top: 1px solid #dee2e6;
+            margin: 0;
+            animation: slideInUp 0.3s ease-out;
+            z-index: 99;
+        }
+        
+        .batch-actions-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .batch-actions-right {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .batch-actions-right .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            background: white;
+            color: #333;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .batch-actions-right .btn:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+        
+        .batch-actions-right .btn.danger {
+            background: white;
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .batch-actions-right .btn.danger:hover {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .batch-actions-right .btn.secondary {
+            background: white;
+            color: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .batch-actions-right .btn.secondary:hover {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .batch-actions-right .btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        /* 悬浮按钮组样式 */
+        .fab-group {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            z-index: 100;
+        }
+
+        /* 批量模式按钮样式 */
+        .fab-batch-mode {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #28a745;
+            border: 2px solid #28a745;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fab-batch-mode:hover {
+            background: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .fab-batch-mode:active {
+            transform: scale(0.95);
+        }
+
+        /* 批量模式激活状态 */
+        .fab-batch-active {
+            background: #dc3545 !important;
+            border-color: #dc3545 !important;
+        }
+
+        .fab-batch-active.fab-batch-mode:hover {
+            background: #c82333 !important;
+            border-color: #bd2130 !important;
+        }
+
+        /* 覆盖原有的 fab-create-order 样式以适配按钮组 */
+        .fab-group .fab-create-order {
+            position: static !important;
+            bottom: auto !important;
+            right: auto !important;
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 18px !important;
+            z-index: auto !important;
+        }
+
+        .fab-create-order.fab-batch-active {
+            background: #6c757d !important;
+            border-color: #6c757d !important;
+        }
+
+        /* 列表数量选择框样式 */
+        .limit-selector {
+            width: 56px;
+            height: 56px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 50%;
+            padding: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 101;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .limit-selector:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .limit-select {
+            border: none;
+            background: transparent;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 0;
+            margin: 0;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            text-align-last: center;
+            transition: all 0.2s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        .limit-select:focus {
+            color: #007bff;
+        }
+
+        .limit-select option {
+            background: white;
+            color: #333;
+            padding: 4px;
+        }
+        
+        /* 批量模式卡片样式 */
+        .batch-mode-card {
+            position: relative;
+            padding-left: 50px;
+        }
+        
+        .card-checkbox {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            z-index: 10;
+        }
+        
+        /* 复选框样式 */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 14px;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            margin-right: 8px;
+            position: relative;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 2px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        
+        .checkbox-label:hover .checkmark {
+            border-color: #007bff;
+        }
+        
+        /* 批量模式下的卡片动画 */
+        .batch-mode-card {
+            animation: slideInLeft 0.3s ease-out;
+        }
+        
+        /* 选中卡片高亮效果 */
+        .batch-mode-card input:checked + .checkmark {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .addresses-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            padding: 15px;
+        }
+        
+        /* 动画效果 */
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 响应式适配 */
+        @media (max-width: 480px) {
+            .batch-actions-bar {
+                padding: 10px 12px;
+                margin: 0;
+                flex-direction: row;
+                gap: 0;
+                border-radius: 8px 8px 0 0;
+            }
+            
+            .batch-actions-left {
+                flex: 1;
+                justify-content: flex-start;
+            }
+            
+            .batch-actions-right {
+                flex: 1;
+                justify-content: flex-end;
+                gap: 6px;
+            }
+            
+            .batch-actions-right .btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+            
+            .fab-group {
+                bottom: 70px;
+                right: 16px;
+                gap: 10px;
+            }
+            
+            .fab-group .fab-create-order {
+                width: 48px !important;
+                height: 48px !important;
+                font-size: 16px !important;
+            }
+            
+            .fab-batch-mode {
+                width: 48px;
+                height: 48px;
+                font-size: 16px;
+            }
+
+            .limit-selector {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                padding: 0;
+                border-width: 1.5px;
+            }
+
+            .limit-select {
+                font-size: 12px;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                text-align: center;
+                text-align-last: center;
+                line-height: 1;
+                vertical-align: middle;
+            }
+            
+            .batch-mode-card {
+                padding-left: 45px;
+            }
+            
+            .card-checkbox {
+                left: 12px;
+                top: 12px;
+            }
+            
+            .checkmark {
+                width: 18px;
+                height: 18px;
+                margin-right: 6px;
+            }
+            
+            .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+                left: 5px;
+                top: 2px;
+                width: 5px;
+                height: 10px;
+            }
+        }
+        
+        /* 全选复选框特殊样式 */
+        .batch-actions-left .checkbox-label {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .batch-actions-left .checkmark {
+            border-color: #6c757d;
+            background-color: white;
+        }
+        
+        .batch-actions-left input[type="checkbox"]:checked + .checkmark {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .batch-actions-left input[type="checkbox"]:checked + .checkmark::after {
+            border-color: white;
+        }
+    </style>
+    <script>
+
+        let currentPage = 1;
+        let addresses = [];
+
+        // 清空搜索框
+        function clearSearch() {
+            const searchInput = document.getElementById('addressSearch');
+            searchInput.value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            currentPage = 1;
+            loadAddresses();
+        }
+
+        // 改变列表显示数量
+        function changeLimit() {
+            currentPage = 1;
+            loadAddresses();
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('页面开始初始化...');
+            try {
+                const isAuthorized = await checkAuth();
+                console.log('权限检查完成，结果:', isAuthorized);
+               
+                // 只有权限检查通过后，才执行后续操作
+                if (isAuthorized) {
+                    // 根据权限控制按钮组的显示
+                    const hasAddressPermission = Utils.hasPermission('地址管理');
+                    const fabGroup = document.getElementById('fabGroup');
+                    const addAddressBtn = document.getElementById('addAddressBtn');
+                    const batchModeBtn = document.getElementById('batchModeBtn');
+                    if (fabGroup) {
+                        fabGroup.style.display = hasAddressPermission ? 'flex' : 'none';
+                    }
+                    if (addAddressBtn) {
+                        addAddressBtn.style.display = hasAddressPermission ? 'block' : 'none';
+                    }
+                    if (batchModeBtn) {
+                        batchModeBtn.style.display = hasAddressPermission ? 'block' : 'none';
+                    }
+                    
+                    await loadAddresses();
+
+                    // 搜索框输入事件监听
+                    document.getElementById('addressSearch').addEventListener('input', function() {
+                        const clearBtn = document.getElementById('clearSearchBtn');
+                        clearBtn.style.display = this.value.trim() ? 'block' : 'none';
+                    });
+                   
+                    setupNavigation();             
+                    // 为搜索框添加回车键搜索支持
+                    document.getElementById('addressSearch').addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            loadAddresses();
+                        }
+                    });
+                }
+                  
+            } catch (error) {
+                console.error('页面初始化失败:', error);
+                Utils.showError('页面初始化失败，请刷新重试');
+            }            
+        });
+
+
+        // 检查权限 - 只检查登录状态，不检查地址管理权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return false;
+            }
+
+            // 权限检查通过（仅登录检查），显示主内容
+            document.getElementById('mainContent').style.display = 'block';                    
+            
+             // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+              // 加载侧边栏头像
+              await loadSidebarAvatar();
+
+            console.log('权限检查完成');           
+            return true;
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+
+            console.log('开始加载侧边栏头像...');
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }       
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 加载地址列表
+        async function loadAddresses() {
+            try {
+                const search = document.getElementById('addressSearch').value.trim();
+                const limit = parseInt(document.getElementById('limitSelect').value) || 10; // 从选择框获取每页显示数量
+                
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: limit
+                });
+                
+                if (search) params.append('search', search);
+                
+                console.log('请求地址列表:', `/addresses?${params}`);
+                const response = await Utils.get(`/addresses?${params}`);
+                
+                // 假设响应包含addresses数组和totalCount字段
+                const addressesList = response.addresses || response;
+                const totalCount = response.totalCount || addressesList.length;
+                
+                // 存储到全局变量中
+                addresses = addressesList;
+                
+                console.log('地址列表加载成功:', addressesList, '总数量:', totalCount);
+                
+                const container = document.getElementById('addressesList');
+                if (!container) {
+                    console.error('找不到addressesList容器');
+                    return;
+                }
+                
+                if (addressesList.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📍</div>
+                            <div class="empty-state-text">暂无地址</div>
+                        </div>
+                    `;
+                    // 清空分页控件
+                    document.getElementById('pagination')?.remove();
+                    return;
+                }
+
+                const hasAddressPermission = Utils.hasPermission('地址管理');
+                const isBatchMode = document.getElementById('batchActionsBar').style.display !== 'none';
+                let html = '<div class="addresses-card-grid">';
+                addressesList.forEach(address => {
+                    let actionsHtml = '';
+                    let checkboxHtml = '';
+                    
+                    if (hasAddressPermission) {
+                        if (isBatchMode) {
+                            // 批量操作模式显示复选框
+                            checkboxHtml = `
+                                <div class="card-checkbox">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" class="address-checkbox" value="${address.id}" onchange="updateSelectedCount()">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </div>
+                            `;
+                        } else {
+                            // 普通模式显示操作按钮
+                            actionsHtml = `
+                                <div class="card-actions">
+                                    <button class="action-btn secondary" onclick="showEditAddressModal(${address.id})"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn danger" onclick="deleteAddress(${address.id})"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    html += `
+                        <div class="card ${isBatchMode ? 'batch-mode-card' : ''}" data-id="${address.id}">
+                            ${checkboxHtml}
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h4>${address.address}</h4>
+                                </div>
+                                ${actionsHtml}
+                            </div>
+                            <div class="card-body">
+                                <div class="info-row">
+                                    <span class="info-label">更新时间:</span>
+                                    <span class="info-value">${Utils.formatDate(address.updated_at)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+                
+                // 添加分页控件
+                renderPagination(totalCount, limit);
+            } catch (error) {
+                console.error('加载地址列表失败:', error);
+                Utils.showError('加载地址列表失败');
+            }
+        }
+        
+        // 渲染分页控件
+        function renderPagination(totalCount, limit) {
+            const totalPages = Math.ceil(totalCount / limit);
+            if (totalPages <= 1) {
+                // 只有一页，不需要分页
+                document.getElementById('pagination')?.remove();
+                return;
+            }
+            
+            // 创建或获取分页容器
+            let paginationContainer = document.getElementById('pagination');
+            if (!paginationContainer) {
+                paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination';
+                paginationContainer.className = 'pagination';
+                document.getElementById('addressesPanel').appendChild(paginationContainer);
+            }
+            
+            // 构建分页HTML
+            let paginationHtml = `
+                <div class="pagination-container">
+                    <button class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" 
+                            onclick="changePage(${currentPage - 1})" 
+                            ${currentPage === 1 ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="pagination-info">
+                        第 ${currentPage} / ${totalPages} 页
+                    </span>
+                    <button class="pagination-btn ${currentPage === totalPages ? 'disabled' : ''}" 
+                            onclick="changePage(${currentPage + 1})" 
+                            ${currentPage === totalPages ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            `;
+            
+            paginationContainer.innerHTML = paginationHtml;
+        }
+        
+        // 切换页码
+        function changePage(page) {
+            currentPage = page;
+            loadAddresses();
+        }
+
+        // 显示添加地址模态框
+        function showAddAddressModal() {
+            document.getElementById('addressId').value = '';
+            document.getElementById('addressName').value = '';
+            document.getElementById('addressModalTitle').textContent = '添加地址';
+            Utils.showModal('addressModal');
+        }
+
+        // 显示编辑地址模态框
+        async function showEditAddressModal(id) {
+            try {
+                console.log('正在编辑地址，ID:', id);
+                // 直接从服务器获取单个地址详情，避免分页问题
+                const address = await Utils.get(`/addresses/${id}`);
+                console.log('获取到的地址数据:', address);
+                
+                if (!address) {
+                    Utils.showError('地址不存在');
+                    return;
+                }
+                
+                document.getElementById('addressId').value = address.id;
+                document.getElementById('addressName').value = address.address;
+                document.getElementById('addressModalTitle').textContent = '编辑地址';
+                Utils.showModal('addressModal');
+            } catch (error) {
+                console.error('加载地址详情失败:', error);
+                Utils.showError('加载地址详情失败: ' + (error.message || error));
+            }
+        }
+
+        // 保存地址
+        async function saveAddress() {
+            try {
+                const id = document.getElementById('addressId').value;
+                const address = document.getElementById('addressName').value.trim();
+                
+                if (!address) {
+                    Utils.showError('地址不能为空');
+                    return;
+                }
+                
+                // 创建当前时间戳，使用统一的时间处理函数，确保东八区时间格式
+                const now = Utils.formatDateTimeForBackend();
+                
+                // 准备提交的数据，包含 created_at 和 updated_at
+                const data = {
+                    address,
+                    created_at: now,
+                    updated_at: now
+                };
+                
+                let response;
+                
+                if (id) {
+                    // 编辑地址 - 只更新 updated_at
+                    data.updated_at = now;
+                    response = await Utils.put(`/addresses/${id}`, data);
+                    Utils.showSuccess('地址更新成功');
+                } else {
+                    // 添加地址 - 设置 created_at 和 updated_at
+                    response = await Utils.post('/addresses', data);
+                    Utils.showSuccess('地址添加成功');
+                }
+                
+                console.log('地址保存成功:', response);
+                Utils.hideModal('addressModal');
+                await loadAddresses();
+            } catch (error) {
+                console.error('保存地址失败:', error);
+                Utils.showError('保存地址失败');
+            }
+        }
+
+        // 删除地址
+        async function deleteAddress(id) {
+        Utils.confirm('删除地址', '确定要删除这个地址吗？', async () => {
+            
+            try {
+                await Utils.delete(`/addresses/${id}`);
+                Utils.showSuccess('地址删除成功');
+                await loadAddresses();
+            } catch (error) {
+                console.error('删除地址失败:', error);
+                Utils.showError('删除地址失败');
+            }
+        });
+        }
+
+        // 进入批量操作模式
+        function enterBatchMode() {
+            const batchActionsBar = document.getElementById('batchActionsBar');
+            const addAddressBtn = document.getElementById('addAddressBtn');
+            const batchModeBtn = document.getElementById('batchModeBtn');
+            
+            batchActionsBar.style.display = 'flex';
+            addAddressBtn.style.display = 'block'; // 保持显示，但改变样式
+            batchModeBtn.style.display = 'block'; // 保持显示，但改变样式
+            
+            // 添加批量模式样式
+            addAddressBtn.classList.add('fab-batch-active');
+            batchModeBtn.classList.add('fab-batch-active');
+            
+            // 重新加载地址列表以显示复选框
+            loadAddresses();
+        }
+
+        // 取消批量操作模式
+        function cancelBatchMode() {
+            const batchActionsBar = document.getElementById('batchActionsBar');
+            const addAddressBtn = document.getElementById('addAddressBtn');
+            const batchModeBtn = document.getElementById('batchModeBtn');
+            
+            batchActionsBar.style.display = 'none';
+            addAddressBtn.style.display = Utils.hasPermission('地址管理') ? 'block' : 'none';
+            batchModeBtn.style.display = 'block';
+            
+            // 移除批量模式样式
+            addAddressBtn.classList.remove('fab-batch-active');
+            batchModeBtn.classList.remove('fab-batch-active');
+            
+            // 清除所有选中状态
+            document.getElementById('selectAll').checked = false;
+            
+            // 重新加载地址列表
+            loadAddresses();
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.address-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            
+            updateSelectedCount();
+        }
+
+        // 更新选中数量显示
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.address-checkbox:checked');
+            const selectedCount = checkboxes.length;
+            const selectedCountText = document.getElementById('selectedCount');
+            const selectAll = document.getElementById('selectAll');
+            const allCheckboxes = document.querySelectorAll('.address-checkbox');
+            
+            // 更新选中数量显示
+            if (selectedCount === 0) {
+                selectedCountText.textContent = '全选';
+            } else if (selectedCount === allCheckboxes.length) {
+                selectedCountText.textContent = `已选中全部 ${selectedCount} 项`;
+                selectAll.checked = true;
+            } else {
+                selectedCountText.textContent = `已选中 ${selectedCount} 项`;
+                selectAll.checked = false;
+            }
+            
+            // 更新批量删除按钮状态
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            if (selectedCount === 0) {
+                batchDeleteBtn.disabled = true;
+                batchDeleteBtn.classList.add('disabled');
+            } else {
+                batchDeleteBtn.disabled = false;
+                batchDeleteBtn.classList.remove('disabled');
+            }
+        }
+
+        // 批量删除
+        async function batchDelete() {
+            const checkboxes = document.querySelectorAll('.address-checkbox:checked');
+            const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            if (selectedIds.length === 0) {
+                Utils.showError('请先选择要删除的地址');
+                return;
+            }
+            
+            Utils.confirm(
+                '批量删除地址', 
+                `确定要删除选中的 ${selectedIds.length} 个地址吗？此操作无法撤销。`, 
+                async () => {
+                    try {
+                        // 显示加载状态
+                        Utils.showLoading('#addressesList');
+                        
+                        // 逐个删除地址
+                        const deletePromises = selectedIds.map(id => Utils.delete(`/addresses/${id}`));
+                        await Promise.all(deletePromises);
+                        
+                        Utils.showSuccess(`成功删除 ${selectedIds.length} 个地址`);
+                        
+                        // 退出批量操作模式并重新加载列表
+                        cancelBatchMode();
+                        await loadAddresses();
+                        
+                    } catch (error) {
+                        console.error('批量删除失败:', error);
+                        Utils.showError('批量删除失败，请重试');
+                        
+                        // 清除加载状态
+                        Utils.hideLoading('#addressesList');
+                    }
+                }
+            );
+        }
+
+        // 侧边栏相关功能
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('active');
+        }
+        
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        }
+        
+        
+        // 点击遮罩层关闭侧边栏
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('sidebarOverlay');
+            overlay.addEventListener('click', closeSidebar);
+            
+            // 设置导航权限和加载未读消息
+            setupNavigation();
+        });
+        
+     
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,3782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>工单管理 - 网盘</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+<body  style="overflow: hidden;">
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">网盘</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+      <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+            <a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content" style="margin-top: 35px;">
+        <!-- 文件列表区域 -->
+        <section class="files-section">
+            <div class="section-header">
+                <!-- 批量操作工具栏 -->
+                <div class="batch-actions" id="batchActions" style="display: none;">
+                    <div class="batch-info">                        
+                        <span id="selectedCount">0</span> 个已选择 
+                    </div>
+                    <div class="batch-buttons">
+                        <button class="batch-btn select-all" onclick="toggleSelectAll()" id="selectAllBtn" title="全选/取消全选">
+                            <i class="fas fa-check-double"></i>
+                        </button>
+                        <button class="batch-btn download" onclick="batchDownload()" id="batchDownloadBtn" disabled title="批量下载">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="batch-btn move" onclick="showBatchMoveDialog()" id="batchMoveBtn" disabled title="批量移动">
+                            <i class="fas fa-arrows-alt"></i>
+                        </button>
+                        <button class="batch-btn copy" onclick="showBatchCopyDialog()" id="batchCopyBtn" disabled title="批量复制">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="batch-btn delete" onclick="batchDelete()" id="batchDeleteBtn" disabled title="批量删除">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="batch-btn cancel" onclick="cancelBatchMode()" title="取消选择">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- 目录导航栏 -->
+            <div class="directory-nav">
+                <div class="nav-top-row">
+                    <div class="back-btn" id="backBtn" style="display: none; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; transition: all 0.2s ease;" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i>
+                    </div>
+                    <div class="current-path-wrapper">
+                        <div class="current-path" id="currentPath" onclick="togglePathDropdown()">主目录</div>
+                        <div class="path-dropdown" id="pathDropdown" style="display: none;">
+                            <!-- 路径下拉列表将在这里动态生成 -->
+                        </div>
+                    </div>
+                    <div class="refresh-btn" onclick="loadFiles()" title="刷新列表">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                </div>
+                <!-- 新行：排序和视图按钮 -->
+                <div class="nav-actions">
+                    <div class="sort-btn" onclick="toggleSortDropdown(event)" title="排序选项">
+                        <i class="fas fa-sort"></i>
+                        <span>排序</span>
+                        <div class="sort-dropdown" id="sortDropdown" style="display: none;">
+                            <button class="sort-option active" data-sort="smart" onclick="setSortMode('smart', event)">
+                                <i class="fas fa-magic"></i>
+                                <span>智能排序</span>
+                            </button>
+                            <button class="sort-option" data-sort="name" onclick="setSortMode('name', event)">
+                                <i class="fas fa-font"></i>
+                                <span>按文件名</span>
+                            </button>
+                            <button class="sort-option" data-sort="type" onclick="setSortMode('type', event)">
+                                <i class="fas fa-file"></i>
+                                <span>按文件类型</span>
+                            </button>
+                            <button class="sort-option" data-sort="size" onclick="setSortMode('size', event)">
+                                <i class="fas fa-weight"></i>
+                                <span>按文件大小</span>
+                            </button>
+                            <button class="sort-option" data-sort="time" onclick="setSortMode('time', event)">
+                                <i class="fas fa-clock"></i>
+                                <span>按修改时间</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="view-mode-btn" onclick="toggleViewModeDropdown(event)" title="视图模式">
+                        <i class="fas fa-list"></i>
+                        <span>视图</span>
+                        <div class="view-mode-dropdown" id="viewModeDropdown" style="display: none;">
+                            <button class="view-mode-option" data-view="list" onclick="setViewMode('list', event)">
+                                <i class="fas fa-list"></i>
+                                <span>列表模式</span>
+                            </button>
+                            <button class="view-mode-option" data-view="tile" onclick="setViewMode('tile', event)">
+                                <i class="fas fa-th"></i>
+                                <span>平铺模式</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="files-list" id="filesList">
+                <!-- 加载动画 -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>加载中...</span>
+                </div>
+            </div>
+        </section>
+    </main>
+        
+    <!-- 隐藏的工具栏，点击悬浮按钮显示 -->
+    <div class="header-actions hidden-toolbar" id="headerActions" style="display: none;">
+        <button class="select-btn" onclick="toggleBatchMode()" id="batchModeBtn">
+            <i class="fas fa-check-square"></i>
+            <span>选择</span>
+        </button>
+        <button class="upload-btn" onclick="openUploadModal()">
+            <i class="fas fa-upload"></i>
+            <span>上传</span>
+        </button>
+        <button class="folder-btn" onclick="openCreateFolderModal()">
+            <i class="fas fa-folder-plus"></i>
+            <span>新建文件夹</span>
+        </button>                     
+    </div>
+
+    <!-- 上传文件模态框 -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>上传文件</h4>
+                <button class="close-btn" onclick="closeUploadModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="hidden" name="storageType" id="modalStorageType">
+                    <div class="form-group">
+                        <label>选择文件</label>
+                        <div class="file-select-area" onclick="document.getElementById('fileInput').click()" 
+                             ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p id="fileSelectedText">点击选择文件或拖拽文件到此处</p>
+                            <p class="file-select-hint">支持所有文件类型</p>
+                        </div>
+                        <input type="file" id="fileInput" name="file" accept="*/*" required style="display: none;">
+                    </div>
+                    <div class="form-group" id="uploadButtonGroup" style="display: none;">
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-upload"></i>
+                            开始上传
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建文件夹模态框 -->
+    <div class="modal" id="createFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>新建文件夹</h4>
+                <button class="close-btn" onclick="closeCreateFolderModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createFolderForm">
+                    <input type="hidden" name="storageType" id="folderModalStorageType">
+                    <div class="form-group">
+                        <label for="folderName">文件夹名称</label>
+                        <input type="text" class="form-control" id="folderName" name="folderName" placeholder="请输入文件夹名称" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-folder-plus"></i>
+                            创建文件夹
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用提示模态框 -->
+    <div class="modal" id="alertModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h4 id="alertModalTitle">提示</h4>
+                <button class="close-btn" onclick="closeAlertDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 0px;">
+                    <i id="alertModalIcon" class="fas fa-info-circle" style="font-size: 48px; color: #667eea; margin-bottom: 16px; display: block;"></i>
+                    <p id="alertModalMessage" style="font-size: 16px; color: #333; line-height: 1.5; margin: 0;"></p>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="submit-btn" onclick="closeAlertDialog()">
+                        <i class="fas fa-check"></i>
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用确认模态框 -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h4 id="confirmModalTitle">确认操作</h4>
+                <button class="close-btn" onclick="closeConfirmDialog(false)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 20px 0;">
+                    <i id="confirmModalIcon" class="fas fa-question-circle" style="font-size: 48px; color: #ffc107; margin-bottom: 16px; display: block;"></i>
+                    <p id="confirmModalMessage" style="font-size: 16px; color: #333; line-height: 1.5; margin: 0;"></p>
+                </div>
+                <div class="form-group" style="display: flex; gap: 12px;">
+                    <button type="button" class="submit-btn" style="flex: 1; background: #6c757d;" onclick="closeConfirmDialog(false)">
+                        <i class="fas fa-times"></i>
+                        取消
+                    </button>
+                    <button type="button" class="submit-btn" style="flex: 1;" onclick="closeConfirmDialog(true)">
+                        <i class="fas fa-check"></i>
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移动文件模态框 -->
+    <div class="modal" id="moveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>移动文件</h4>
+                <button class="close-btn" onclick="closeMoveModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 提示信息 -->
+                <div class="modal-tip" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-info-circle" style="color: #2196f3; font-size: 16px;"></i>
+                        <div>
+                            <p style="margin: 0; color: #1976d2; font-size: 14px; font-weight: 500;">移动文件提示</p>
+                            <p style="margin: 4px 0 0 0; color: #666; font-size: 13px;">支持跨网盘移动，如果目标位置已存在同名文件，系统会提示您选择覆盖、创建副本或取消操作</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>目标存储位置</label>
+                    <div class="storage-type-selector" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <label class="storage-type-option">
+                            <input type="radio" name="targetStorageType" value="private" checked>
+                            <span class="storage-label">
+                                <i class="fas fa-user-lock"></i>
+                                私人网盘
+                            </span>
+                        </label>
+                        <label class="storage-type-option">
+                            <input type="radio" name="targetStorageType" value="public">
+                            <span class="storage-label">
+                                <i class="fas fa-users"></i>
+                                公共网盘
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>选择目标文件夹</label>
+                    <div class="folder-selector" id="folderSelector" style="max-height: 200px; overflow-y: auto;">
+                        <!-- 文件夹列表将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; padding: 28px; border-top: 1px solid #e9ecef;">
+                <button type="button" class="submit-btn" style="flex: 1; background: #6c757d;" onclick="closeMoveModal()">
+                    <i class="fas fa-times"></i>
+                    取消
+                </button>
+                <button type="button" class="submit-btn" style="flex: 1;" onclick="confirmMove()">
+                    <i class="fas fa-check"></i>
+                    移动
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 复制文件模态框 -->
+    <div class="modal" id="copyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>复制文件</h4>
+                <button class="close-btn" onclick="closeCopyModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 提示信息 -->
+                <div class="modal-tip" style="background: #e8f5e8; border-left: 4px solid #4caf50; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-info-circle" style="color: #4caf50; font-size: 16px;"></i>
+                        <div>
+                            <p style="margin: 0; color: #388e3c; font-size: 14px; font-weight: 500;">复制文件提示</p>
+                            <p style="margin: 4px 0 0 0; color: #666; font-size: 13px;">支持跨网盘复制，如果目标位置已存在同名文件，系统会提示您选择覆盖、创建副本或取消操作</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>目标存储位置</label>
+                    <div class="storage-type-selector" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <label class="storage-type-option">
+                            <input type="radio" name="targetStorageTypeCopy" value="private" checked>
+                            <span class="storage-label">
+                                <i class="fas fa-user-lock"></i>
+                                私人网盘
+                            </span>
+                        </label>
+                        <label class="storage-type-option">
+                            <input type="radio" name="targetStorageTypeCopy" value="public">
+                            <span class="storage-label">
+                                <i class="fas fa-users"></i>
+                                公共网盘
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>选择目标文件夹</label>
+                    <div class="folder-selector" id="copyFolderSelector" style="max-height: 200px; overflow-y: auto;">
+                        <!-- 文件夹列表将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; padding: 28px; border-top: 1px solid #e9ecef;">
+                <button type="button" class="submit-btn" style="flex: 1; background: #6c757d;" onclick="closeCopyModal()">
+                    <i class="fas fa-times"></i>
+                    取消
+                </button>
+                <button type="button" class="submit-btn" style="flex: 1;" onclick="confirmCopy()">
+                    <i class="fas fa-check"></i>
+                    复制
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件预览模态框 -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content preview-modal-content">
+            <div class="modal-header">
+                <h4 id="previewModalTitle">文件预览</h4>
+                <button class="close-btn" onclick="closePreviewModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body preview-modal-body">
+                <div id="previewContent" class="preview-content">
+                    <!-- 预览内容将在这里动态生成 -->
+                </div>
+                <div class="preview-actions">
+                    <button class="preview-action-btn download" onclick="downloadPreviewFile()">
+                        <i class="fas fa-download"></i>
+                        <span>下载</span>
+                    </button>
+                    <button class="preview-action-btn share" onclick="shareFile()">
+                        <i class="fas fa-share-alt"></i>
+                        <span>分享</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重命名模态框 -->
+    <div class="modal" id="renameModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h4>重命名</h4>
+                <button class="close-btn" onclick="closeRenameModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="renameInput">新名称</label>
+                    <input type="text" class="form-control" id="renameInput" placeholder="请输入新的名称" autofocus>
+                    <small class="form-text text-muted" id="renameHint"></small>
+                </div>
+                <div class="form-group" style="display: flex; gap: 12px;">
+                    <button type="button" class="submit-btn" style="flex: 1; background: #6c757d;" onclick="closeRenameModal()">
+                        <i class="fas fa-times"></i>
+                        取消
+                    </button>
+                    <button type="button" class="submit-btn" style="flex: 1;" onclick="confirmRename()">
+                        <i class="fas fa-check"></i>
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件冲突对话框 -->
+    <div class="modal" id="fileConflictModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h4 id="fileConflictModalTitle">文件冲突</h4>
+                <button class="close-btn" onclick="closeFileConflictDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 20px 0;">
+                    <i id="fileConflictModalIcon" class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ffc107; margin-bottom: 16px; display: block;"></i>
+                    <p id="fileConflictModalMessage" style="font-size: 16px; color: #333; line-height: 1.5; margin: 0;"></p>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="button" class="submit-btn conflict-overwrite" onclick="handleFileConflictAction('overwrite')">
+                        <i class="fas fa-sync-alt"></i>
+                        覆盖现有文件
+                    </button>
+                    <button type="button" class="submit-btn conflict-copy" onclick="handleFileConflictAction('copy')">
+                        <i class="fas fa-copy"></i>
+                        创建副本
+                    </button>
+                    <button type="button" class="submit-btn conflict-cancel" style="background: #6c757d;" onclick="handleFileConflictAction('cancel')">
+                        <i class="fas fa-times"></i>
+                        取消操作
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script>
+        let currentStorageType = 'private';
+        let currentDirectory = '';
+        let confirmCallback = null;
+        let currentPreviewFile = null;
+        let scrollPositions = new Map(); // 存储不同目录的滚动位置
+        let batchMode = false; // 批量选择模式
+        let selectedItems = new Set(); // 已选择的文件项
+        let currentSortMode = 'smart'; // 当前排序模式：smart, name, type, size, time
+        let currentViewMode = 'list'; // 当前视图模式：list, tile
+
+        // 切换工具栏显示/隐藏
+        function toggleToolbar() {
+            const toolbar = document.getElementById('hiddenToolbar');
+            const floatingBtn = document.getElementById('floatingActionBtn');
+            toolbar.classList.toggle('visible');
+            floatingBtn.classList.toggle('active');
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAuth();
+            setupNavigation();
+            
+            // 初始化路径显示
+            updateCurrentPath();
+            
+            // 设置默认排序模式激活状态
+            document.querySelector(`[data-sort="${currentSortMode}"]`).classList.add('active');
+            
+            // 从localStorage读取保存的视图模式，如果没有则使用默认值
+            const savedViewMode = localStorage.getItem('boxViewMode');
+            if (savedViewMode && (savedViewMode === 'list' || savedViewMode === 'tile')) {
+                currentViewMode = savedViewMode;
+            }
+            
+            // 设置默认视图模式激活状态
+            document.querySelector(`[data-view="${currentViewMode}"]`).classList.add('active');
+            
+            // 设置初始视图模式图标
+            const viewModeBtnIcon = document.querySelector('.view-mode-btn i');
+            if (currentViewMode === 'list') {
+                viewModeBtnIcon.className = 'fas fa-list';
+            } else if (currentViewMode === 'tile') {
+                viewModeBtnIcon.className = 'fas fa-th';
+            }
+            
+            await loadFiles();
+            
+            // 点击遮罩层关闭侧边栏
+            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+            
+            // 点击页面其他地方关闭下拉菜单
+            document.addEventListener('click', function(event) {
+                const sortBtn = document.querySelector('.sort-btn');
+                const sortDropdown = document.getElementById('sortDropdown');
+                const pathDropdown = document.getElementById('pathDropdown');
+                const viewModeBtn = document.querySelector('.view-mode-btn');
+                const viewModeDropdown = document.getElementById('viewModeDropdown');
+                
+                // 如果点击的不是排序按钮，关闭排序下拉菜单
+                if (!sortBtn.contains(event.target)) {
+                    sortDropdown.style.display = 'none';
+                }
+                
+                // 如果点击的不是路径下拉菜单相关元素，关闭路径下拉菜单
+                const currentPath = document.getElementById('currentPath');
+                if (!currentPath.contains(event.target) && !pathDropdown.contains(event.target)) {
+                    pathDropdown.style.display = 'none';
+                }
+                
+                // 如果点击的不是视图模式按钮，关闭视图模式下拉菜单
+                if (!viewModeBtn.contains(event.target)) {
+                    viewModeDropdown.style.display = 'none';
+                }
+            });
+            
+            // 上传表单提交事件
+            document.getElementById('uploadForm').addEventListener('submit', handleFileUpload);
+            
+            // 文件选择监听事件
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            
+            // 创建文件夹表单提交事件
+            document.getElementById('createFolderForm').addEventListener('submit', handleCreateFolder);
+        });
+
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+            
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+            }
+        }
+
+        // 切换存储类型
+        function switchStorage(storageType) {
+            currentStorageType = storageType;
+            
+            // 更新标签状态
+            document.querySelectorAll('.storage-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${storageType}"]`).classList.add('active');
+            
+            // 重置批量选择模式
+            if (batchMode) {
+                cancelBatchMode();
+            }
+            
+            // 重新加载文件列表
+            loadFiles();
+        }
+
+        // 切换排序下拉菜单
+        function toggleSortDropdown(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            const dropdown = document.getElementById('sortDropdown');
+            const isVisible = dropdown.style.display === 'block';
+            
+            // 关闭路径下拉菜单
+            document.getElementById('pathDropdown').style.display = 'none';
+            
+            // 切换排序下拉菜单显示状态
+            if (isVisible) {
+                dropdown.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+            }
+        }
+
+        // 设置排序模式
+        function setSortMode(mode, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            currentSortMode = mode;
+            
+            // 更新排序选项的激活状态
+            document.querySelectorAll('.sort-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            const selectedOption = document.querySelector(`[data-sort="${mode}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('active');
+            }
+            
+            // 关闭下拉菜单
+            document.getElementById('sortDropdown').style.display = 'none';
+            
+            // 切换排序模式时，关闭所有操作菜单
+            closeAllContextMenus();
+            
+            // 重新加载文件列表
+            loadFiles();
+        }
+        
+        // 切换视图模式下拉菜单显示/隐藏
+        function toggleViewModeDropdown(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            const dropdown = document.getElementById('viewModeDropdown');
+            const isVisible = dropdown.style.display === 'block';
+            
+            // 关闭其他下拉菜单
+            document.getElementById('sortDropdown').style.display = 'none';
+            document.getElementById('pathDropdown').style.display = 'none';
+            
+            // 切换视图模式下拉菜单显示状态
+            if (isVisible) {
+                dropdown.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+            }
+        }
+        
+        // 设置视图模式
+        function setViewMode(mode, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            currentViewMode = mode;
+            
+            // 将视图模式保存到localStorage
+            localStorage.setItem('boxViewMode', mode);
+            
+            // 更新视图选项的激活状态
+            document.querySelectorAll('.view-mode-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            const selectedOption = document.querySelector(`[data-view="${mode}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('active');
+            }
+            
+            // 更新主按钮的图标
+            const viewModeBtnIcon = document.querySelector('.view-mode-btn i');
+            if (mode === 'list') {
+                viewModeBtnIcon.className = 'fas fa-list';
+            } else if (mode === 'tile') {
+                viewModeBtnIcon.className = 'fas fa-th';
+            }
+            
+            // 关闭下拉菜单
+            document.getElementById('viewModeDropdown').style.display = 'none';
+            
+            // 应用视图模式
+            applyViewMode();
+        }
+        
+        // 应用视图模式到文件列表
+        function applyViewMode() {
+            const filesList = document.getElementById('filesList');
+            
+            // 移除所有视图模式类
+            filesList.classList.remove('list-mode', 'tile-mode');
+            
+            // 添加当前视图模式类
+            switch(currentViewMode) {
+                case 'list':
+                    filesList.classList.add('list-mode');
+                    break;
+                case 'tile':
+                    filesList.classList.add('tile-mode');
+                    break;
+            }
+            
+            // 切换视图模式时，关闭所有操作菜单，避免定位问题
+            closeAllContextMenus();
+        }
+
+        // 获取文件类型优先级（用于智能排序）
+        function getFileTypePriority(filename, isFolder) {
+            if (isFolder) return 0;
+            
+            const ext = getFileExtension(filename).toLowerCase();
+            
+            // 文档类型优先级
+            const documentTypes = ['pdf', 'doc', 'docx', 'txt', 'rtf'];
+            // 图片类型优先级
+            const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+            // 视频类型优先级
+            const videoTypes = ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv'];
+            // 音频类型优先级
+            const audioTypes = ['mp3', 'wav', 'flac', 'aac', 'ogg'];
+            // 压缩文件优先级
+            const archiveTypes = ['zip', 'rar', '7z', 'tar', 'gz'];
+            
+            if (documentTypes.includes(ext)) return 1;
+            if (imageTypes.includes(ext)) return 2;
+            if (videoTypes.includes(ext)) return 3;
+            if (audioTypes.includes(ext)) return 4;
+            if (archiveTypes.includes(ext)) return 5;
+            
+            return 10; // 其他文件类型
+        }
+
+        // 排序文件和文件夹
+        function sortFiles(folders, files) {
+            const allItems = [...folders, ...files];
+            
+            return allItems.sort((a, b) => {
+                switch (currentSortMode) {
+                    case 'smart':
+                        // 智能排序：文件夹 > 文档 > 图片 > 视频 > 音频 > 压缩文件 > 其他
+                        const priorityA = getFileTypePriority(a.filename, a.type === 'folder');
+                        const priorityB = getFileTypePriority(b.filename, b.type === 'folder');
+                        if (priorityA !== priorityB) {
+                            return priorityA - priorityB;
+                        }
+                        return a.filename.localeCompare(b.filename);
+                        
+                    case 'name':
+                        // 按文件名排序
+                        if (a.type === 'folder' && b.type !== 'folder') return -1;
+                        if (a.type !== 'folder' && b.type === 'folder') return 1;
+                        return a.filename.localeCompare(b.filename);
+                        
+                    case 'type':
+                        // 按文件类型排序
+                        if (a.type === 'folder' && b.type !== 'folder') return -1;
+                        if (a.type !== 'folder' && b.type === 'folder') return 1;
+                        const extA = getFileExtension(a.filename).toLowerCase();
+                        const extB = getFileExtension(b.filename).toLowerCase();
+                        if (extA !== extB) {
+                            return extA.localeCompare(extB);
+                        }
+                        return a.filename.localeCompare(b.filename);
+                        
+                    case 'size':
+                        // 按文件大小排序
+                        if (a.type === 'folder' && b.type !== 'folder') return -1;
+                        if (a.type !== 'folder' && b.type === 'folder') return 1;
+                        const sizeA = a.size || 0;
+                        const sizeB = b.size || 0;
+                        if (sizeA !== sizeB) {
+                            return sizeB - sizeA; // 降序：大的在前
+                        }
+                        return a.filename.localeCompare(b.filename);
+                        
+                    case 'time':
+                        // 按修改时间排序
+                        const timeA = new Date(a.uploadTime || a.createTime || 0);
+                        const timeB = new Date(b.uploadTime || b.createTime || 0);
+                        if (a.type === 'folder' && b.type !== 'folder') return -1;
+                        if (a.type !== 'folder' && b.type === 'folder') return 1;
+                        if (timeA.getTime() !== timeB.getTime()) {
+                            return timeB.getTime() - timeA.getTime(); // 降序：最新的在前
+                        }
+                        return a.filename.localeCompare(b.filename);
+                        
+                    default:
+                        // 默认按名称排序
+                        if (a.type === 'folder' && b.type !== 'folder') return -1;
+                        if (a.type !== 'folder' && b.type === 'folder') return 1;
+                        return a.filename.localeCompare(b.filename);
+                }
+            });
+        }
+
+        // 加载文件列表
+        async function loadFiles() {
+            // 重置批量选择模式（刷新时）
+            if (batchMode) {
+                cancelBatchMode();
+            }
+            
+            // 刷新文件列表时，关闭所有操作菜单
+            closeAllContextMenus();
+            
+            try {
+                const params = new URLSearchParams({
+                    storageType: currentStorageType,
+                    directory: currentDirectory
+                });
+                
+                const response = await Utils.get(`/storage/files?${params}`);
+                const files = response.files || [];
+                const folders = response.folders || [];
+                const container = document.getElementById('filesList');
+                
+                // 更新当前路径显示
+                updateCurrentPath();
+                
+                // 更新返回按钮状态
+                const backBtn = document.getElementById('backBtn');
+                backBtn.style.display = currentDirectory ? 'flex' : 'none';
+                
+                // 获取当前路径的滚动位置
+                const pathKey = currentStorageType + ':' + (currentDirectory || 'root');
+                const savedScrollTop = scrollPositions.get(pathKey) || 0;
+                
+                // 使用新的排序函数排序文件和文件夹
+                const allItems = sortFiles(folders, files);
+                
+                if (allItems.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-folder-open"></i>
+                            <p>暂无文件数据</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 渲染文件和文件夹列表
+                let html = '';
+                allItems.forEach(item => {
+                    const itemId = `${item.type}-${item.filename}`;
+                    
+                    if (item.type === 'folder') {
+                        // 渲染文件夹
+                        html += `
+                            <div class="file-item" data-type="${item.type}" data-filename="${item.filename}" data-id="${itemId}">
+                                <div class="file-checkbox" id="checkbox-${itemId}" onclick="event.stopPropagation(); toggleItemSelection('${item.type}', '${item.filename}')">
+                                    <i class="far fa-square"></i>
+                                </div>
+                                <div class="file-info" onclick="openFolder('${item.filename}')">
+                                    <div class="file-icon folder">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <div class="file-details">
+                                        <div class="file-name">${item.filename}</div>
+                                        <div class="file-meta">
+                                            <span>文件夹</span>
+                                            <span>${Utils.formatDateTime(item.createTime)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <div class="file-action-wrapper" style="position: relative;">
+                                        <button class="file-action-btn more" onclick="event.stopPropagation(); toggleContextMenu('${item.filename}', 'folder', event)">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                        <div class="context-menu" id="menu-${item.filename}">
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); openFolder('${item.filename}')">
+                                                <i class="fas fa-folder-open"></i>
+                                                <span>打开</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); showRenameDialog('${item.filename}', 'folder')">
+                                                <i class="fas fa-edit"></i>
+                                                <span>重命名</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); downloadFolder('${item.filename}')">
+                                                <i class="fas fa-download"></i>
+                                                <span>下载</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); showMoveDialog('${item.filename}', 'folder')">
+                                                <i class="fas fa-arrows-alt"></i>
+                                                <span>移动</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); showCopyDialog('${item.filename}', 'folder')">
+                                                <i class="fas fa-copy"></i>
+                                                <span>复制</span>
+                                            </button>
+                                            <div class="context-menu-divider"></div>
+                                            <button class="context-menu-item danger" onclick="event.stopPropagation(); deleteFolder('${item.filename}')">
+                                                <i class="fas fa-trash"></i>
+                                                <span>删除</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 渲染文件
+                        const fileSize = formatFileSize(item.size);
+                        const uploadTime = Utils.formatDateTime(item.uploadTime);
+                        
+                        // 获取文件扩展名和图标
+                        const fileExtension = getFileExtension(item.filename);
+                        const fileIconClass = getFileIconClass(fileExtension);
+                        const fileIcon = getFileIcon(fileExtension);
+                        
+                        html += `
+                            <div class="file-item" data-type="${item.type}" data-filename="${item.filename}" data-id="${itemId}">
+                                <div class="file-checkbox" id="checkbox-${itemId}" onclick="event.stopPropagation(); toggleItemSelection('${item.type}', '${item.filename}')">
+                                    <i class="far fa-square"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-icon ${fileIconClass}">
+                                        <i class="fas ${fileIcon}"></i>
+                                    </div>
+                                    <div class="file-details">
+                                        <div class="file-name">${item.filename}</div>
+                                        <div class="file-meta">
+                                            <span>${fileSize}</span>
+                                            <span>${uploadTime}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <div class="file-action-wrapper" style="position: relative;">
+                                        <button class="file-action-btn more" onclick="event.stopPropagation(); toggleContextMenu('${item.filename}', 'file', event)">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                        <div class="context-menu" id="menu-${item.filename}" style="z-index: 9999">
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); previewFile('${item.filename}', '${item.path}', '${fileExtension}')">
+                                                <i class="fas fa-eye"></i>
+                                                <span>预览</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); showRenameDialog('${item.filename}', 'file')">
+                                                <i class="fas fa-edit"></i>
+                                                <span>重命名</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); downloadFile('${item.filename}', '${item.path}')">
+                                                <i class="fas fa-download"></i>
+                                                <span>下载</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); showMoveDialog('${item.filename}')">
+                                                <i class="fas fa-arrows-alt"></i>
+                                                <span>移动</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); showCopyDialog('${item.filename}')">
+                                                <i class="fas fa-copy"></i>
+                                                <span>复制</span>
+                                            </button>
+                                            <button class="context-menu-item" onclick="event.stopPropagation(); shareFile('${item.filename}')">
+                                                <i class="fas fa-share-alt"></i>
+                                                <span>分享</span>
+                                            </button>
+                                            <div class="context-menu-divider"></div>
+                                            <button class="context-menu-item danger" onclick="event.stopPropagation(); deleteFile('${item.filename}')">
+                                                <i class="fas fa-trash"></i>
+                                                <span>删除</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                container.innerHTML = html;
+                
+                // 应用当前视图模式
+                applyViewMode();
+                
+                // 恢复滚动位置
+                requestAnimationFrame(() => {
+                    container.scrollTop = savedScrollTop;
+                });
+                
+                // 添加滚动监听器，保存滚动位置
+                container.addEventListener('scroll', () => {
+                    scrollPositions.set(pathKey, container.scrollTop);
+                }, { passive: true });
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+                document.getElementById('filesList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败，请稍后重试</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 打开上传模态框
+        function openUploadModal() {
+            document.getElementById('modalStorageType').value = currentStorageType;
+            const modal = document.getElementById('uploadModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            
+            // 隐藏工具栏
+            const toolbar = document.getElementById('headerActions');
+            const floatingBtn = document.getElementById('floatingActionBtn');
+            toolbar.style.display = 'none';
+            toolbar.classList.remove('visible');
+            floatingBtn.classList.remove('active');
+        }
+
+        // 关闭上传模态框
+        function closeUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            document.getElementById('uploadForm').reset();
+            
+            // 重置文件选择区域显示
+            const fileSelectArea = document.querySelector('.file-select-area');
+            const fileSelectedText = document.getElementById('fileSelectedText');
+            const uploadButtonGroup = document.getElementById('uploadButtonGroup');
+            
+            if (fileSelectArea) {
+                fileSelectArea.classList.remove('has-file');
+            }
+            if (fileSelectedText) {
+                fileSelectedText.textContent = '点击选择文件或拖拽文件到此处';
+            }
+            if (uploadButtonGroup) {
+                uploadButtonGroup.style.display = 'none';
+            }
+        }
+
+        // 打开新建文件夹模态框
+        function openCreateFolderModal() {
+            document.getElementById('folderModalStorageType').value = currentStorageType;
+            const modal = document.getElementById('createFolderModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            
+            // 隐藏工具栏
+            const toolbar = document.getElementById('headerActions');
+            const floatingBtn = document.getElementById('floatingActionBtn');
+            toolbar.style.display = 'none';
+            toolbar.classList.remove('visible');
+            floatingBtn.classList.remove('active');
+        }
+
+        // 关闭新建文件夹模态框
+        function closeCreateFolderModal() {
+            const modal = document.getElementById('createFolderModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            document.getElementById('createFolderForm').reset();
+        }
+
+        // 处理新建文件夹
+        async function handleCreateFolder(e) {
+            e.preventDefault();
+            
+            const folderName = document.getElementById('folderName').value.trim();
+            const storageType = currentStorageType;
+            
+            if (!folderName) {
+                showAlert('请输入文件夹名称', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            try {
+                const response = await Utils.post('/storage/folders', { 
+                    folderName, 
+                    storageType,
+                    directory: currentDirectory
+                });
+                
+                if (response.success) {
+                    // 创建成功，关闭模态框并刷新文件列表
+                    closeCreateFolderModal();
+                    await loadFiles();
+                    showAlert('文件夹创建成功', '成功', 'fa-check-circle', '#28a745');
+                } else {
+                    showAlert('文件夹创建失败: ' + (response.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            } catch (error) {
+                console.error('创建文件夹错误:', error);
+                showAlert('文件夹创建失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+            }
+        }
+
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const fileInput = event.target;
+            const file = fileInput.files[0];
+            const fileSelectArea = document.querySelector('.file-select-area');
+            const fileSelectedText = document.getElementById('fileSelectedText');
+            const uploadButtonGroup = document.getElementById('uploadButtonGroup');
+            
+            if (file) {
+                // 更新文件选择区域的显示
+                fileSelectArea.classList.add('has-file');
+                fileSelectedText.textContent = `已选择: ${file.name}`;
+                
+                // 显示上传按钮
+                uploadButtonGroup.style.display = 'block';
+            } else {
+                // 重置文件选择区域的显示
+                fileSelectArea.classList.remove('has-file');
+                fileSelectedText.textContent = '点击选择文件或拖拽文件到此处';
+                
+                // 隐藏上传按钮
+                uploadButtonGroup.style.display = 'none';
+            }
+        }
+
+        // 拖拽处理函数
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const fileSelectArea = document.querySelector('.file-select-area');
+            fileSelectArea.style.borderColor = '#28a745';
+            fileSelectArea.style.background = '#e8f5e8';
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const fileSelectArea = document.querySelector('.file-select-area');
+            if (!fileSelectArea.contains(event.relatedTarget)) {
+                fileSelectArea.style.borderColor = '#667eea';
+                fileSelectArea.style.background = '#f8f9ff';
+            }
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const fileSelectArea = document.querySelector('.file-select-area');
+            fileSelectArea.style.borderColor = '#667eea';
+            fileSelectArea.style.background = '#f8f9ff';
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const fileInput = document.getElementById('fileInput');
+                fileInput.files = files;
+                
+                // 触发change事件来更新UI
+                const changeEvent = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(changeEvent);
+            }
+        }
+
+        // 处理文件上传
+        async function handleFileUpload(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            // 添加当前目录参数
+            formData.append('directory', currentDirectory);
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('请选择要上传的文件', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 检查文件是否已存在
+            const params = new URLSearchParams({
+                storageType: currentStorageType,
+                directory: currentDirectory
+            });
+            
+            try {
+                const response = await Utils.get(`/storage/files?${params}`);
+                const files = response.files || [];
+                
+                // 检查是否存在同名文件
+                const existingFile = files.find(f => f.filename === file.name);
+                
+                // 如果存在同名文件，提示用户是否覆盖
+                if (existingFile) {
+                    showConfirm(
+                        `文件 "${file.name}" 已存在，是否覆盖？`,
+                        '确认覆盖',
+                        (result) => {
+                            if (!result) {
+                                return;
+                            }
+                            // 添加覆盖参数和文件名
+                            formData.append('overwrite', 'true');
+                            formData.append('filename', file.name);
+                            // 继续上传
+                            performFileUpload(formData, file);
+                        },
+                        'fa-exclamation-triangle',
+                        '#ffc107'
+                    );
+                    return; // 提前返回，等待用户确认
+                }
+                
+                // 直接执行上传（无文件冲突）
+                performFileUpload(formData, file);
+            } catch (error) {
+                console.error('检查文件冲突错误:', error);
+                showAlert('检查文件失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+            }
+        }
+
+        // 执行文件上传
+        async function performFileUpload(formData, file) {
+            const uploadForm = document.getElementById('uploadForm');
+            const submitBtn = uploadForm.querySelector('.submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // 禁用按钮并显示加载状态
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+            
+            try {
+                // 将directory参数同时添加到URL查询字符串中，确保Multer能获取到
+                const uploadUrl = `/storage/upload?directory=${encodeURIComponent(currentDirectory)}`;
+                const uploadResponse = await Utils.postForm(uploadUrl, formData);
+                if (uploadResponse.success) {
+                    // 上传成功，关闭模态框并刷新文件列表
+                    closeUploadModal();
+                    await loadFiles();
+                    showAlert('文件上传成功', '成功', 'fa-check-circle', '#28a745');
+                } else {
+                    showAlert('文件上传失败: ' + (uploadResponse.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            } catch (error) {
+                console.error('文件上传错误:', error);
+                showAlert('文件上传失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+            } finally {
+                // 恢复按钮状态
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-upload"></i> 开始上传';
+                }
+            }
+        }
+
+        // 下载文件
+        async function downloadFile(filename, filePath) {
+            try {
+                const token = Utils.getToken();
+                if (!token) {
+                    showAlert('请先登录', '错误', 'fa-exclamation-circle', '#dc3545');
+                    return;
+                }
+                
+                const params = new URLSearchParams({
+                    storageType: currentStorageType,
+                    directory: currentDirectory
+                });
+                
+                // 对文件名进行URL编码，确保中文文件名和特殊字符能正确处理
+                const encodedFilename = encodeURIComponent(filename);
+                const downloadUrl = `/storage/download/${encodedFilename}?${params}`;
+                
+                console.log('下载URL:', Utils.BASE_URL + downloadUrl);
+                
+                // 使用fetch进行认证下载
+                const response = await fetch(Utils.BASE_URL + downloadUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('文件不存在');
+                    } else if (response.status === 401) {
+                        throw new Error('认证失败，请重新登录');
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `下载失败 (${response.status})`);
+                    }
+                }
+                
+                // 获取文件blob
+                const blob = await response.blob();
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+                link.download = filename; // 保持原始文件名作为下载文件名
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发点击
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理资源
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('文件下载成功:', filename);
+                
+            } catch (error) {
+                console.error('下载文件错误:', error);
+                showAlert('下载失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+            }
+        }
+
+        // 下载文件夹
+        async function downloadFolder(folderName) {
+            try {
+                const token = Utils.getToken();
+                if (!token) {
+                    showAlert('请先登录', '错误', 'fa-exclamation-circle', '#dc3545');
+                    return;
+                }
+                
+                const params = new URLSearchParams({
+                    storageType: currentStorageType,
+                    directory: currentDirectory
+                });
+                
+                // 对文件夹名进行URL编码
+                const encodedFoldername = encodeURIComponent(folderName);
+                const downloadUrl = `/storage/download-folder/${encodedFoldername}?${params}`;
+                
+                console.log('下载文件夹URL:', Utils.BASE_URL + downloadUrl);
+                
+                // 使用fetch进行认证下载
+                const response = await fetch(Utils.BASE_URL + downloadUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('文件夹不存在');
+                    } else if (response.status === 401) {
+                        throw new Error('认证失败，请重新登录');
+                    } else if (response.status === 400) {
+                        throw new Error('不是有效的文件夹');
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `下载失败 (${response.status})`);
+                    }
+                }
+                
+                // 获取ZIP文件blob
+                const blob = await response.blob();
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+                link.download = `${folderName}.zip`; // 使用文件夹名.zip作为下载文件名
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发点击
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理资源
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('文件夹下载成功:', folderName);
+                
+            } catch (error) {
+                console.error('下载文件夹错误:', error);
+                showAlert('下载失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+            }
+        }
+
+        // 删除文件
+        async function deleteFile(filename) {
+            showConfirm(
+                `确定要删除文件 "${filename}" 吗？`,
+                '确认删除',
+                async (result) => {
+                    if (!result) return;
+                    
+                    try {
+                        const params = new URLSearchParams({
+                            storageType: currentStorageType,
+                            directory: currentDirectory
+                        });
+                        
+                        const response = await Utils.delete(`/storage/files/${filename}?${params}`);
+                        if (response.success) {
+                            // 删除成功，刷新文件列表
+                            await loadFiles();
+                            showAlert('文件删除成功', '成功', 'fa-check-circle', '#28a745');
+                        } else {
+                            showAlert('文件删除失败: ' + (response.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                        }
+                    } catch (error) {
+                        console.error('文件删除错误:', error);
+                        showAlert('文件删除失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                    }
+                },
+                'fa-exclamation-triangle',
+                '#dc3545'
+            );
+        }
+
+        // 下载文件夹
+        async function downloadFolder(folderName) {
+            try {
+                const token = Utils.getToken();
+                if (!token) {
+                    showAlert('请先登录', '错误', 'fa-exclamation-circle', '#dc3545');
+                    return;
+                }
+                
+                const params = new URLSearchParams({
+                    storageType: currentStorageType,
+                    directory: currentDirectory
+                });
+                
+                // 对文件夹名进行URL编码
+                const encodedFoldername = encodeURIComponent(folderName);
+                const downloadUrl = `/storage/download-folder/${encodedFoldername}?${params}`;
+                
+                console.log('下载文件夹URL:', Utils.BASE_URL + downloadUrl);
+                
+                // 使用fetch进行认证下载
+                const response = await fetch(Utils.BASE_URL + downloadUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('文件夹不存在');
+                    } else if (response.status === 401) {
+                        throw new Error('认证失败，请重新登录');
+                    } else if (response.status === 400) {
+                        throw new Error('不是有效的文件夹');
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `下载失败 (${response.status})`);
+                    }
+                }
+                
+                // 获取ZIP文件blob
+                const blob = await response.blob();
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+                link.download = `${folderName}.zip`; // 使用文件夹名.zip作为下载文件名
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发点击
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理资源
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('文件夹下载成功:', folderName);
+                
+            } catch (error) {
+                console.error('下载文件夹错误:', error);
+                showAlert('下载失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+            }
+        }
+
+        // 删除文件夹
+        async function deleteFolder(folderName) {
+            showConfirm(
+                `确定要删除文件夹 "${folderName}" 吗？`,
+                '确认删除',
+                async (result) => {
+                    if (!result) return;
+                    
+                    try {
+                        const params = new URLSearchParams({
+                            storageType: currentStorageType,
+                            directory: currentDirectory
+                        });
+                        
+                        const response = await Utils.delete(`/storage/folders/${folderName}?${params}`);
+                        if (response.success) {
+                            // 删除成功，刷新文件列表
+                            await loadFiles();
+                            showAlert('文件夹删除成功', '成功', 'fa-check-circle', '#28a745');
+                        } else {
+                            showAlert('文件夹删除失败: ' + (response.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                        }
+                    } catch (error) {
+                        console.error('文件夹删除错误:', error);
+                        showAlert('文件夹删除失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                    }
+                },
+                'fa-exclamation-triangle',
+                '#dc3545'
+            );
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 获取文件扩展名
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        // 根据文件扩展名获取图标类名
+        function getFileIconClass(extension) {
+            const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'];
+            const documentTypes = ['doc', 'docx', 'rtf', 'odt'];
+            const pdfTypes = ['pdf'];
+            const excelTypes = ['xls', 'xlsx', 'csv'];
+            const powerpointTypes = ['ppt', 'pptx'];
+            const videoTypes = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
+            const audioTypes = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma'];
+            const archiveTypes = ['zip', 'rar', '7z', 'tar', 'gz'];
+            const codeTypes = ['js', 'html', 'css', 'json', 'xml', 'py', 'java', 'cpp', 'c'];
+            const textTypes = ['txt', 'md'];
+
+            if (imageTypes.includes(extension)) return 'image';
+            if (documentTypes.includes(extension)) return 'document';
+            if (pdfTypes.includes(extension)) return 'pdf';
+            if (excelTypes.includes(extension)) return 'excel';
+            if (powerpointTypes.includes(extension)) return 'powerpoint';
+            if (videoTypes.includes(extension)) return 'video';
+            if (audioTypes.includes(extension)) return 'audio';
+            if (archiveTypes.includes(extension)) return 'archive';
+            if (codeTypes.includes(extension)) return 'code';
+            if (textTypes.includes(extension)) return 'text';
+            
+            return 'default';
+        }
+
+        // 根据文件扩展名获取图标
+        function getFileIcon(extension) {
+            const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'];
+            const documentTypes = ['doc', 'docx', 'rtf', 'odt'];
+            const pdfTypes = ['pdf'];
+            const excelTypes = ['xls', 'xlsx', 'csv'];
+            const powerpointTypes = ['ppt', 'pptx'];
+            const videoTypes = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
+            const audioTypes = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma'];
+            const archiveTypes = ['zip', 'rar', '7z', 'tar', 'gz'];
+            const codeTypes = ['js', 'html', 'css', 'json', 'xml', 'py', 'java', 'cpp', 'c'];
+            const textTypes = ['txt', 'md'];
+
+            if (imageTypes.includes(extension)) return 'fa-file-image';
+            if (documentTypes.includes(extension)) return 'fa-file-word';
+            if (pdfTypes.includes(extension)) return 'fa-file-pdf';
+            if (excelTypes.includes(extension)) return 'fa-file-excel';
+            if (powerpointTypes.includes(extension)) return 'fa-file-powerpoint';
+            if (videoTypes.includes(extension)) return 'fa-file-video';
+            if (audioTypes.includes(extension)) return 'fa-file-audio';
+            if (archiveTypes.includes(extension)) return 'fa-file-archive';
+            if (codeTypes.includes(extension)) return 'fa-file-code';
+            if (textTypes.includes(extension)) return 'fa-file-alt';
+            
+            return 'fa-file';
+        }
+
+        // 文件预览功能
+        async function previewFile(filename, filePath, extension) {
+            currentPreviewFile = { filename, filePath, extension };
+            
+            const modal = document.getElementById('previewModal');
+            const titleElement = document.getElementById('previewModalTitle');
+            const contentElement = document.getElementById('previewContent');
+            
+            titleElement.textContent = `预览 - ${filename}`;
+            
+            // 根据文件类型显示不同的预览内容
+            if (isImageFile(extension)) {
+                await showImagePreview(filename, filePath, contentElement);
+            } else if (isVideoFile(extension)) {
+                await showVideoPreview(filename, filePath, contentElement);
+            } else if (isAudioFile(extension)) {
+                await showAudioPreview(filename, filePath, contentElement);
+            } else if (isTextFile(extension)) {
+                await showTextPreview(filename, filePath, contentElement);
+            } else if (isPdfFile(extension)) {
+                await showPdfPreview(filename, filePath, contentElement);
+            } else {
+                showUnsupportedPreview(filename, extension, contentElement);
+            }
+            
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        // 判断文件类型的辅助函数
+        function isImageFile(extension) {
+            return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension);
+        }
+
+        function isVideoFile(extension) {
+            return ['mp4', 'webm', 'ogg'].includes(extension);
+        }
+
+        function isAudioFile(extension) {
+            return ['mp3', 'wav', 'ogg'].includes(extension);
+        }
+
+        function isTextFile(extension) {
+            return ['txt', 'md', 'js', 'html', 'css', 'json', 'xml'].includes(extension);
+        }
+
+        function isPdfFile(extension) {
+            return extension === 'pdf';
+        }
+
+        // 图片预览
+        async function showImagePreview(filename, filePath, contentElement) {
+            try {
+                const imageUrl = await getFileUrl(filename);
+                
+                // 通过 fetch 获取图片数据并转换为 blob URL
+                const token = Utils.getToken();
+                const response = await fetch(imageUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('图片加载失败');
+                }
+                
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                
+                contentElement.innerHTML = `<img src="${blobUrl}" alt="${filename}" />`;
+                
+                // 当模态框关闭时清理 blob URL
+                const currentModal = document.getElementById('previewModal');
+                const originalClose = currentModal.onclose || (() => {});
+                currentModal.addEventListener('hide', () => {
+                    URL.revokeObjectURL(blobUrl);
+                });
+                
+            } catch (error) {
+                console.error('图片预览错误:', error);
+                contentElement.innerHTML = '<div class="unsupported-preview"><i class="fas fa-exclamation-triangle"></i><p>图片加载失败</p></div>';
+            }
+        }
+
+        // 视频预览
+        async function showVideoPreview(filename, filePath, contentElement) {
+            try {
+                const videoUrl = await getFileUrl(filename);
+                
+                // 通过 fetch 获取视频数据并转换为 blob URL
+                const token = Utils.getToken();
+                const response = await fetch(videoUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('视频加载失败');
+                }
+                
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                
+                contentElement.innerHTML = `
+                    <video controls>
+                        <source src="${blobUrl}" type="video/${getVideoType(filename)}">
+                        您的浏览器不支持视频播放
+                    </video>
+                `;
+                
+                // 保存 blob URL 用于清理
+                window.currentVideoBlob = blobUrl;
+                
+            } catch (error) {
+                console.error('视频预览错误:', error);
+                contentElement.innerHTML = '<div class="unsupported-preview"><i class="fas fa-exclamation-triangle"></i><p>视频加载失败</p></div>';
+            }
+        }
+
+        // 音频预览
+        async function showAudioPreview(filename, filePath, contentElement) {
+            try {
+                const audioUrl = await getFileUrl(filename);
+                
+                // 通过 fetch 获取音频数据并转换为 blob URL
+                const token = Utils.getToken();
+                const response = await fetch(audioUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('音频加载失败');
+                }
+                
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                
+                contentElement.innerHTML = `
+                    <div style="text-align: center; width: 100%;">
+                        <i class="fas fa-music" style="font-size: 40px; color: #667eea; margin-bottom: 15px;"></i>
+                        <h3 style="margin: 0 0 15px 0; color: #333;">${filename}</h3>
+                        <audio controls style="width: 100%;">
+                            <source src="${blobUrl}" type="audio/${getAudioType(filename)}">
+                            您的浏览器不支持音频播放
+                        </audio>
+                    </div>
+                `;
+                
+                // 保存 blob URL 用于清理
+                window.currentAudioBlob = blobUrl;
+                
+            } catch (error) {
+                console.error('音频预览错误:', error);
+                contentElement.innerHTML = '<div class="unsupported-preview"><i class="fas fa-exclamation-triangle"></i><p>音频加载失败</p></div>';
+            }
+        }
+
+        // 文本预览
+        async function showTextPreview(filename, filePath, contentElement) {
+            try {
+                const textContent = await loadTextFile(filename);
+                contentElement.innerHTML = `<div class="text-preview">${textContent}</div>`;
+            } catch (error) {
+                contentElement.innerHTML = '<div class="unsupported-preview"><i class="fas fa-exclamation-triangle"></i><p>文本文件加载失败</p></div>';
+            }
+        }
+
+        // PDF预览
+        async function showPdfPreview(filename, filePath, contentElement) {
+            try {
+                const pdfUrl = await getFileUrl(filename);
+                
+                // 对于PDF，我们无法直接在iframe中使用blob URL，所以提供下载链接
+                contentElement.innerHTML = `
+                    <div style="text-align: center; width: 100%; padding: 10px;">
+                        <i class="fas fa-file-pdf" style="font-size: 48px; color: #dc3545; margin-bottom: 15px;"></i>
+                        <h3 style="margin: 0 0 15px 0; color: #333;">${filename}</h3>
+                        <p style="margin: 0 0 15px 0; color: #666;">PDF文件预览暂不支持</p>
+                        <button class="preview-action-btn download" onclick="downloadPreviewFile()">
+                            <i class="fas fa-download"></i>
+                            <span>下载查看</span>
+                        </button>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('PDF预览错误:', error);
+                contentElement.innerHTML = '<div class="unsupported-preview"><i class="fas fa-exclamation-triangle"></i><p>PDF文件加载失败</p></div>';
+            }
+        }
+
+        // 不支持预览的文件
+        function showUnsupportedPreview(filename, extension, contentElement) {
+            const iconClass = getFileIconClass(extension);
+            const iconName = getFileIcon(extension);
+            contentElement.innerHTML = `
+                <div class="unsupported-preview">
+                    <i class="fas ${iconName}" style="font-size: 48px; color: #ddd; margin-bottom: 12px;"></i>
+                    <h3 style="margin: 0 0 6px 0; color: #333;">${filename}</h3>
+                    <p style="margin: 0; color: #666;">此文件类型不支持预览</p>
+                    <p style="margin: 6px 0 0 0; color: #999; font-size: 14px;">请下载文件后查看</p>
+                </div>
+            `;
+        }
+
+        // 获取文件URL
+        async function getFileUrl(filename) {
+            const token = Utils.getToken();
+            if (!token) {
+                throw new Error('未登录');
+            }
+            
+            const params = new URLSearchParams({
+                storageType: currentStorageType,
+                directory: currentDirectory
+            });
+            
+            const encodedFilename = encodeURIComponent(filename);
+            return `${Utils.BASE_URL}/storage/download/${encodedFilename}?${params}`;
+        }
+
+        // 加载文本文件内容
+        async function loadTextFile(filename) {
+            const url = await getFileUrl(filename);
+            const token = Utils.getToken();
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('无法加载文件');
+            }
+            return await response.text();
+        }
+
+        // 获取视频类型
+        function getVideoType(filename) {
+            const extension = getFileExtension(filename);
+            const videoTypes = {
+                'mp4': 'mp4',
+                'webm': 'webm',
+                'ogg': 'ogg'
+            };
+            return videoTypes[extension] || 'mp4';
+        }
+
+        // 获取音频类型
+        function getAudioType(filename) {
+            const extension = getFileExtension(filename);
+            const audioTypes = {
+                'mp3': 'mpeg',
+                'wav': 'wav',
+                'ogg': 'ogg'
+            };
+            return audioTypes[extension] || 'mpeg';
+        }
+
+        // 关闭预览模态框
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            currentPreviewFile = null;
+            
+            // 清理 blob URLs
+            if (window.currentVideoBlob) {
+                URL.revokeObjectURL(window.currentVideoBlob);
+                window.currentVideoBlob = null;
+            }
+            if (window.currentAudioBlob) {
+                URL.revokeObjectURL(window.currentAudioBlob);
+                window.currentAudioBlob = null;
+            }
+            
+            // 清理预览内容中的所有 blob URLs
+            const contentElement = document.getElementById('previewContent');
+            const imgs = contentElement.querySelectorAll('img');
+            const videos = contentElement.querySelectorAll('video source');
+            const audios = contentElement.querySelectorAll('audio source');
+            
+            imgs.forEach(img => {
+                if (img.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(img.src);
+                }
+            });
+            
+            videos.forEach(source => {
+                if (source.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(source.src);
+                }
+            });
+            
+            audios.forEach(source => {
+                if (source.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(source.src);
+                }
+            });
+        }
+
+        // 下载预览文件
+        function downloadPreviewFile() {
+            if (currentPreviewFile) {
+                downloadFile(currentPreviewFile.filename, currentPreviewFile.filePath);
+            }
+        }
+
+        // 分享文件
+        function shareFile() {
+            if (currentPreviewFile) {
+                const shareUrl = `${window.location.origin}/mobile-box.html?file=${encodeURIComponent(currentPreviewFile.filename)}`;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: currentPreviewFile.filename,
+                        text: `分享文件：${currentPreviewFile.filename}`,
+                        url: shareUrl
+                    }).catch(err => console.log('分享失败:', err));
+                } else {
+                    // 复制链接到剪贴板
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        showAlert('链接已复制到剪贴板', '成功', 'fa-check-circle', '#28a745');
+                    }).catch(() => {
+                        showAlert('复制链接失败', '错误', 'fa-exclamation-circle', '#dc3545');
+                    });
+                }
+            }
+        }
+        
+        // 打开文件夹
+        function openFolder(folderName) {
+            currentDirectory = currentDirectory ? `${currentDirectory}/${folderName}` : folderName;
+            
+            // 重置批量选择模式
+            if (batchMode) {
+                cancelBatchMode();
+            }
+            
+            // 进入文件夹时，关闭所有操作菜单
+            closeAllContextMenus();
+            
+            loadFiles();
+        }
+        
+        // 返回上一级目录
+        function goBack() {
+            if (!currentDirectory) return;
+            const pathParts = currentDirectory.split('/');
+            pathParts.pop();
+            currentDirectory = pathParts.join('/');
+            
+            // 重置批量选择模式
+            if (batchMode) {
+                cancelBatchMode();
+            }
+            
+            // 返回上级目录时，关闭所有操作菜单
+            closeAllContextMenus();
+            
+            loadFiles();
+        }
+        
+        // 更新当前路径显示
+        function updateCurrentPath() {
+            const pathElement = document.getElementById('currentPath');
+            
+            if (currentDirectory) {
+                // 构建带图标的路径HTML
+                const pathParts = currentDirectory.split('/');
+                let pathHtml = '<i class="fas fa-home" style="color: #667eea; margin-right: 6px;"></i>主目录';
+                
+                pathParts.forEach((part, index) => {
+                    pathHtml += ' <i class="fas fa-chevron-right" style="color: #999; font-size: 12px; margin: 0 6px;"></i> ';
+                    pathHtml += `<i class="fas fa-folder" style="color: #ffc107; margin-right: 6px;"></i>${part}`;
+                });
+                
+                pathElement.innerHTML = pathHtml;
+                pathElement.title = '主目录/' + currentDirectory; // 鼠标悬停显示完整路径
+            } else {
+                // 在根目录时显示主目录
+                pathElement.innerHTML = '<i class="fas fa-home" style="color: #667eea; margin-right: 6px;"></i>主目录';
+                pathElement.title = '主目录';
+            }
+            
+            // 更新路径下拉列表
+            updatePathDropdown();
+        }
+
+        // 导航到指定路径
+        function navigateToPath(path) {
+            // 重置批量选择模式
+            if (batchMode) {
+                cancelBatchMode();
+            }
+            
+            currentDirectory = path;
+            loadFiles();
+            hidePathDropdown();
+        }
+        
+        // 切换路径下拉列表显示
+        function togglePathDropdown() {
+            const dropdown = document.getElementById('pathDropdown');
+            if (dropdown.style.display === 'none') {
+                showPathDropdown();
+            } else {
+                hidePathDropdown();
+            }
+        }
+        
+        // 显示路径下拉列表
+        function showPathDropdown() {
+            const dropdown = document.getElementById('pathDropdown');
+            dropdown.style.display = 'block';
+            
+            // 点击页面其他地方关闭下拉列表
+            setTimeout(() => {
+                document.addEventListener('click', hidePathDropdownOnClickOutside);
+            }, 100);
+        }
+        
+        // 隐藏路径下拉列表
+        function hidePathDropdown() {
+            const dropdown = document.getElementById('pathDropdown');
+            dropdown.style.display = 'none';
+            document.removeEventListener('click', hidePathDropdownOnClickOutside);
+        }
+        
+        // 点击外部区域隐藏下拉列表
+        function hidePathDropdownOnClickOutside(event) {
+            const wrapper = document.querySelector('.current-path-wrapper');
+            if (!wrapper.contains(event.target)) {
+                hidePathDropdown();
+            }
+        }
+        
+        // 更新路径下拉列表内容
+        function updatePathDropdown() {
+            const dropdown = document.getElementById('pathDropdown');
+            let html = '';
+            
+            // 添加主目录
+            html += `
+                <div class="path-dropdown-item ${!currentDirectory ? 'active' : ''}" onclick="navigateToPath('')">
+                    <i class="fas fa-home" style="${!currentDirectory ? 'color: #667eea;' : 'color: #667eea; opacity: 0.7;'}"></i>主目录
+                </div>
+            `;
+            
+            if (currentDirectory) {
+                const pathParts = currentDirectory.split('/');
+                let currentPath = '';
+                
+                pathParts.forEach((part, index) => {
+                    currentPath += (index > 0 ? '/' : '') + part;
+                    const isLastItem = index === pathParts.length - 1;
+                    
+                    html += `
+                        <div class="path-dropdown-item ${isLastItem ? 'active' : ''}" onclick="navigateToPath('${currentPath}')">
+                            <i class="fas ${isLastItem ? 'fa-folder-open' : 'fa-folder'}" style="${isLastItem ? 'color: #667eea;' : 'color: #ffc107; opacity: 0.7;'}"></i>
+                            ${part}
+                        </div>
+                    `;
+                });
+            }
+            
+            dropdown.innerHTML = html;
+        }
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+            
+            if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+
+        // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // 显示提示对话框
+        function showAlert(message, title = '提示', icon = 'fa-info-circle', iconColor = '#667eea') {
+            const modal = document.getElementById('alertModal');
+            const titleElement = document.getElementById('alertModalTitle');
+            const messageElement = document.getElementById('alertModalMessage');
+            const iconElement = document.getElementById('alertModalIcon');
+            
+            titleElement.textContent = title;
+            messageElement.textContent = message;
+            iconElement.className = `fas ${icon}`;
+            iconElement.style.color = iconColor;
+            
+            // 设置更高的z-index确保提示框显示在其他模态框之上
+            modal.style.zIndex = '10010';
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        // 关闭提示对话框
+        function closeAlertDialog() {
+            const modal = document.getElementById('alertModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            // 重置z-index为默认值
+            modal.style.zIndex = '';
+        }
+
+        // 切换上下文菜单显示
+        function toggleContextMenu(filename, type, event) {
+            // 关闭所有其他菜单
+            closeAllContextMenus();
+            
+            const menu = document.getElementById(`menu-${filename}`);
+            if (menu) {
+                // 阻止事件冒泡，避免立即关闭菜单
+                event.stopPropagation();
+                
+                // 获取点击位置和按钮元素
+                const clickX = event.clientX;
+                const clickY = event.clientY;
+                const buttonElement = event.currentTarget;
+                
+                // 屏幕边界
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                
+                // 获取菜单实际尺寸（先临时显示）
+                menu.classList.add('show');
+                menu.style.opacity = '0';
+                menu.style.pointerEvents = 'none';
+                
+                // 获取菜单实际尺寸
+                const menuRect = menu.getBoundingClientRect();
+                const menuWidth = menuRect.width || 180;
+                const menuHeight = menuRect.height || 200;
+                
+                // 计算菜单位置
+                let left, top;
+                
+                // 检查是否为平铺模式
+                const isTileMode = document.getElementById('filesList').classList.contains('tile-mode');
+                
+                if (isTileMode) {
+                    // 平铺模式：基于按钮位置定位，而不是鼠标点击位置
+                    const buttonRect = buttonElement.getBoundingClientRect();
+                    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+                    const buttonBottom = buttonRect.bottom;
+                    
+                    // 水平定位：居中于按钮
+                    left = buttonCenterX - menuWidth / 2;
+                    
+                    // 垂直定位：显示在按钮下方
+                    top = buttonBottom + 8; // 8px间距
+                    
+                    // 边界调整 - 水平
+                    if (left < 20) {
+                        left = 20;
+                    } else if (left + menuWidth > screenWidth - 20) {
+                        left = screenWidth - menuWidth - 20;
+                    }
+                    
+                    // 边界调整 - 垂直
+                    if (top + menuHeight > screenHeight - 20) {
+                        // 下方空间不足，显示在按钮上方
+                        top = buttonRect.top - menuHeight - 8;
+                        // 如果上方空间也不足，选择空间更大的方向
+                        if (top < 20) {
+                            const spaceBelow = screenHeight - buttonBottom - 20;
+                            const spaceAbove = buttonRect.top - 20;
+                            if (spaceBelow > spaceAbove) {
+                                top = screenHeight - menuHeight - 20;
+                            } else {
+                                top = 20;
+                            }
+                        }
+                    }
+                } else {
+                    // 列表模式：基于鼠标点击位置定位（保持原有逻辑）
+                    // 水平定位：默认放在点击位置右侧
+                    if (clickX + menuWidth <= screenWidth - 20) {
+                        left = clickX + 10; // 向右偏移10px，避免与按钮重叠
+                    } else if (clickX - menuWidth >= 20) {
+                        left = clickX - menuWidth - 10; // 向左偏移10px，避免与按钮重叠
+                    } else {
+                        // 空间不足，贴右边显示
+                        left = screenWidth - menuWidth - 20;
+                    }
+                    
+                    // 垂直定位：优先放在点击位置下方（更符合用户习惯）
+                    if (clickY + menuHeight <= screenHeight - 20) {
+                        top = clickY + 10; // 向下偏移10px，避免与按钮重叠
+                    } else if (clickY - menuHeight >= 20) {
+                        top = clickY - menuHeight - 10; // 向上偏移10px，避免与按钮重叠
+                    } else {
+                        // 上下空间都不足，选择空间更大的方向
+                        const spaceBelow = screenHeight - clickY - 20;
+                        const spaceAbove = clickY - 20;
+                        
+                        if (spaceBelow > spaceAbove) {
+                            // 下方空间更大，放在下方
+                            top = screenHeight - menuHeight - 20;
+                        } else {
+                            // 上方空间更大，放在上方
+                            top = 20;
+                        }
+                    }
+                }
+                
+                // 最终边界检查，确保菜单完全在屏幕内
+                left = Math.max(20, Math.min(left, screenWidth - menuWidth - 20));
+                top = Math.max(20, Math.min(top, screenHeight - menuHeight - 20));
+                
+                // 设置菜单位置
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+                
+                // 恢复可见性
+                menu.style.opacity = '';
+                menu.style.pointerEvents = '';
+                
+                // 添加全局点击监听器来关闭菜单
+                setTimeout(() => {
+                    document.addEventListener('click', hideContextMenuOnClickOutside);
+                }, 0);
+            }
+        }
+
+        // 关闭所有上下文菜单
+        function closeAllContextMenus() {
+            const menus = document.querySelectorAll('.context-menu');
+            menus.forEach(menu => {
+                menu.classList.remove('show');
+                // 清理位置样式
+                menu.style.left = '';
+                menu.style.top = '';
+            });
+            document.removeEventListener('click', hideContextMenuOnClickOutside);
+        }
+
+        // 点击外部区域隐藏菜单
+        function hideContextMenuOnClickOutside(event) {
+            const isInsideMenu = event.target.closest('.context-menu');
+            const isMenuButton = event.target.closest('.file-action-btn.more');
+            
+            if (!isInsideMenu && !isMenuButton) {
+                closeAllContextMenus();
+            }
+        }
+
+ 
+        // 显示移动对话框
+        function showMoveDialog(filename, itemType = 'file') {
+            moveTargetFile = filename;
+            moveTargetItemType = itemType; // 存储项目类型（文件或文件夹）
+            loadFolderSelector('folderSelector');
+            
+            // 添加存储类型切换事件监听器
+            const storageTypeRadios = document.querySelectorAll('input[name="targetStorageType"]');
+            storageTypeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    loadFolderSelector('folderSelector');
+                });
+            });
+            
+            closeAllContextMenus();
+            
+            const modal = document.getElementById('moveModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        // 显示复制对话框
+        function showCopyDialog(filename, itemType = 'file') {
+            copyTargetFile = filename;
+            copyTargetItemType = itemType; // 存储项目类型（文件或文件夹）
+            loadFolderSelector('copyFolderSelector');
+            
+            // 添加存储类型切换事件监听器
+            const storageTypeRadios = document.querySelectorAll('input[name="targetStorageTypeCopy"]');
+            storageTypeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    loadFolderSelector('copyFolderSelector');
+                });
+            });
+            
+            closeAllContextMenus();
+            
+            const modal = document.getElementById('copyModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        // 分享文件
+        function shareFile(filename) {
+            const shareUrl = `${window.location.origin}/mobile-box.html?file=${encodeURIComponent(filename)}&storageType=${encodeURIComponent(currentStorageType)}&dir=${encodeURIComponent(currentDirectory || '')}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: filename,
+                    text: `分享文件：${filename}`,
+                    url: shareUrl
+                }).catch(err => console.log('分享失败:', err));
+            } else {
+                // 复制链接到剪贴板
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showAlert('链接已复制到剪贴板', '成功', 'fa-check-circle', '#28a745');
+                }).catch(() => {
+                    showAlert('复制链接失败', '错误', 'fa-exclamation-circle', '#dc3545');
+                });
+            }
+            closeAllContextMenus();
+        }
+
+        // 显示重命名对话框
+        function showRenameDialog(filename, itemType = 'file') {
+            renameTargetFile = filename;
+            renameTargetItemType = itemType;
+            
+            const modal = document.getElementById('renameModal');
+            const renameInput = document.getElementById('renameInput');
+            const renameHint = document.getElementById('renameHint');
+            
+            // 设置输入框的初始值
+            renameInput.value = filename;
+            
+            // 设置提示文本
+            if (itemType === 'folder') {
+                renameHint.textContent = '文件夹名称不能包含特殊字符';
+            } else {
+                const extension = filename.includes('.') ? filename.substring(filename.lastIndexOf('.')) : '';
+                if (extension) {
+                    const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+                    renameHint.textContent = `文件扩展名是 ${extension}`;
+                    // 选中文件名部分（不包含扩展名）
+                    renameInput.setSelectionRange(0, nameWithoutExt.length);
+                } else {
+                    renameHint.textContent = '输入新的文件名';
+                }
+            }
+            
+            closeAllContextMenus();
+            
+            // 显示模态框
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            
+            // 聚焦到输入框
+            setTimeout(() => {
+                renameInput.focus();
+                renameInput.select();
+            }, 200);
+            
+            // 添加回车键提交事件
+            renameInput.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    confirmRename();
+                }
+            };
+        }
+
+        // 确认重命名
+        async function confirmRename() {
+            const newName = document.getElementById('renameInput').value.trim();
+            
+            if (!newName) {
+                showAlert('请输入新的名称', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 保存当前变量值，因为closeRenameModal会清空它们
+            const oldName = renameTargetFile;
+            const itemType = renameTargetItemType;
+            
+            if (newName === oldName) {
+                showAlert('新名称与原名称相同', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 验证名称
+            if (!validateName(newName, itemType)) {
+                return;
+            }
+            
+            try {
+                const response = await Utils.post('/storage/rename', {
+                    oldName: oldName,
+                    newName: newName,
+                    storageType: currentStorageType,
+                    directory: currentDirectory,
+                    itemType: itemType
+                });
+                
+                if (response.success) {
+                    // 关闭模态框
+                    closeRenameModal();
+                    await loadFiles();
+                    const itemText = itemType === 'folder' ? '文件夹' : '文件';
+                    showAlert(`${itemText}重命名成功`, '成功', 'fa-check-circle', '#28a745');
+                } else {
+                    const itemText = itemType === 'folder' ? '文件夹' : '文件';
+                    showAlert(`${itemText}重命名失败: ` + (response.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            } catch (error) {
+                if (error.name === 'FileExistsError' && error.fileExists) {
+                    // 文件已存在，提示用户
+                    const itemText = itemType === 'folder' ? '文件夹' : '文件';
+                    showAlert(`${itemText} "${newName}" 已存在，请选择其他名称`, '错误', 'fa-exclamation-circle', '#dc3545');
+                    // 重新显示重命名对话框
+                    setTimeout(() => {
+                        showRenameDialog(oldName, itemType);
+                    }, 100);
+                } else {
+                    console.error('重命名错误:', error);
+                    const itemText = itemType === 'folder' ? '文件夹' : '文件';
+                    showAlert(`${itemText}重命名失败: ` + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            }
+        }
+
+        // 关闭重命名模态框
+        function closeRenameModal() {
+            const modal = document.getElementById('renameModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            
+            // 清理变量
+            renameTargetFile = '';
+            renameTargetItemType = 'file';
+            
+            // 清理输入框事件和重置表单
+            const renameInput = document.getElementById('renameInput');
+            renameInput.onkeypress = null;
+            renameInput.value = '';
+            document.getElementById('renameHint').textContent = '';
+        }
+
+        // 验证名称
+        function validateName(name, itemType) {
+            // 检查是否为空
+            if (!name || name.trim() === '') {
+                showAlert('名称不能为空', '提示', 'fa-exclamation-circle', '#dc3545');
+                return false;
+            }
+            
+            // 检查长度
+            if (name.length > 255) {
+                showAlert('名称长度不能超过255个字符', '提示', 'fa-exclamation-circle', '#dc3545');
+                return false;
+            }
+            
+            // 检查是否包含非法字符
+            const invalidChars = /[<>:"/\\|?*\x00-\x1f]/;
+            if (invalidChars.test(name)) {
+                showAlert('名称不能包含以下字符: < > : " / \\ | ? *', '提示', 'fa-exclamation-circle', '#dc3545');
+                return false;
+            }
+            
+            // 检查是否以点开头或结尾
+            if (name.startsWith('.') || name.endsWith('.')) {
+                showAlert('名称不能以点开头或结尾', '提示', 'fa-exclamation-circle', '#dc3545');
+                return false;
+            }
+            
+            // 检查是否包含保留名称（Windows系统）
+            const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
+            if (reservedNames.includes(name.toUpperCase())) {
+                showAlert('不能使用保留名称', '提示', 'fa-exclamation-circle', '#dc3545');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 移动和复制相关变量
+        let moveTargetFile = '';
+        let copyTargetFile = '';
+        let moveTargetItemType = 'file'; // 移动目标项目类型
+        let copyTargetItemType = 'file'; // 复制目标项目类型
+        let fileConflictCallback = null;
+        
+        // 重命名相关变量
+        let renameTargetFile = '';
+        let renameTargetItemType = 'file'; // 重命名目标项目类型
+
+
+
+        // 加载文件夹选择器
+        async function loadFolderSelector(selectorId) {
+            try {
+                // 获取目标存储类型
+                let targetStorageType;
+                if (selectorId === 'folderSelector') {
+                    // 移动对话框
+                    const selectedRadio = document.querySelector('input[name="targetStorageType"]:checked');
+                    targetStorageType = selectedRadio ? selectedRadio.value : currentStorageType;
+                } else if (selectorId === 'copyFolderSelector') {
+                    // 复制对话框
+                    const selectedRadio = document.querySelector('input[name="targetStorageTypeCopy"]:checked');
+                    targetStorageType = selectedRadio ? selectedRadio.value : currentStorageType;
+                } else {
+                    targetStorageType = currentStorageType;
+                }
+                
+                const response = await Utils.get(`/storage/folders?storageType=${targetStorageType}`);
+                const folders = response.folders || [];
+                const selector = document.getElementById(selectorId);
+                
+                // 将线性文件夹列表转换为树状结构
+                const folderTree = buildFolderTree(folders);
+                
+                let html = `
+                    <div class="folder-item ${!currentDirectory ? 'selected' : ''}" onclick="selectFolder(this, '')">
+                        <i class="fas fa-folder" style="color: #ffc107;"></i>
+                        <span>主目录</span>
+                    </div>
+                `;
+                
+                // 递归生成树状HTML
+                html += generateTreeHTML(folderTree);
+                
+                selector.innerHTML = html;
+                
+                // 默认选中第一个
+                const firstItem = selector.querySelector('.folder-item');
+                if (firstItem) {
+                    firstItem.classList.add('selected');
+                }
+            } catch (error) {
+                console.error('加载文件夹列表失败:', error);
+                showAlert('加载文件夹列表失败', '错误', 'fa-exclamation-circle', '#dc3545');
+            }
+        }
+        
+        // 将线性文件夹列表转换为树状结构
+        function buildFolderTree(folders) {
+            const tree = [];
+            const folderMap = new Map();
+            
+            // 首先创建所有文件夹节点并存储在map中
+            folders.forEach(folder => {
+                folderMap.set(folder.relativePath, {
+                    ...folder,
+                    children: []
+                });
+            });
+            
+            // 构建树状结构
+            folders.forEach(folder => {
+                const currentFolder = folderMap.get(folder.relativePath);
+                
+                if (folder.level === 0) {
+                    // 顶级文件夹直接添加到树中
+                    tree.push(currentFolder);
+                } else {
+                    // 查找父文件夹
+                    const parentPath = getParentPath(folder.relativePath);
+                    const parentFolder = folderMap.get(parentPath);
+                    
+                    if (parentFolder) {
+                        parentFolder.children.push(currentFolder);
+                    } else {
+                        // 如果找不到父文件夹，作为顶级文件夹处理
+                        tree.push(currentFolder);
+                    }
+                }
+            });
+            
+            return tree;
+        }
+        
+        // 获取父文件夹路径
+        function getParentPath(relativePath) {
+            const parts = relativePath.split('/').filter(part => part);
+            parts.pop();
+            return parts.join('/');
+        }
+        
+        // 递归生成树状HTML
+        function generateTreeHTML(folderTree) {
+            let html = '';
+            
+            folderTree.forEach(folder => {
+                const hasChildren = folder.children && folder.children.length > 0;
+                html += `
+                    <div class="tree-node">
+                        <div class="folder-item" onclick="selectFolder(this, '${folder.relativePath}')">
+                            ${hasChildren ? 
+                                '<i class="fas fa-chevron-right folder-toggle" onclick="toggleFolder(this, event)"></i>' : 
+                                '<i class="folder-toggle-placeholder"></i>'}
+                            <i class="fas fa-folder" style="color: #ffc107;"></i>
+                            <span>${folder.filename}</span>
+                        </div>
+                        ${hasChildren ? 
+                            `<div class="folder-children" style="display: none;">${generateTreeHTML(folder.children)}</div>` : 
+                            ''}
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+        
+        // 展开/折叠文件夹
+        function toggleFolder(toggleElement, event) {
+            event.stopPropagation(); // 防止触发selectFolder
+            
+            const folderItem = toggleElement.parentElement;
+            const childrenContainer = folderItem.nextElementSibling;
+            const treeNode = folderItem.parentElement;
+            
+            if (childrenContainer) {
+                if (childrenContainer.style.display === 'none') {
+                    // 展开
+                    childrenContainer.style.display = 'block';
+                    toggleElement.classList.remove('fa-chevron-right');
+                    toggleElement.classList.add('fa-chevron-down');
+                } else {
+                    // 折叠
+                    childrenContainer.style.display = 'none';
+                    toggleElement.classList.remove('fa-chevron-down');
+                    toggleElement.classList.add('fa-chevron-right');
+                }
+            }
+        }
+
+        // 选择文件夹
+        function selectFolder(element, folderPath) {
+            // 找到最外层的选择器容器
+            const selector = element.closest('.folder-selector');
+            
+            // 移除所有选中状态
+            selector.querySelectorAll('.folder-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 设置当前选中
+            element.classList.add('selected');
+            element.dataset.targetPath = folderPath;
+        }
+
+        // 确认移动
+        async function confirmMove() {
+            const selector = document.getElementById('folderSelector');
+            const selectedItem = selector.querySelector('.folder-item.selected');
+            
+            if (!selectedItem) {
+                showAlert('请选择目标文件夹', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 获取目标存储类型
+            const targetStorageRadio = document.querySelector('input[name="targetStorageType"]:checked');
+            const targetStorageType = targetStorageRadio ? targetStorageRadio.value : currentStorageType;
+            
+            const targetPath = selectedItem.dataset.targetPath || '';
+            
+            // 检查是否移动到当前目录和存储类型
+            if (targetPath === currentDirectory && targetStorageType === currentStorageType) {
+                showAlert('不能移动到当前目录\n如需创建副本，请使用复制功能', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 如果是批量模式，执行批量移动
+            if (batchMode) {
+                await batchMove();
+                return;
+            }
+            
+            // 保存文件名，因为关闭模态框会清空变量
+            const filenameToMove = moveTargetFile;
+            
+            // 立即关闭模态框，提供更好的用户体验
+            closeMoveModal();
+            
+            try {
+                const response = await Utils.post('/storage/move', {
+                    filename: filenameToMove,
+                    sourcePath: currentDirectory,
+                    targetPath: targetPath,
+                    sourceStorageType: currentStorageType,
+                    targetStorageType: targetStorageType,
+                    itemType: moveTargetItemType
+                });
+                
+                if (response.success) {
+                    await loadFiles();
+                    const location = targetStorageType === currentStorageType ? '' : `到${targetStorageType === 'public' ? '公共' : '私人'}网盘`;
+                    const itemText = moveTargetItemType === 'folder' ? '文件夹' : '文件';
+                    showAlert(response.message || `${itemText}移动${location}成功`, '成功', 'fa-check-circle', '#28a745');
+                } else {
+                    showAlert(`${moveTargetItemType === 'folder' ? '文件夹' : '文件'}移动失败: ` + (response.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            } catch (error) {
+                if (error.name === 'FileExistsError' && error.fileExists) {
+                    // 文件已存在，提供三个选项：覆盖、创建副本、取消
+                    showFileConflictDialog(
+                        filenameToMove,
+                        'move',
+                        targetPath,
+                        async (action) => {
+                            if (action === 'cancel') return;
+                            
+                            try {
+                                const moveResponse = await Utils.post('/storage/move', {
+                                    filename: filenameToMove,
+                                    sourcePath: currentDirectory,
+                                    targetPath: targetPath,
+                                    sourceStorageType: currentStorageType,
+                                    targetStorageType: targetStorageType,
+                                    overwrite: action === 'overwrite',
+                                    createCopy: action === 'copy',
+                                    itemType: moveTargetItemType
+                                });
+                                
+                                if (moveResponse.success) {
+                                    await loadFiles();
+                                    const location = targetStorageType === currentStorageType ? '' : `到${targetStorageType === 'public' ? '公共' : '私人'}网盘`;
+                                    const actionText = action === 'overwrite' ? '移动并覆盖' : '移动并创建副本';
+                                    const itemText = moveTargetItemType === 'folder' ? '文件夹' : '文件';
+                                    showAlert(moveResponse.message || `${itemText}${actionText}${location}成功`, '成功', 'fa-check-circle', '#28a745');
+                                } else {
+                                    showAlert(`${moveTargetItemType === 'folder' ? '文件夹' : '文件'}移动失败: ` + (moveResponse.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                                }
+                            } catch (moveError) {
+                                console.error('移动错误:', moveError);
+                                showAlert('文件移动失败: ' + moveError.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                            }
+                        }
+                    );
+                } else {
+                    console.error('移动文件错误:', error);
+                    showAlert('文件移动失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            }
+        }
+
+        // 确认复制
+        async function confirmCopy() {
+            const selector = document.getElementById('copyFolderSelector');
+            const selectedItem = selector.querySelector('.folder-item.selected');
+            
+            if (!selectedItem) {
+                showAlert('请选择目标文件夹', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 获取目标存储类型
+            const targetStorageRadio = document.querySelector('input[name="targetStorageTypeCopy"]:checked');
+            const targetStorageType = targetStorageRadio ? targetStorageRadio.value : currentStorageType;
+            
+            const targetPath = selectedItem.dataset.targetPath || '';
+            
+            // 如果是批量模式，执行批量复制
+            if (batchMode) {
+                await batchCopy();
+                return;
+            }
+            
+            // 如果复制到当前目录和存储类型，直接创建副本
+            const isSameLocation = targetPath === currentDirectory && targetStorageType === currentStorageType;
+            
+            // 保存文件名，因为关闭模态框会清空变量
+            const filenameToCopy = copyTargetFile;
+            
+            // 立即关闭模态框，提供更好的用户体验
+            closeCopyModal();
+            
+            try {
+                const response = await Utils.post('/storage/copy', {
+                    filename: filenameToCopy,
+                    sourcePath: currentDirectory,
+                    targetPath: targetPath,
+                    sourceStorageType: currentStorageType,
+                    targetStorageType: targetStorageType,
+                    createCopy: isSameLocation, // 如果是同位置复制，自动创建副本
+                    itemType: copyTargetItemType
+                });
+                
+                if (response.success) {
+                    await loadFiles();
+                    const location = targetStorageType === currentStorageType ? '' : `到${targetStorageType === 'public' ? '公共' : '私人'}网盘`;
+                    const itemText = copyTargetItemType === 'folder' ? '文件夹' : '文件';
+                    const message = isSameLocation ? `${itemText}副本创建成功` : (response.message || `${itemText}复制${location}成功`);
+                    showAlert(message, '成功', 'fa-check-circle', '#28a745');
+                } else {
+                    showAlert(`${copyTargetItemType === 'folder' ? '文件夹' : '文件'}复制失败: ` + (response.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            } catch (error) {
+                if (error.name === 'FileExistsError' && error.fileExists) {
+                    // 文件已存在，提供三个选项：覆盖、创建副本、取消
+                    showFileConflictDialog(
+                        filenameToCopy,
+                        'copy',
+                        targetPath,
+                        async (action) => {
+                            if (action === 'cancel') return;
+                            
+                            try {
+                                const copyResponse = await Utils.post('/storage/copy', {
+                                    filename: filenameToCopy,
+                                    sourcePath: currentDirectory,
+                                    targetPath: targetPath,
+                                    sourceStorageType: currentStorageType,
+                                    targetStorageType: targetStorageType,
+                                    overwrite: action === 'overwrite',
+                                    createCopy: action === 'copy',
+                                    itemType: copyTargetItemType
+                                });
+                                
+                                if (copyResponse.success) {
+                                    await loadFiles();
+                                    const location = targetStorageType === currentStorageType ? '' : `到${targetStorageType === 'public' ? '公共' : '私人'}网盘`;
+                                    const actionText = action === 'overwrite' ? '复制并覆盖' : '复制并创建副本';
+                                    const itemText = copyTargetItemType === 'folder' ? '文件夹' : '文件';
+                                    showAlert(copyResponse.message || `${itemText}${actionText}${location}成功`, '成功', 'fa-check-circle', '#28a745');
+                                } else {
+                                    showAlert(`${copyTargetItemType === 'folder' ? '文件夹' : '文件'}复制失败: ` + (copyResponse.error || '未知错误'), '错误', 'fa-exclamation-circle', '#dc3545');
+                                }
+                            } catch (copyError) {
+                                console.error('复制错误:', copyError);
+                                showAlert('文件复制失败: ' + copyError.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                            }
+                        }
+                    );
+                } else {
+                    console.error('复制文件错误:', error);
+                    showAlert('文件复制失败: ' + error.message, '错误', 'fa-exclamation-circle', '#dc3545');
+                }
+            }
+        }
+
+        // 关闭移动模态框
+        function closeMoveModal() {
+            const modal = document.getElementById('moveModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            moveTargetFile = '';
+            moveTargetItemType = 'file';
+        }
+
+        // 关闭复制模态框
+        function closeCopyModal() {
+            const modal = document.getElementById('copyModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            copyTargetFile = '';
+            copyTargetItemType = 'file';
+        }
+
+        // 显示确认对话框
+        function showConfirm(message, title = '确认操作', callback = null, icon = 'fa-question-circle', iconColor = '#ffc107') {
+            const modal = document.getElementById('confirmModal');
+            const titleElement = document.getElementById('confirmModalTitle');
+            const messageElement = document.getElementById('confirmModalMessage');
+            const iconElement = document.getElementById('confirmModalIcon');
+            
+            titleElement.textContent = title;
+            messageElement.textContent = message;
+            iconElement.className = `fas ${icon}`;
+            iconElement.style.color = iconColor;
+            
+            confirmCallback = callback;
+            // 设置更高的z-index确保确认框显示在其他模态框之上
+            modal.style.zIndex = '10010';
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        // 关闭确认对话框
+        function closeConfirmDialog(result) {
+            const modal = document.getElementById('confirmModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            // 重置z-index为默认值
+            modal.style.zIndex = '';
+            
+            if (confirmCallback) {
+                confirmCallback(result);
+                confirmCallback = null;
+            }
+        }
+
+        // 批量操作相关函数
+        
+        // 切换批量选择模式
+        function toggleBatchMode() {
+            batchMode = !batchMode;
+            const batchActions = document.getElementById('batchActions');
+            const batchModeBtn = document.getElementById('batchModeBtn');
+            
+            if (batchMode) {
+                // 进入批量模式
+                batchActions.style.display = 'flex';
+                batchModeBtn.classList.add('active');
+                
+                // 重置全选按钮状态
+                const selectAllBtn = document.getElementById('selectAllBtn');
+                selectAllBtn.classList.remove('active');
+                selectAllBtn.title = '全选';
+                
+                // 为文件项添加批量模式样式，这会通过CSS自动显示复选框
+                document.querySelectorAll('.file-item').forEach(item => {
+                    item.classList.add('batch-mode');
+                });
+                
+                // 添加一个简短的提示
+                showBatchModeTip();
+            } else {
+                // 退出批量模式
+                cancelBatchMode();
+            }
+            
+            // 隐藏工具栏
+            const toolbar = document.getElementById('headerActions');
+            const floatingBtn = document.getElementById('floatingActionBtn');
+            toolbar.style.display = 'none';
+            toolbar.classList.remove('visible');
+            floatingBtn.classList.remove('active');
+        }
+        
+        // 显示批量模式提示
+        function showBatchModeTip() {
+            const tip = document.createElement('div');
+            tip.className = 'batch-mode-tip';
+            tip.innerHTML = '<i class="fas fa-info-circle"></i> 点击复选框选择文件';
+            tip.style.cssText = `
+                position: fixed;
+                top: 120px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 13px;
+                z-index: 1001;
+                animation: fadeInOut 3s ease;
+            `;
+            
+            document.body.appendChild(tip);
+            
+            // 3秒后自动移除提示
+            setTimeout(() => {
+                if (tip.parentNode) {
+                    tip.parentNode.removeChild(tip);
+                }
+            }, 3000);
+        }
+        
+        // 取消批量模式
+        function cancelBatchMode() {
+            batchMode = false;
+            selectedItems.clear();
+            
+            const batchActions = document.getElementById('batchActions');
+            const batchModeBtn = document.getElementById('batchModeBtn');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            
+            batchActions.style.display = 'none';
+            batchModeBtn.classList.remove('active');
+            
+            // 重置全选按钮状态
+            selectAllBtn.classList.remove('active');
+            selectAllBtn.title = '全选';
+            
+            // 重置所有复选框状态
+            document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+                checkbox.innerHTML = '<i class="far fa-square"></i>';
+                checkbox.classList.remove('checked');
+            });
+            
+            // 移除文件项的批量模式样式，这会通过CSS自动隐藏复选框
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('batch-mode');
+            });
+            
+            // 退出批量模式时，关闭所有操作菜单
+            closeAllContextMenus();
+            
+            // 更新批量操作按钮状态
+            updateBatchActionButtons();
+        }
+        
+        // 切换文件项选择状态
+        function toggleItemSelection(type, filename) {
+            const itemId = `${type}-${filename}`;
+            const checkbox = document.getElementById(`checkbox-${itemId}`);
+            
+            if (selectedItems.has(itemId)) {
+                // 取消选择
+                selectedItems.delete(itemId);
+                checkbox.innerHTML = '<i class="far fa-square"></i>';
+                checkbox.classList.remove('checked');
+            } else {
+                // 选择
+                selectedItems.add(itemId);
+                checkbox.innerHTML = '<i class="fas fa-check-square"></i>';
+                checkbox.classList.add('checked');
+            }
+            
+            // 更新批量操作按钮状态
+            updateBatchActionButtons();
+        }
+        
+        // 更新批量操作按钮状态
+        function updateBatchActionButtons() {
+            const count = selectedItems.size;
+            const selectedCount = document.getElementById('selectedCount');
+            const batchDownloadBtn = document.getElementById('batchDownloadBtn');
+            const batchMoveBtn = document.getElementById('batchMoveBtn');
+            const batchCopyBtn = document.getElementById('batchCopyBtn');
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            
+            selectedCount.textContent = count;
+            
+            // 更新全选按钮状态
+            const allFileItems = document.querySelectorAll('.file-item');
+            const totalItems = allFileItems.length;
+            
+            if (count === 0) {
+                selectAllBtn.classList.remove('active');
+                selectAllBtn.title = '全选';
+            } else if (count === totalItems && totalItems > 0) {
+                selectAllBtn.classList.add('active');
+                selectAllBtn.title = '取消全选';
+            } else {
+                selectAllBtn.classList.remove('active');
+                selectAllBtn.title = '全选';
+            }
+            
+            // 启用/禁用批量操作按钮
+            const hasSelection = count > 0;
+            batchDownloadBtn.disabled = !hasSelection;
+            batchMoveBtn.disabled = !hasSelection;
+            batchCopyBtn.disabled = !hasSelection;
+            batchDeleteBtn.disabled = !hasSelection;
+        }
+        
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const allFileItems = document.querySelectorAll('.file-item');
+            const totalItems = allFileItems.length;
+            const currentSelectedCount = selectedItems.size;
+            
+            if (currentSelectedCount === 0 || currentSelectedCount < totalItems) {
+                // 全选
+                allFileItems.forEach(item => {
+                    const type = item.dataset.type;
+                    const filename = item.dataset.filename;
+                    const itemId = `${type}-${filename}`;
+                    const checkbox = item.querySelector('.file-checkbox');
+                    
+                    // 选中该项
+                    selectedItems.add(itemId);
+                    checkbox.innerHTML = '<i class="fas fa-check-square"></i>';
+                    checkbox.classList.add('checked');
+                });
+                
+                // 更新全选按钮状态
+                const selectAllBtn = document.getElementById('selectAllBtn');
+                selectAllBtn.classList.add('active');
+                selectAllBtn.title = '取消全选';
+                
+                // 显示全选提示
+                showSelectAllTip(true);
+            } else {
+                // 取消全选
+                allFileItems.forEach(item => {
+                    const checkbox = item.querySelector('.file-checkbox');
+                    
+                    // 取消选中该项
+                    checkbox.innerHTML = '<i class="far fa-square"></i>';
+                    checkbox.classList.remove('checked');
+                });
+                
+                selectedItems.clear();
+                
+                // 更新全选按钮状态
+                const selectAllBtn = document.getElementById('selectAllBtn');
+                selectAllBtn.classList.remove('active');
+                selectAllBtn.title = '全选';
+                
+                // 显示取消全选提示
+                showSelectAllTip(false);
+            }
+            
+            // 更新批量操作按钮状态
+            updateBatchActionButtons();
+        }
+        
+        // 显示全选操作提示
+        function showSelectAllTip(isSelectAll) {
+            const tip = document.createElement('div');
+            tip.className = 'batch-mode-tip';
+            tip.innerHTML = isSelectAll ? 
+                '<i class="fas fa-check-double"></i> 已选择所有文件' : 
+                '<i class="fas fa-times-circle"></i> 已取消所有选择';
+            tip.style.cssText = `
+                position: fixed;
+                top: 120px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${isSelectAll ? '#28a745' : '#6c757d'};
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 13px;
+                z-index: 1001;
+                animation: fadeInOut 2s ease;
+            `;
+            
+            document.body.appendChild(tip);
+            
+            // 2秒后自动移除提示
+            setTimeout(() => {
+                if (tip.parentNode) {
+                    tip.parentNode.removeChild(tip);
+                }
+            }, 2000);
+        }
+        
+        // 批量下载
+        async function batchDownload() {
+            if (selectedItems.size === 0) {
+                showAlert('请先选择要下载的文件或文件夹', '提示', 'fa-info-circle', '#667eea');
+                return;
+            }
+            
+            const selectedArray = Array.from(selectedItems);
+            let downloadCount = 0;
+            let downloadErrors = [];
+            
+            showAlert(`开始下载 ${selectedItems.size} 个项目...`, '提示', 'fa-download', '#667eea');
+            
+            for (const itemId of selectedArray) {
+                // 更可靠的分割方法：找到第一个破折号的位置
+                const firstDashIndex = itemId.indexOf('-');
+                const type = itemId.substring(0, firstDashIndex);
+                const filename = itemId.substring(firstDashIndex + 1);
+                
+                try {
+                    if (type === 'file') {
+                        await downloadFile(filename, '');
+                    } else if (type === 'folder') {
+                        await downloadFolder(filename);
+                    }
+                    downloadCount++;
+                } catch (error) {
+                    downloadErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}`);
+                    console.error(`下载 ${type === 'folder' ? '文件夹' : '文件'} ${filename} 失败:`, error);
+                }
+                
+                // 添加延迟避免浏览器阻止多个下载
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            if (downloadErrors.length === 0) {
+                showAlert(`成功下载 ${downloadCount} 个项目`, '成功', 'fa-check-circle', '#28a745');
+            } else {
+                showAlert(`下载完成：成功 ${downloadCount} 个，失败 ${downloadErrors.length} 个`, '提示', 'fa-exclamation-triangle', '#ffc107');
+            }
+            
+            // 退出批量模式
+            cancelBatchMode();
+        }
+        
+        // 显示批量移动对话框
+        function showBatchMoveDialog() {
+            if (selectedItems.size === 0) {
+                showAlert('请先选择要移动的文件', '提示', 'fa-info-circle', '#667eea');
+                return;
+            }
+            
+            loadFolderSelector('folderSelector');
+            
+            // 添加存储类型切换事件监听器
+            const storageTypeRadios = document.querySelectorAll('input[name="targetStorageType"]');
+            storageTypeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    loadFolderSelector('folderSelector');
+                });
+            });
+            
+            const modal = document.getElementById('moveModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+        
+        // 执行批量移动
+        async function batchMove() {
+            if (selectedItems.size === 0) {
+                showAlert('请先选择要移动的文件', '提示', 'fa-info-circle', '#667eea');
+                return;
+            }
+            
+            const selector = document.getElementById('folderSelector');
+            const selectedItem = selector.querySelector('.folder-item.selected');
+            
+            if (!selectedItem) {
+                showAlert('请选择目标文件夹', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 获取目标存储类型
+            const targetStorageRadio = document.querySelector('input[name="targetStorageType"]:checked');
+            const targetStorageType = targetStorageRadio ? targetStorageRadio.value : currentStorageType;
+            
+            const targetPath = selectedItem.dataset.targetPath || '';
+            
+            // 检查是否移动到当前目录和存储类型
+            if (targetPath === currentDirectory && targetStorageType === currentStorageType) {
+                showAlert('不能移动到当前目录\n如需创建副本，请使用复制功能', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 立即关闭模态框
+            closeMoveModal();
+            
+            const selectedArray = Array.from(selectedItems);
+            let moveCount = 0;
+            let moveErrors = [];
+            let conflictResolution = null; // 冲突解决策略：overwrite/copy/cancel
+            
+            const location = targetStorageType === currentStorageType ? '' : `到${targetStorageType === 'public' ? '公共' : '私人'}网盘`;
+            
+            for (const itemId of selectedArray) {
+                // 更可靠的分割方法：找到第一个破折号的位置
+                const firstDashIndex = itemId.indexOf('-');
+                const type = itemId.substring(0, firstDashIndex);
+                const filename = itemId.substring(firstDashIndex + 1);
+                
+                try {
+                    let response;
+                    
+                    // 如果已经有冲突解决策略，直接使用
+                    if (conflictResolution) {
+                        response = await Utils.post('/storage/move', {
+                            filename: filename,
+                            sourcePath: currentDirectory,
+                            targetPath: targetPath,
+                            sourceStorageType: currentStorageType,
+                            targetStorageType: targetStorageType,
+                            itemType: type,
+                            overwrite: conflictResolution === 'overwrite',
+                            createCopy: conflictResolution === 'copy'
+                        });
+                    } else {
+                        // 第一次尝试移动，不指定冲突处理策略
+                        response = await Utils.post('/storage/move', {
+                            filename: filename,
+                            sourcePath: currentDirectory,
+                            targetPath: targetPath,
+                            sourceStorageType: currentStorageType,
+                            targetStorageType: targetStorageType,
+                            itemType: type
+                        });
+                    }
+                    
+                    if (response.success) {
+                        moveCount++;
+                    } else {
+                        moveErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${response.error || '未知错误'}`);
+                    }
+                } catch (error) {
+                    // 检查是否是文件已存在错误
+                    if (error.name === 'FileExistsError' && error.fileExists && !conflictResolution) {
+                        // 请求用户选择冲突处理策略
+                        const action = await new Promise(resolve => {
+                            showFileConflictDialog(filename, 'move', targetPath, resolve, true);
+                        });
+                        
+                        // 如果用户选择取消，终止批量移动
+                        if (action === 'cancel') {
+                            moveErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: 用户取消操作`);
+                            break;
+                        }
+                        
+                        // 保存冲突解决策略，后续文件使用相同策略
+                        conflictResolution = action;
+                        
+                        // 使用用户选择的策略重新尝试移动
+                        try {
+                            const response = await Utils.post('/storage/move', {
+                                filename: filename,
+                                sourcePath: currentDirectory,
+                                targetPath: targetPath,
+                                sourceStorageType: currentStorageType,
+                                targetStorageType: targetStorageType,
+                                itemType: type,
+                                overwrite: action === 'overwrite',
+                                createCopy: action === 'copy'
+                            });
+                            
+                            if (response.success) {
+                                moveCount++;
+                            } else {
+                                moveErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${response.error || '未知错误'}`);
+                            }
+                        } catch (retryError) {
+                            moveErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${retryError.message}`);
+                            console.error(`移动 ${filename} 失败:`, retryError);
+                        }
+                    } else {
+                        moveErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${error.message}`);
+                        console.error(`移动 ${filename} 失败:`, error);
+                    }
+                }
+            }
+            
+            // 刷新文件列表
+            await loadFiles();
+            
+            if (moveErrors.length === 0) {
+                showAlert(`成功移动 ${moveCount} 个项目${location}`, '成功', 'fa-check-circle', '#28a745');
+            } else {
+                showAlert(`移动完成：成功 ${moveCount} 个，失败 ${moveErrors.length} 个${location}`, '提示', 'fa-exclamation-triangle', '#ffc107');
+            }
+            
+            // 退出批量模式
+            cancelBatchMode();
+        }
+        
+        // 显示批量复制对话框
+        function showBatchCopyDialog() {
+            if (selectedItems.size === 0) {
+                showAlert('请先选择要复制的文件', '提示', 'fa-info-circle', '#667eea');
+                return;
+            }
+            
+            loadFolderSelector('copyFolderSelector');
+            
+            // 添加存储类型切换事件监听器
+            const storageTypeRadios = document.querySelectorAll('input[name="targetStorageTypeCopy"]');
+            storageTypeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    loadFolderSelector('copyFolderSelector');
+                });
+            });
+            
+            const modal = document.getElementById('copyModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+        
+        // 执行批量复制
+        async function batchCopy() {
+            if (selectedItems.size === 0) {
+                showAlert('请先选择要复制的文件', '提示', 'fa-info-circle', '#667eea');
+                return;
+            }
+            
+            const selector = document.getElementById('copyFolderSelector');
+            const selectedItem = selector.querySelector('.folder-item.selected');
+            
+            if (!selectedItem) {
+                showAlert('请选择目标文件夹', '提示', 'fa-exclamation-circle', '#dc3545');
+                return;
+            }
+            
+            // 获取目标存储类型
+            const targetStorageRadio = document.querySelector('input[name="targetStorageTypeCopy"]:checked');
+            const targetStorageType = targetStorageRadio ? targetStorageRadio.value : currentStorageType;
+            
+            const targetPath = selectedItem.dataset.targetPath || '';
+            
+            // 立即关闭模态框
+            closeCopyModal();
+            
+            const selectedArray = Array.from(selectedItems);
+            let copyCount = 0;
+            let copyErrors = [];
+            let conflictResolution = null; // 冲突解决策略：overwrite/copy/cancel
+            
+            const location = targetStorageType === currentStorageType ? '' : `到${targetStorageType === 'public' ? '公共' : '私人'}网盘`;
+            
+            for (const itemId of selectedArray) {
+                // 更可靠的分割方法：找到第一个破折号的位置
+                const firstDashIndex = itemId.indexOf('-');
+                const type = itemId.substring(0, firstDashIndex);
+                const filename = itemId.substring(firstDashIndex + 1);
+                
+                try {
+                    let response;
+                    
+                    // 如果已经有冲突解决策略，直接使用
+                    if (conflictResolution) {
+                        response = await Utils.post('/storage/copy', {
+                            filename: filename,
+                            sourcePath: currentDirectory,
+                            targetPath: targetPath,
+                            sourceStorageType: currentStorageType,
+                            targetStorageType: targetStorageType,
+                            itemType: type,
+                            overwrite: conflictResolution === 'overwrite',
+                            createCopy: conflictResolution === 'copy'
+                        });
+                    } else {
+                        // 第一次尝试复制，不指定冲突处理策略
+                        response = await Utils.post('/storage/copy', {
+                            filename: filename,
+                            sourcePath: currentDirectory,
+                            targetPath: targetPath,
+                            sourceStorageType: currentStorageType,
+                            targetStorageType: targetStorageType,
+                            itemType: type
+                        });
+                    }
+                    
+                    if (response.success) {
+                        copyCount++;
+                    } else {
+                        copyErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${response.error || '未知错误'}`);
+                    }
+                } catch (error) {
+                    // 检查是否是文件已存在错误
+                    if (error.name === 'FileExistsError' && error.fileExists && !conflictResolution) {
+                        // 请求用户选择冲突处理策略
+                        const action = await new Promise(resolve => {
+                            showFileConflictDialog(filename, 'copy', targetPath, resolve, true);
+                        });
+                        
+                        // 如果用户选择取消，终止批量复制
+                        if (action === 'cancel') {
+                            copyErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: 用户取消操作`);
+                            break;
+                        }
+                        
+                        // 保存冲突解决策略，后续文件使用相同策略
+                        conflictResolution = action;
+                        
+                        // 使用用户选择的策略重新尝试复制
+                        try {
+                            const response = await Utils.post('/storage/copy', {
+                                filename: filename,
+                                sourcePath: currentDirectory,
+                                targetPath: targetPath,
+                                sourceStorageType: currentStorageType,
+                                targetStorageType: targetStorageType,
+                                itemType: type,
+                                overwrite: action === 'overwrite',
+                                createCopy: action === 'copy'
+                            });
+                            
+                            if (response.success) {
+                                copyCount++;
+                            } else {
+                                copyErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${response.error || '未知错误'}`);
+                            }
+                        } catch (retryError) {
+                            copyErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${retryError.message}`);
+                            console.error(`复制 ${filename} 失败:`, retryError);
+                        }
+                    } else {
+                        copyErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${error.message}`);
+                        console.error(`复制 ${filename} 失败:`, error);
+                    }
+                }
+            }
+            
+            // 刷新文件列表
+            await loadFiles();
+            
+            if (copyErrors.length === 0) {
+                showAlert(`成功复制 ${copyCount} 个项目${location}`, '成功', 'fa-check-circle', '#28a745');
+            } else {
+                showAlert(`复制完成：成功 ${copyCount} 个，失败 ${copyErrors.length} 个${location}`, '提示', 'fa-exclamation-triangle', '#ffc107');
+            }
+            
+            // 退出批量模式
+            cancelBatchMode();
+        }
+        
+        // 批量删除
+        async function batchDelete() {
+            if (selectedItems.size === 0) {
+                showAlert('请先选择要删除的文件', '提示', 'fa-info-circle', '#667eea');
+                return;
+            }
+            
+            const selectedArray = Array.from(selectedItems);
+            const fileNames = selectedArray.map(itemId => {
+                // 更可靠的分割方法：找到第一个破折号的位置
+                const firstDashIndex = itemId.indexOf('-');
+                const type = itemId.substring(0, firstDashIndex);
+                const filename = itemId.substring(firstDashIndex + 1);
+                return filename;
+            });
+            
+            showConfirm(
+                `确定要删除选中的 ${selectedItems.size} 个项目吗？\n\n${fileNames.slice(0, 5).join('\n')}${fileNames.length > 5 ? '\n...' : ''}\n\n此操作不可恢复！`,
+                '确认批量删除',
+                async (result) => {
+                    if (!result) return;
+                    
+                    let deleteCount = 0;
+                    let deleteErrors = [];
+                    
+                    showAlert(`开始删除 ${selectedItems.size} 个项目...`, '提示', 'fa-trash', '#dc3545');
+                    
+                    for (const itemId of selectedArray) {
+                        // 更可靠的分割方法：找到第一个破折号的位置
+                        const firstDashIndex = itemId.indexOf('-');
+                        const type = itemId.substring(0, firstDashIndex);
+                        const filename = itemId.substring(firstDashIndex + 1);
+                        
+                        try {
+                            const params = new URLSearchParams({
+                                storageType: currentStorageType,
+                                directory: currentDirectory
+                            });
+                            
+                            // 对文件名进行URL编码
+                            const encodedFilename = encodeURIComponent(filename);
+                            const endpoint = type === 'folder' ? `/storage/folders/${encodedFilename}` : `/storage/files/${encodedFilename}`;
+                            const response = await Utils.delete(`${endpoint}?${params}`);
+                            
+                            if (response.success) {
+                                deleteCount++;
+                            } else {
+                                deleteErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${response.error || '未知错误'}`);
+                            }
+                        } catch (error) {
+                            deleteErrors.push(`${type === 'folder' ? '文件夹' : '文件'} ${filename}: ${error.message}`);
+                            console.error(`删除 ${filename} 失败:`, error);
+                        }
+                    }
+                    
+                    // 刷新文件列表
+                    await loadFiles();
+                    
+                    if (deleteErrors.length === 0) {
+                        showAlert(`成功删除 ${deleteCount} 个项目`, '成功', 'fa-check-circle', '#28a745');
+                    } else {
+                        showAlert(`删除完成：成功 ${deleteCount} 个，失败 ${deleteErrors.length} 个`, '提示', 'fa-exclamation-triangle', '#ffc107');
+                    }
+                    
+                    // 退出批量模式
+                    cancelBatchMode();
+                },
+                'fa-exclamation-triangle',
+                '#dc3545'
+            );
+        }
+
+        // 显示文件冲突对话框
+        function showFileConflictDialog(filename, operation, targetPath, callback, batch = false) {
+            const modal = document.getElementById('fileConflictModal');
+            const titleElement = document.getElementById('fileConflictModalTitle');
+            const messageElement = document.getElementById('fileConflictModalMessage');
+            const iconElement = document.getElementById('fileConflictModalIcon');
+            
+            const operationText = operation === 'move' ? '移动' : '复制';
+            const itemType = filename.includes('.') ? '文件' : '文件夹';
+            titleElement.textContent = '项目冲突';
+            
+            if (batch) {
+                messageElement.textContent = `目标位置已存在同名${itemType} "${filename}"。\n\n选择的处理方式将应用到所有后续冲突的${itemType}。\n\n请选择处理方式：`;
+            } else {
+                messageElement.textContent = `目标位置已存在同名${itemType} "${filename}"，请选择处理方式：`;
+            }
+            
+            iconElement.className = 'fas fa-exclamation-triangle';
+            iconElement.style.color = '#ffc107';
+            
+            fileConflictCallback = callback;
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        // 处理文件冲突操作
+        function handleFileConflictAction(action) {
+            const modal = document.getElementById('fileConflictModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            
+            if (fileConflictCallback) {
+                fileConflictCallback(action);
+                fileConflictCallback = null;
+            }
+        }
+
+        // 关闭文件冲突对话框
+        function closeFileConflictDialog() {
+            const modal = document.getElementById('fileConflictModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+
+            if (fileConflictCallback) {
+                fileConflictCallback('cancel');
+                fileConflictCallback = null;
+            }
+        }
+
+        // 切换工具栏显示/隐藏
+        function toggleHeaderActions() {
+            const floatingBtn = document.getElementById('floatingActionBtn');
+            const toolbar = document.getElementById('headerActions');
+            
+            // 切换悬浮按钮状态
+            floatingBtn.classList.toggle('active');
+            
+            // 切换工具栏显示
+            if (toolbar.style.display === 'none' || toolbar.style.display === '') {
+                toolbar.style.display = 'flex';
+                toolbar.classList.add('visible');
+            } else {
+                toolbar.style.display = 'none';
+                toolbar.classList.remove('visible');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加点击外部区域隐藏工具栏的功能
+            document.addEventListener('click', function(event) {
+                const floatingBtn = document.getElementById('floatingActionBtn');
+                const toolbar = document.getElementById('headerActions');
+                
+                // 检查点击的目标是否在悬浮按钮或工具栏内部
+                if (!floatingBtn.contains(event.target) && !toolbar.contains(event.target)) {
+                    // 如果点击的是外部区域，隐藏工具栏
+                    toolbar.style.display = 'none';
+                    toolbar.classList.remove('visible');
+                    floatingBtn.classList.remove('active');
+                }
+            });
+        });
+
+    </script>
+    
+    <!-- 底部导航栏 -->
+    <footer class="bottom-nav">
+        <div class="storage-tabs">
+            <button class="storage-tab active" data-type="private" onclick="switchStorage('private')">
+                <i class="fas fa-user"></i>
+                <span>我的网盘</span>
+            </button>
+            <button class="floating-action-btn" id="floatingActionBtn" onclick="toggleHeaderActions()">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="storage-tab" data-type="public" onclick="switchStorage('public')">
+                <i class="fas fa-users"></i>
+                <span>公共网盘</span>
+            </button>
+        </div>
+    </footer>
+</body>
+</html>

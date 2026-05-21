@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>物料管理 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        .status-filter {
+            padding: 15px;
+            background: white;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status-buttons {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            /* 隐藏滚动条 */
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 隐藏WebKit浏览器的滚动条 */
+        .status-buttons::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* 隐藏IE/Edge的滚动条 */
+        .status-buttons {
+            -ms-overflow-style: none;
+        }
+        
+        .status-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            color: #666;
+            white-space: nowrap;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .status-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .material-card {
+            background: white;
+            margin: 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        
+        .material-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .material-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+        
+        .material-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .status-application { background: #ffc107; }
+        .status-approved { background: #17a2b8; }
+        .status-purchasing { background: #667eea; }
+        .status-completed { background: #28a745; }
+        .status-warehouse_out { background: #6c757d; }
+        .status-rejected { background: #dc3545; }
+        .btn-reject { background: #dc3545; color: white; }
+        
+        .material-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        /* 图片预览样式 */
+        .material-images {
+            margin: 10px 0;
+        }
+        
+        .image-preview-container {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 5px 0;
+            max-width: 100%;
+        }
+        
+        .image-preview-item {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+               
+        .btn-approve { background: #28a745; color: white; }
+        .btn-purchasing { background: #667eea; color: white; }
+        .btn-complete { background: #17a2b8; color: white; }
+        .btn-warehouse { background: #6c757d; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
+        .btn-workorder { background: #ffc107; color: white; }
+        
+        .add-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+        }
+        
+        /* 图片查看器使用通用样式 */
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        /* 布局样式 - 固定筛选按钮，只滚动列表 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 50px); /* 减去头部高度 */
+        }
+        
+        .status-filter {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        #materialList {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        /* 响应式多列布局 */
+        @media (min-width: 768px) {
+            #materialList {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
+        }
+
+        /* 状态进度文字样式 */
+        .status-timeline {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .timeline-status {
+            margin: 2px 0;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">物料管理</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item active" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 状态筛选 -->
+        <div class="status-filter">
+            <div class="status-buttons">
+                <button class="status-btn" data-status="all">全部</button>
+                 <button class="status-btn" data-status="exclude_warehouse_out">所有未出库</button>
+                <button class="status-btn" data-status="application">申请中</button>
+                <button class="status-btn" data-status="approved">已同意</button>
+                <button class="status-btn" data-status="purchasing">采购中</button>
+                <button class="status-btn" data-status="completed">已完成</button>
+                <button class="status-btn" data-status="warehouse_out">已出库</button>
+                <button class="status-btn" data-status="rejected">已拒绝</button>              
+            </div>
+        </div>
+
+        <!-- 物料列表 -->
+        <div id="materialList">
+            <div class="loading">
+            <i class="fas fa-spinner"></i> 加载中...
+        </div>
+    </main>
+
+    <!-- 图片查看器 -->
+    <div id="imageViewer" class="image-modal">
+        <button class="close-btn" onclick="closeImageViewer()">&times;</button>
+        <img id="viewerImage" src="" alt="大图预览">
+    </div>
+    
+    <!-- 关联工单模态框 -->
+    <div id="associateWorkOrderModal" class="workorder-modal">
+        <div class="workorder-modal-content">
+            <div class="workorder-modal-header">
+                <h2>关联工单</h2>
+                <button class="close-btn" onclick="closeAssociateWorkOrderModal()">&times;</button>
+            </div>
+            <div class="workorder-modal-body">
+                <div class="search-container">
+                    <input type="text" id="workOrderSearch" placeholder="搜索工单（ID、客户名、设备名）" 
+                           class="search-input">
+                </div>
+                <div id="workOrderSearchResults" class="search-results">
+                    <!-- 搜索结果将显示在这里 -->
+                </div>
+            </div>
+            <div class="workorder-modal-footer">
+                <button onclick="closeAssociateWorkOrderModal()" class="cancel-btn">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        /* 关联工单模态框样式 */
+        .workorder-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .workorder-modal.show {
+            display: flex;
+        }
+        
+        .workorder-modal-content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .workorder-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .workorder-modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .workorder-modal .close-btn {
+            position: relative;
+            top: auto;
+            right: auto;
+            color: #6c757d;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        
+        .workorder-modal .close-btn:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .workorder-modal-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .search-input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .workorder-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: right;
+        }
+        
+        .cancel-btn {
+            padding: 8px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .cancel-btn:hover {
+            background: #5a6268;
+        }
+        
+        /* 搜索结果样式 */
+        .no-results {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .workorder-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .workorder-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .workorder-id {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .workorder-info {
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .workorder-info div {
+            margin-bottom: 4px;
+        }
+        
+        .workorder-date {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 6px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+
+    <!-- 添加按钮 -->
+    <button class="add-btn" onclick="window.location.href='/mobile-material-request-create.html'">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        let currentPage = 1;
+        // 从localStorage读取上次的筛选状态，如果没有则使用默认值
+        let currentStatus = localStorage.getItem('materialRequestFilterStatus') || 'exclude_warehouse_out';
+        let isLoading = false;
+        let materials = [];
+
+        // 获取当前状态
+        function getCurrentStatus(material) {
+            if (material.status_rejected) return { text: '已拒绝', class: 'status-rejected' };
+            if (material.status_warehouse_out) return { text: '已出库', class: 'status-warehouse_out' };
+            if (material.status_completed) return { text: '已完成', class: 'status-completed' };
+            if (material.status_purchasing) return { text: '采购中', class: 'status-purchasing' };
+            if (material.status_approved) return { text: '已同意', class: 'status-approved' };
+            if (material.status_application) return { text: '申请中', class: 'status-application' };
+            return { text: '未知', class: '' };
+        }
+
+        /* 图片查看器功能 */
+        function viewMaterialImage(imageUrl) {
+            const viewer = document.getElementById('imageViewer');
+            const viewerImage = document.getElementById('viewerImage');
+            viewerImage.src = imageUrl;
+            viewer.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeImageViewer() {
+            const viewer = document.getElementById('imageViewer');
+            viewer.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 点击图片查看器外部关闭
+        document.addEventListener('click', function(e) {
+            const viewer = document.getElementById('imageViewer');
+            if (e.target === viewer) {
+                closeImageViewer();
+            }
+        });
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString || dateString === '—') return '—';
+            const date = new Date(dateString);
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) {
+                return '—';
+            }
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 筛选物料 - 简化版本
+        function filterMaterials(status) {
+            currentStatus = status;
+            currentPage = 1;
+            
+            console.log('筛选物料，状态:', status);
+            loadMaterials();
+        }
+
+        // 当前正在操作的物料申请ID
+        let currentMaterialId = null;
+        
+        // 获取可操作按钮
+        function getActionButtons(material) {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            console.log('当前用户:', currentUser);
+            console.log('物料申请人ID:', material.applicant_id, '当前用户ID:', currentUser.id);
+            console.log('用户权限:', currentUser.permissions);
+            
+            const buttons = [];
+            
+            // 如果有关联工单，显示查看工单按钮
+            if (material.work_order_id) {
+                buttons.push(`<button class="action-btn btn-workorder" onclick="viewWorkOrder(${material.work_order_id})">查看关联工单</button>`);
+            } else {
+                // 如果没有关联工单，显示关联工单按钮
+                // 只有申请人或管理员可以关联工单
+                if (material.applicant_id === currentUser.id || currentUser.account_type === 'admin') {
+                    buttons.push(`<button class="action-btn btn-workorder" onclick="openAssociateWorkOrderModal(${material.id})">关联工单</button>`);
+                }
+            }
+            
+            // 根据当前状态和用户权限显示操作按钮
+            if (material.status_application && !material.status_approved && !material.status_rejected && currentUser.permissions && currentUser.permissions.includes('仓储管理')) {
+                buttons.push(`<button class="action-btn btn-approve" onclick="updateStatus(${material.id}, 'approved')">同意采购</button>`);
+                buttons.push(`<button class="action-btn btn-reject" onclick="updateStatus(${material.id}, 'rejected')">拒绝采购</button>`);
+            }
+            
+            if (material.status_approved && !material.status_purchasing && currentUser.permissions && currentUser.permissions.includes('仓储管理')) {
+                buttons.push(`<button class="action-btn btn-purchasing" onclick="updateStatus(${material.id}, 'purchasing')">开始采购</button>`);
+            }
+            
+            if (material.status_purchasing && !material.status_completed && currentUser.permissions && currentUser.permissions.includes('仓储管理')) {
+                buttons.push(`<button class="action-btn btn-complete" onclick="updateStatus(${material.id}, 'completed')">采购完成</button>`);
+            }
+            
+            if (material.status_completed && !material.status_warehouse_out && currentUser.permissions && currentUser.permissions.includes('仓储管理')) {
+                buttons.push(`<button class="action-btn btn-warehouse" onclick="updateStatus(${material.id}, 'warehouse_out')">出库</button>`);
+            }
+            
+            // 只有申请人在申请中状态可以删除，或者管理员可以删除
+            if (material.status_application && !material.status_approved && !material.status_rejected && (material.applicant_id === currentUser.id || currentUser.account_type === 'admin')) {
+                buttons.push(`<button class="action-btn btn-delete" onclick="deleteMaterial(${material.id})">删除</button>`);
+            }
+            
+            return buttons.join('');
+        }
+
+        // 生成状态进度文字
+        function getTimelineHTML(material) {
+            // 获取当前状态
+            const currentStatus = getCurrentStatus(material);
+            
+            // 状态列表
+            let statusList;
+            
+            // 如果是已拒绝状态
+            if (material.status_rejected) {
+                statusList = [
+                    // 申请中 - 浅灰色背景
+                    {text: `申请中: ${formatDate(material.status_application || '—')} (申请人: ${material.applicant_name || '—'})`, class: 'status-application'},
+                    // 已拒绝 - 有背景色（终止状态）
+                    {text: `已拒绝: ${formatDate(material.status_rejected || '—')} (拒绝人: ${material.rejecter_name || '—'})`, class: 'status-rejected'}
+                ];
+            } else {
+                // 正常流程，只在当前状态的下一阶段显示箭头，全部完成不显示
+                const currentStatusText = currentStatus.text;
+                
+                // 定义状态顺序
+                const statusOrder = ['申请中', '已同意', '采购中', '已完成', '已出库'];
+                
+                // 获取当前状态在顺序中的索引
+                const currentIndex = statusOrder.indexOf(currentStatusText);
+                
+                // 正常流程状态列表 - 只有已完成的阶段才有背景色
+                statusList = [
+                    // 申请中 - 浅灰色背景（初始阶段）
+                    {text: `申请中: ${formatDate(material.status_application || '—')} (申请人: ${material.applicant_name || '—'})`, class: 'status-application'},
+                    // 已同意 - 已完成阶段才有背景色
+                    {text: `${currentStatusText === '申请中' ? '<i class="fas fa-arrow-right" style="color: #28a745;"></i>':''}已同意: ${formatDate(material.status_approved || '—')} (审批人: ${material.approver_name || '—'})`, class: material.status_approved ? 'status-approved' : ''},
+                    // 采购中 - 已完成阶段才有背景色
+                    {text: `${currentStatusText === '已同意' ? '<i class="fas fa-arrow-right" style="color: #28a745;"></i>':''}采购中: ${formatDate(material.status_purchasing || '—')} (采购人: ${material.purchaser_name || '—'})`, class: material.status_purchasing ? 'status-purchasing' : ''},
+                    // 已完成 - 已完成阶段才有背景色
+                    {text: `${currentStatusText === '采购中' ? '<i class="fas fa-arrow-right" style="color: #28a745;"></i>':''}已完成: ${formatDate(material.status_completed || '—')} (完成人: ${material.completer_name || '—'})`, class: material.status_completed ? 'status-completed' : ''},
+                    // 已出库 - 已完成阶段才有背景色
+                    {text: `${currentStatusText === '已完成' ? '<i class="fas fa-arrow-right" style="color: #28a745;"></i>':''}已出库: ${formatDate(material.status_warehouse_out || '—')} (出库人: ${material.warehouse_staff_name || '—'})`, class: material.status_warehouse_out ? 'status-warehouse-out' : ''}
+                ];
+    }
+            
+            // 生成带背景样式的文字列表
+            return `
+                <style>
+                    .status-timeline{                    
+                        padding: 12px 18px;
+                         border-radius: 4px;
+                        border: 1px solid;
+                        border-color: #dee2e6;
+                    }
+                    /* 隐藏时间线竖线 */
+                    .status-timeline::before {
+                        display: none;
+                    }
+                    
+                    /* 为不同状态添加不同背景颜色和边框颜色 */
+                    .status-application { background-color: #f8f9fa; color: #333; border: 1px solid #dee2e6; }
+                    .status-approved { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+                    .status-purchasing { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+                    .status-completed { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+                    .status-warehouse-out { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+                    .status-rejected { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+                    
+                    /* 进度标题样式 */
+                    .timeline-title {
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: #666;
+                        margin-right: 8px;
+                        display: inline-block;
+                    }
+                    
+                    /* 通用样式 */
+                    .status-timeline div {
+                        padding: 8px 8px;
+                        margin: 4px 0;
+                        border-radius: 4px;
+                        font-size: 14px;
+                    }
+                </style>
+                <div class="status-timeline"><span class="timeline-title">进度：</span>
+                    ${statusList.map(status => `<div class="${status.class}">${status.text}</div>`).join('')}
+                </div>
+            `;
+        }
+
+        // 渲染物料列表
+        function renderMaterials(materialsList) {
+            // 保存物料数据到全局变量
+            materials = materialsList;
+            
+            const listContainer = document.getElementById('materialList');
+            
+            if (materialsList.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <p>暂无物料采购申请</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = materialsList.map(material => {
+                const status = getCurrentStatus(material);
+                const workOrderInfo = material.work_order_id ? 
+                    `<div class="material-info">
+                        <span>关联工单: ${material.work_order_customer || material.work_order_id}</span>
+                        <span>服务时间: ${formatDate(material.work_order_service_time)}</span>
+                    </div>` : '';
+                
+                // 生成图片预览HTML
+                const imagesHtml = material.images && material.images.length > 0 ? `
+                    <div class="material-images">
+                        <div class="image-preview-container">
+                            ${material.images.map(image => `
+                                <div class="image-preview-item">
+                                    <img src="${image}" alt="物料图片" onclick="viewMaterialImage('${image}')">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '';
+                
+                // 生成状态时间线HTML
+                const timelineHtml = getTimelineHTML(material);
+                
+                return `
+                    <div class="material-card">
+                         <div class="material-header">
+                            <div class="material-id" style="font-size: 14px; color: #666;">订单ID: #${material.id}</div>
+                            
+                            </div>
+                        <div class="material-header">
+                            <div class="material-name">${material.material_name}</div>
+                            <div class="material-status ${status.class}">${status.text}</div>
+                        </div>
+                        
+                        <div class="material-info">
+                            <span>数量: ${material.quantity}</span>
+                            <span>申请人: ${material.applicant_name || '—'}</span>
+                        </div>
+                         ${imagesHtml}
+                        ${workOrderInfo}
+                        ${timelineHtml} 
+                        <div class="action-buttons normal">
+                            ${getActionButtons(material)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            listContainer.innerHTML = html;
+        }
+
+        // 加载物料列表
+        async function loadMaterials() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const listContainer = document.getElementById('materialList');
+            
+            try {
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: 10
+                });
+                
+                if (currentStatus !== 'all') {
+                    params.append('status', currentStatus);
+                    console.log('筛选状态:', currentStatus);
+                }
+                
+                const url = `/api/material-requests/list?${params}`;
+                console.log('请求URL:', url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const result = await response.json();
+                console.log('API响应:', result);
+                
+                if (result.success) {
+                    renderMaterials(result.data);
+                    console.log('物料数量:', result.data.length);
+                } else {
+                    showToast(result.message || '加载失败');
+                    console.error('API错误:', result);
+                }
+            } catch (error) {
+                console.error('加载物料列表失败:', error);
+                showToast('网络错误，请重试');
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>加载失败，请重试</p>
+                    </div>
+                `;
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // 更新状态
+        async function updateStatus(id, status) { 
+            // 为不同状态提供不同的确认提示
+            const confirmMessages = {
+                'approved': '确定要同意此采购申请吗？',
+                'purchasing': '确定要开始采购此物料吗？',
+                'completed': '确定要标记此采购为已完成吗？',
+                'warehouse_out': '确定要执行出库操作吗？',
+                'rejected': '确定要拒绝此采购申请吗？'
+            };
+            
+            Utils.confirm('提示', confirmMessages[status] || '确定要更新状态吗？', async () => {
+                     
+            try {
+                const response = await fetch(`/api/material-requests/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('状态更新成功');
+                    loadMaterials();
+                } else {
+                    showToast(result.message || '状态更新失败');
+                }
+            } catch (error) {
+                console.error('更新状态失败:', error);
+                showToast('网络错误，请重试');
+            }
+        });
+        }
+
+        // 查看关联工单
+        function viewWorkOrder(workOrderId) {
+            window.location.href = `/mobile-work-order-detail.html?id=${workOrderId}`;
+        }
+        
+        // 打开关联工单模态框
+        function openAssociateWorkOrderModal(materialId) {
+            currentMaterialId = materialId;
+            const modal = document.getElementById('associateWorkOrderModal');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // 初始化搜索框
+            const searchInput = document.getElementById('workOrderSearch');
+            searchInput.value = '';
+            searchInput.focus();
+            
+            // 添加搜索事件监听
+            searchInput.addEventListener('input', handleWorkOrderSearch);
+            
+            // 初始加载所有工单
+            searchWorkOrders('');
+        }
+        
+        // 关闭关联工单模态框
+        function closeAssociateWorkOrderModal() {
+            const modal = document.getElementById('associateWorkOrderModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+            
+            // 移除搜索事件监听
+            const searchInput = document.getElementById('workOrderSearch');
+            searchInput.removeEventListener('input', handleWorkOrderSearch);
+            
+            currentMaterialId = null;
+        }
+        
+        // 搜索事件处理
+        function handleWorkOrderSearch() {
+            const searchTerm = this.value;
+            searchWorkOrders(searchTerm);
+        }
+        
+        // 搜索工单
+        async function searchWorkOrders(searchTerm) {
+            const resultsContainer = document.getElementById('workOrderSearchResults');
+            
+            try {
+                const params = new URLSearchParams();
+                if (searchTerm) {
+                    params.append('search', searchTerm);
+                }
+                params.append('limit', 50);
+                
+                const response = await fetch(`/api/work-orders?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                // 检查响应状态和数据格式
+                if (response.ok && Array.isArray(result.workOrders)) {
+                    displayWorkOrderSearchResults(result.workOrders);
+                } else {
+                    resultsContainer.innerHTML = '<div class="no-results">搜索失败，请重试</div>';
+                }
+            } catch (error) {
+                console.error('搜索工单失败:', error);
+                resultsContainer.innerHTML = '<div class="no-results">网络错误，请重试</div>';
+            }
+        }
+        
+        // 显示搜索结果
+        function displayWorkOrderSearchResults(workOrders) {
+            const resultsContainer = document.getElementById('workOrderSearchResults');
+            
+            if (workOrders.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">没有找到匹配的工单</div>';
+                return;
+            }
+            
+            const html = workOrders.map(order => `
+                <div class="workorder-item" onclick="selectWorkOrder(${order.id}, '${order.customer_name}', '${order.device_name}')">
+                    <div class="workorder-id">工单 #${order.id}</div>
+                    <div class="workorder-info">
+                        <div><strong>客户:</strong> ${order.customer_name || '—'}</div>
+                        <div><strong>设备:</strong> ${order.device_name || '—'}</div>
+                        <div class="workorder-date">创建时间: ${formatDate(order.created_at)}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // 选择工单
+        function selectWorkOrder(workOrderId, customerName, deviceName) {
+            Utils.confirm('提示', `确定要将物料申请关联到工单 #${workOrderId}（${customerName} - ${deviceName}）吗？`, () => {
+                associateWorkOrder(currentMaterialId, workOrderId);
+            });
+        }
+        
+        // 关联工单
+        async function associateWorkOrder(materialId, workOrderId) {
+            try {
+                const response = await fetch(`/api/material-requests/${materialId}/associate-work-order`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ work_order_id: workOrderId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('工单关联成功');
+                    closeAssociateWorkOrderModal();
+                    loadMaterials();
+                } else {
+                    showToast(result.message || '工单关联失败');
+                }
+            } catch (error) {
+                console.error('关联工单失败:', error);
+                showToast('网络错误，请重试');
+            }
+        }
+        
+        // 删除物料申请
+        async function deleteMaterial(id) {
+            // 查找要删除的物料
+            const material = materials.find(m => m.id === id);
+            if (!material) {
+                showToast('未找到该物料申请');
+                return;
+            }
+            
+            // 检查权限
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            if (currentUser.account_type !== 'admin' && material.applicant_id !== currentUser.id) {
+                showToast('您没有权限删除这个物料申请');
+                return;
+            }
+            
+            // 检查状态
+            if (!material.status_application || material.status_approved || material.status_rejected) {
+                showToast('该物料申请状态不允许删除');
+                return;
+            }
+            
+            Utils.confirm('提示', '确定要删除这个物料申请吗？', async () => {      
+            try {
+                const response = await fetch(`/api/material-requests/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('删除成功');
+                    loadMaterials();
+                } else {
+                    showToast(result.message || '删除失败');
+                }
+            } catch (error) {
+                console.error('删除失败:', error);
+                showToast('网络错误，请重试');
+            }
+        });
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const authSuccess = checkAuth();
+            if (authSuccess) {
+                // 确保用户信息正确存储
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                console.log('用户认证成功，当前用户:', user);
+                
+                
+                // 重新获取按钮并添加事件
+                const freshStatusButtons = document.querySelectorAll('.status-btn');
+                freshStatusButtons.forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        console.log('按钮被点击:', this.getAttribute('data-status'));
+                        
+                        // 移除所有按钮的active类
+                        freshStatusButtons.forEach(b => b.classList.remove('active'));
+                        
+                        // 给当前按钮添加active类
+                        this.classList.add('active');
+                        
+                        const status = this.getAttribute('data-status');
+                        currentStatus = status;
+                        currentPage = 1;
+                        
+                        // 将筛选状态保存到localStorage
+                        localStorage.setItem('materialRequestFilterStatus', status);
+                        
+                        console.log('点击筛选按钮:', status, this);
+                        
+                        // 延迟一点执行，确保UI更新
+                        setTimeout(() => {
+                            loadMaterials();
+                        }, 50);
+                    });
+                    
+                });
+                
+                // 页面加载时，根据currentStatus设置默认选中的按钮
+                const statusButtons = document.querySelectorAll('.status-btn');
+                statusButtons.forEach(btn => {
+                    if (btn.getAttribute('data-status') === currentStatus) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                loadMaterials();
+            }
+        });
+
+    </script>
+</body>
+</html>

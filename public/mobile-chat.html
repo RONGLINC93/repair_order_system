@@ -1,0 +1,2485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>内部聊天 - 维修工单系统</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        
+        .user-list {
+            width: 100%;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            display: block;
+        }
+        
+        .chat-window {
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            background: #fff;
+        }
+        
+        .chat-window.active {
+            display: flex;
+        }
+        
+        .chat-header {
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-header .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .chat-header .chat-user-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .chat-header .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-header .user-name {
+            font-weight: 500;
+        }
+        
+        .chat-header .user-account-type {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 2px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        /* 只限制接收消息的最大宽度 */
+        .message.received {
+            max-width: 80%;
+        }
+        
+        /* 发送消息不限制宽度，让它完全靠右 */
+        .message.sent {
+            max-width: 100%;
+            justify-content: flex-end;
+        }
+        
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            position: relative;
+        }
+        
+        .message.sent .message-bubble {
+            background: #667eea;
+            color: white;
+            margin-left: 10px;
+            max-width: 80%;
+        }
+        
+        .message.received .message-bubble {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            margin-right: 10px;
+            max-width: 80%;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        /* 消息容器使用flex布局 */
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        /* 发送消息时整体布局 */
+        .message.sent {
+            flex-direction: row-reverse;
+        }
+        
+        /* 接收消息时整体布局 */
+        .message.received {
+            flex-direction: row;
+        }
+        
+        /* 头像部分占两行高度 */
+        .message-avatar {
+            margin-top: 5px;
+            flex-shrink: 0; /* 确保头像不会被压缩 */
+        }
+        
+        /* 发送消息时头像在右侧 */
+        .message.sent .message-avatar {
+            margin-left: 10px;
+        }
+        
+        /* 接收消息时头像在左侧 */
+        .message.received .message-avatar {
+            margin-right: 10px;
+        }
+        
+        /* 消息主体部分 */
+        .message-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 发送消息时消息主体 */
+        .message.sent .message-body {
+            align-items: flex-end;
+            text-align: right;
+        }
+        
+        /* 接收消息时消息主体 */
+        .message.received .message-body {
+            align-items: flex-start;
+            text-align: left;
+        }
+        
+        /* 姓名和账号类型行 */
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        /* 发送消息时姓名和账号类型右对齐 */
+        .message.sent .message-header {
+            justify-content: flex-end;
+        }
+        
+        /* 接收消息时姓名和账号类型左对齐 */
+        .message.received .message-header {
+            justify-content: flex-start;
+        }
+        
+        /* 消息气泡 */
+        .message-bubble {
+            max-width: 80%;
+        }
+        
+        /* 发送消息时气泡右对齐 */
+        .message.sent .message-bubble {
+            margin-left: auto;
+        }
+        
+        /* 接收消息时气泡左对齐 */
+        .message.received .message-bubble {
+            margin-right: auto;
+        }
+        
+        .message.received .message-time {
+            text-align: left;
+        }
+        
+        .message-sender-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .sender-name {
+            font-weight: 500;
+            color: #333;
+            margin-right: 8px;
+            font-size: 10px;
+        }
+        
+        .sender-account-type {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            background: #e9ecef;
+            color: #666;
+            text-transform: capitalize;
+        }
+        
+        .message-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .message-file {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .message-file i {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #667eea;
+        }
+        
+        .chat-input-area {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #f8f9fa;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+        
+        .chat-btn:hover {
+            background: #e9ecef;
+        }
+        
+        .chat-btn.send {
+            background: #667eea;
+            color: white;
+        }
+        
+        .chat-btn.send:hover {
+            background: #0056b3;
+        }
+        
+        .group-header {
+            padding: 10px 15px;
+            background: #efeff1;
+            color: #000;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        
+        .group-header::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .group-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+        
+        .group-content {
+            display: block;
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .group-content.collapsed {
+            max-height: 0;
+            display: none;
+        }
+        
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .user-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .user-item .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .user-item .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-item .user-info {
+            flex: 1;
+        }
+        
+        .user-item .user-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        
+        .user-item .user-role {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 确保menu-btn相对定位，使角标能正确放置 */
+        .menu-btn {
+            position: relative;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: #666;
+            font-style: italic;
+            font-size: 12px;
+        }
+        
+        .typing-indicator.show {
+            display: block;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        
+        .typing-dots span {
+            animation: typing 1.4s infinite;
+            margin-right: 3px;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        /* 文件上传样式 */
+        .file-input {
+            display: none;
+        }
+        
+        /* 加载提示样式 */
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 没有更多消息提示 */
+        .no-more-messages {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        /* 加载错误提示 */
+        .load-error-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            color: #dc3545;
+            font-size: 12px;
+        }
+        
+        .btn.btn-primary.btn-xs {
+            padding: 4px 8px;
+            font-size: 10px;
+            margin-top: 5px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* 禁用页面滚动 */
+        body {
+            overflow: hidden;
+        }
+        
+        /* 确保聊天容器高度正确，不超出视口 */
+        .main-content {
+            overflow: hidden;
+        }
+        
+        /* 图片预览模态框 */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .image-modal.show {
+            display: flex;
+        }
+        
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .image-modal .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* 全局禁用浏览器手势，特别是下拉刷新 */
+        * {
+            touch-action: pan-y;
+        }
+        
+        /* 确保聊天消息区域仍可正常滚动 */
+        .chat-messages {
+            touch-action: auto;
+        }
+
+        /* 大屏幕下的左右分栏布局 */
+        @media (min-width: 992px) {
+            .chat-container {
+                margin: 0 auto;
+            }
+            
+            .chat-container .user-list {
+                width: 350px;
+                position: relative;
+                display: block !important;
+            }
+            
+            .chat-container .chat-window {
+                width: calc(100% - 350px);
+                position: relative;
+                display: flex;
+            }
+            
+            .chat-container .chat-window:not(.active) {
+                display: none;
+            }
+            
+            .chat-header .back-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">内部聊天</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>            
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item active" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区域 -->
+    <main class="main-content" >
+        <div class="chat-container">
+            <!-- 用户列表 -->
+            <div class="user-list" id="userList">
+                <div class="search-bar" style="padding: 15px; background: white; border-bottom: 1px solid #e9ecef;">
+                    <input type="text" id="userSearch" placeholder="搜索用户..." 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none;">
+                </div>
+                <div id="userListContent">
+                    <!-- 用户列表将通过JavaScript动态加载 -->
+                </div>
+            </div>
+
+            <!-- 聊天窗口 -->
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-header">
+                    <button class="back-btn" onclick="backToUserList()">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="chat-user-info">
+                        <div class="user-avatar" id="chatUserAvatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="user-name" id="chatUserName">用户名</div>
+                            <div class="user-account-type" id="chatUserAccountType"></div>
+                        </div>
+                    </div>
+                    <button class="chat-btn" onclick="showChatOptions()">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- 消息内容将通过JavaScript动态加载 -->
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dots">
+                        <span>•</span><span>•</span><span>•</span>
+                        对方正在输入
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="file" id="fileInput" class="file-input" accept="image/*,*/*">
+                    <button class="chat-btn" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="text" class="chat-input" id="messageInput" placeholder="输入消息..." 
+                           onkeypress="handleInputKeypress(event)">
+                    <div class="chat-actions">
+                        <button class="chat-btn send" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 图片预览模态框 -->
+    <div class="image-modal" id="imageModal">
+        <button class="close-btn" onclick="closeImageModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="modalImage" src="" alt="预览图片">
+    </div>
+
+    <!-- 用户资料模态框（从底部弹出） -->
+    <div class="profile-modal" id="userProfileModal">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3>用户资料</h3>
+                <button class="close-btn" onclick="closeUserProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="profileContent" class="profile-modal-body">
+                <!-- 用户资料内容将通过JavaScript动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* 用户资料模态框样式 */
+        .profile-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        .profile-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .profile-modal-content {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-modal.show .profile-modal-content {
+            transform: translateY(0);
+        }
+        
+        .profile-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* 用户资料模态框关闭按钮样式 */
+        .profile-modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666; /* 设置明确的颜色使其在白色背景上可见 */
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+        }
+        
+        .profile-modal-header .close-btn:hover {
+            color: #333; /* 悬停时颜色变深 */
+        }
+        
+        /* 确保图标正确显示 */
+        .profile-modal-header .close-btn i {
+            font-size: inherit;
+        }
+        
+        .profile-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .profile-modal-body {
+            padding: 20px;
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .profile-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .profile-type {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .profile-details {
+            margin-bottom: 30px;
+        }
+        
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .profile-item:last-child {
+            border-bottom: none;
+        }
+        
+        .profile-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .profile-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .profile-actions {
+            margin-top: 30px;
+        }
+        
+        .btn.btn-primary.full-width {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn.btn-primary.full-width:hover {
+            background: #5a67d8;
+        }
+        
+        /* 适配移动设备 */
+        @media (max-width: 768px) {
+            .profile-modal-content {
+                width: 100%;
+                max-height: 90vh;
+            }
+        }
+    </style>
+
+    <!-- JavaScript -->
+    <script src="/js/utils.js"></script>
+    <script>
+        // 全局变量
+        // 声明为全局变量，以便Utils.handleNewNotification可以访问
+        currentChatUser = null;
+        let currentPage = 1;
+        let hasMoreMessages = true;
+        let isLoadingMessages = false;
+        let sseConnection = null;
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 首先检查认证状态
+            await checkAuth();
+            
+            // 设置导航菜单
+            setupNavigation();
+             
+            // 页面特定初始化
+            await initializePage();
+        });
+        
+
+        
+       // 检查权限 - 只检查登录状态，不检查地址管理权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return false;
+            }              
+            
+             // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+              // 加载侧边栏头像
+              await loadSidebarAvatar();
+
+            console.log('权限检查完成');           
+            return true;
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+
+            console.log('开始加载侧边栏头像...');
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                    // 将头像信息保存到用户对象中
+                    user.avatar = avatarPath;
+                    Utils.setUser(user);
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                    // 设置默认头像
+                    user.avatar = '/images/default-avatar.png';
+                    Utils.setUser(user);
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }       
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+        // 切换侧边栏显示/隐藏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+        
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+        
+        
+        // 侧边栏遮罩点击事件
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+        // 加载当前用户信息
+        async function loadUserInfo() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (!user) {
+                    throw new Error('用户信息不存在');
+                }
+                
+                currentUser = user;
+                console.log('当前用户信息:', currentUser);
+            } catch (error) {
+                console.error('加载用户信息失败:', error);
+                throw error;
+            }
+        }
+
+        async function initializePage() {
+            try {
+                // 检查登录状态
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // 加载用户信息
+                await loadUserInfo();
+                
+                // 加载用户列表
+                await loadUserList();
+                
+                // 检查URL参数，自动打开聊天窗口
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                // 建立SSE连接
+                establishSSEConnection();
+                
+                // 绑定搜索事件
+                document.getElementById('userSearch').addEventListener('input', debounce(handleUserSearch, 300));
+                
+                // 绑定文件上传事件
+                document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+                
+                // 绑定消息输入框事件
+                const messageInput = document.getElementById('messageInput');
+                messageInput.addEventListener('input', handleTyping);
+                messageInput.addEventListener('focus', () => {
+                    if (currentChatUser) {
+                        markMessagesAsRead();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('页面初始化失败:', error);
+                showError('页面初始化失败');
+            }
+        }
+
+        // 加载用户列表
+        async function loadUserList() {
+            try {
+                showLoading('userListContent');
+                const response = await apiRequest('/chat/users', 'GET');
+                
+                const userListContent = document.getElementById('userListContent');
+                
+                if (response.length === 0) {
+                    userListContent.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>暂无其他用户</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 将用户按账号类型分组
+                const groups = {
+                    'admin': [],
+                    'engineer': [],
+                    'customer_service': [],
+                    'user': []
+                };
+                
+                response.forEach(user => {
+                    if (groups[user.account_type]) {
+                        groups[user.account_type].push(user);
+                    }
+                });
+                
+                let html = '';
+                
+                // 定义分组显示顺序
+                const groupOrder = ['admin', 'engineer', 'customer_service', 'user'];
+                
+                // 从本地存储获取分组状态，默认全部收起
+                const groupStates = JSON.parse(localStorage.getItem('groupStates')) || {};
+                
+                // 为每个分组生成HTML
+                groupOrder.forEach(groupType => {
+                    const users = groups[groupType];
+                    if (users.length > 0) {
+                        // 检查分组是否应该收起 (默认收起)
+                        const isCollapsed = groupStates[groupType] !== false; // 默认收起
+                        
+                        // 添加分组标题
+                        html += `<div class="group-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleGroup('${groupType}')">
+                                    ${getAccountTypeText(groupType)} (${users.length})
+                                </div>`;
+                        
+                        // 添加分组内容容器
+                        html += `<div class="group-content ${isCollapsed ? 'collapsed' : ''}" id="group-${groupType}">`;
+                        
+                        // 添加分组内的用户
+                        users.forEach(user => {
+                            const unreadBadge = user.unreadCount > 0 ? 
+                                `<span class="unread-badge">${user.unreadCount}</span>` : '';
+                            
+                            const accountTypeText = getAccountTypeText(user.account_type);
+                            const phone = user.phone ? `'${user.phone}'` : 'null';
+                            const email = user.email ? `'${user.email}'` : 'null';
+                            
+                            html += `
+                                <div class="user-item" onclick="openChat(${user.id}, '${user.username}','${user.full_name}', '${user.account_type}', '${user.avatar}', ${phone}, ${email})">
+                                    <div class="user-avatar">
+                                        ${user.avatar && user.avatar !== '/images/default-avatar.png' ? 
+                                            `<img src="${user.avatar}" alt="${user.full_name || user.username}">` : 
+                                            '<i class="fas fa-user"></i>'}
+                                    </div>
+                                    <div class="user-info">
+                                        <div class="user-name">${user.full_name || user.username}</div>
+                                        <div class="user-role">${accountTypeText}</div>
+                                    </div>
+                                    ${unreadBadge}
+                                </div>
+                            `;
+                        });
+                        
+                        // 关闭分组内容容器
+                        html += '</div>';
+                    }
+                });
+                
+                userListContent.innerHTML = html;
+                await Utils.loadChatUnreadCount();
+                
+                // 加载完成后检查URL参数，自动打开聊天窗口
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('id');
+                if (userId) {
+                    // 直接从响应数据中查找用户信息
+                    const targetUser = response.find(user => user.id == userId);
+                    if (targetUser) {
+                        openChat(targetUser.id, targetUser.full_name || targetUser.username, targetUser.account_type, targetUser.avatar, targetUser.phone, targetUser.email);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('加载用户列表失败:', error);
+                document.getElementById('userListContent').innerHTML = `
+                    <div class="error-state">
+                        <p>加载用户列表失败</p>
+                        <button onclick="loadUserList()" class="btn btn-primary btn-sm">重试</button>
+                    </div>
+                `;
+            }
+        }
+
+        // 切换分组展开/收起状态
+        function toggleGroup(groupType) {
+            // 找到分组标题和内容元素
+            const groupHeader = document.querySelector(`[onclick="toggleGroup('${groupType}')"]`);
+            const groupContent = document.getElementById(`group-${groupType}`);
+            
+            if (!groupHeader || !groupContent) return;
+            
+            // 切换状态类
+            groupHeader.classList.toggle('collapsed');
+            groupContent.classList.toggle('collapsed');
+            
+            // 从本地存储获取当前分组状态
+            const groupStates = JSON.parse(localStorage.getItem('groupStates')) || {};
+            
+            // 更新状态 (false表示展开，true表示收起)
+            groupStates[groupType] = !groupStates[groupType];
+            
+            // 保存到本地存储
+            localStorage.setItem('groupStates', JSON.stringify(groupStates));
+        }
+
+        // 搜索用户
+        async function handleUserSearch(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            const userItems = document.querySelectorAll('.user-item');
+            
+            userItems.forEach(item => {
+                const userName = item.querySelector('.user-name').textContent.toLowerCase();
+                const userRole = item.querySelector('.user-role').textContent.toLowerCase();
+                
+                if (userName.includes(searchTerm) || userRole.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // 打开聊天窗口
+        async function openChat(userId, userName, fullName, accountType, avatar, phone, email) {
+            currentChatUser = {
+                id: userId,
+                name: userName,
+                fullName: fullName,
+                accountType: accountType,
+                avatar: avatar,
+                phone: phone,
+                email: email
+            };
+
+            // 更新聊天窗口头部信息
+            document.getElementById('chatUserName').textContent = fullName || userName || '-';
+            // 设置账号类型
+            const accountTypeText = Utils.getAccountTypeText(accountType);
+            document.getElementById('chatUserAccountType').textContent = accountTypeText;
+            
+            const chatAvatar = document.getElementById('chatUserAvatar');
+            chatAvatar.innerHTML = avatar && avatar !== '/images/default-avatar.png' ? 
+                `<img src="${avatar}" alt="${userName}">` : 
+                '<i class="fas fa-user"></i>';
+
+            
+            // 加载聊天记录
+            await loadChatMessages();
+            
+            // 显示聊天窗口，隐藏用户列表
+            document.getElementById('userList').style.display = 'none';
+            document.getElementById('chatWindow').classList.add('active');
+
+            // 标记消息为已读并刷新未读数量
+            await markMessagesAsRead();
+
+
+        }
+
+        // 返回用户列表
+        function backToUserList() {
+            currentChatUser = null;
+            currentPage = 1;
+            hasMoreMessages = true;
+            isLoadingMessages = false;
+
+            document.getElementById('chatWindow').classList.remove('active');
+            document.getElementById('userList').style.display = 'block';
+            document.getElementById('messageInput').value = '';
+        }
+
+        // 显示聊天选项菜单
+        function showChatOptions() {
+            // 创建选项菜单
+            const optionsMenu = document.createElement('div');
+            optionsMenu.className = 'chat-options-menu';
+            optionsMenu.innerHTML = `
+                <div class="options-menu-content">
+                    <div class="menu-item" onclick="viewUserProfile()">
+                        <i class="fas fa-user-circle"></i>
+                        <span>查看用户资料</span>
+                    </div>
+                    <div class="menu-item" onclick="markAllMessagesAsRead()">
+                        <i class="fas fa-check-circle"></i>
+                        <span>标记全部已读</span>
+                    </div>
+                    <div class="menu-item danger" onclick="confirmDeleteChat()">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>删除聊天记录</span>
+                    </div>
+                    <div class="menu-item" onclick="closeOptionsMenu()">
+                        <i class="fas fa-times"></i>
+                        <span>关闭</span>
+                    </div>
+                </div>
+            `;
+            
+            // 添加菜单项的样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .chat-options-menu {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-end;
+                    z-index: 1000;
+                }
+                .options-menu-content {
+                    background-color: white;
+                    width: 100%;
+                    border-radius: 15px 15px 0 0;
+                    padding: 20px;
+                    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                }
+                .menu-item {
+                    display: flex;
+                    align-items: center;
+                    padding: 15px 0;
+                    border-bottom: 1px solid #f0f0f0;
+                    cursor: pointer;
+                }
+                .menu-item:last-child {
+                    border-bottom: none;
+                }
+                .menu-item i {
+                    margin-right: 15px;
+                    font-size: 18px;
+                    color: #666;
+                }
+                .menu-item.danger {
+                    color: #e74c3c;
+                }
+                .menu-item.danger i {
+                    color: #e74c3c;
+                }
+            `;
+            
+            document.head.appendChild(style);
+            document.body.appendChild(optionsMenu);
+            
+            // 添加点击外部关闭菜单的功能
+            optionsMenu.addEventListener('click', function(e) {
+                if (e.target === optionsMenu) {
+                    closeOptionsMenu();
+                }
+            });
+        }
+        
+        // 关闭选项菜单
+        function closeOptionsMenu() {
+            const menu = document.querySelector('.chat-options-menu');
+            const style = document.querySelector('style:last-child');
+            if (menu) menu.remove();
+            if (style && style.textContent.includes('.chat-options-menu')) style.remove();
+        }
+        
+        // 查看用户资料
+        function viewUserProfile() {
+            closeOptionsMenu();
+            if (currentChatUser) {
+                const profileModal = document.getElementById('userProfileModal');
+                const profileContent = document.getElementById('profileContent');
+                
+                // 获取当前用户信息
+                const userAvatar = currentChatUser.avatar || '/images/default-avatar.png';
+                const userName = currentChatUser.fullName || currentChatUser.name || '-';
+                const userAccountType = getAccountTypeText(currentChatUser.accountType || currentChatUser.role);
+                
+                // 填充用户资料
+                profileContent.innerHTML = `
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            ${userAvatar !== '/images/default-avatar.png' ? 
+                                `<img src="${userAvatar}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : 
+                                '<i class="fas fa-user"></i>'}
+                        </div>
+                        <div class="profile-name">${userName}</div>
+                        <div class="profile-type">${userAccountType}</div>
+                    </div>
+                    <div class="profile-details">
+                        <div class="profile-item">
+                            <span class="profile-label">用户ID</span>
+                            <span class="profile-value">${currentChatUser.id}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">用户名</span>
+                            <span class="profile-value">${currentChatUser.name || '-'}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">联系方式</span>
+                            <span class="profile-value">
+                                ${currentChatUser.phone ? `${currentChatUser.phone} <a href="tel:${currentChatUser.phone}" style="color: #3498db; text-decoration: none;">打给他</a>` : currentChatUser.email || '-'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn btn-primary full-width" onclick="startNewChat()">开始聊天</button>
+                    </div>
+                `;
+                
+                // 显示模态框
+                profileModal.classList.add('show');
+                document.body.style.overflow = 'hidden'; // 防止背景滚动
+                
+                // 添加Esc键关闭功能
+                document.addEventListener('keydown', handleEscKey);
+            }
+        }
+        
+        // 关闭用户资料模态框
+        function closeUserProfileModal() {
+            const profileModal = document.getElementById('userProfileModal');
+            profileModal.classList.remove('show');
+            document.body.style.overflow = ''; // 恢复背景滚动
+            // 移除事件监听器
+            document.removeEventListener('keydown', handleEscKey);
+        }
+        
+        // 处理Esc键关闭模态框
+        function handleEscKey(event) {
+            if (event.key === 'Escape') {
+                closeUserProfileModal();
+            }
+        }
+        
+        // 添加点击模态框外部关闭功能
+        function addModalOutsideClickHandler() {
+            const profileModal = document.getElementById('userProfileModal');
+            profileModal.addEventListener('click', function(event) {
+                // 如果点击的是模态框背景而不是内容区域
+                if (event.target === profileModal) {
+                    closeUserProfileModal();
+                }
+            });
+        }
+        
+        // 在页面加载时添加点击外部关闭的事件监听器
+        window.addEventListener('DOMContentLoaded', addModalOutsideClickHandler);
+        
+        // 开始新聊天
+        function startNewChat() {
+            closeUserProfileModal();
+            // 已经在聊天页面，不需要跳转
+            loadChatMessages();
+        }
+        
+        // 标记全部消息为已读
+        async function markAllMessagesAsRead() {
+            closeOptionsMenu();
+            await markMessagesAsRead();
+        }
+        
+        // 确认删除聊天
+        function confirmDeleteChat() {
+            closeOptionsMenu();
+             Utils.confirm('提示', '确定要删除所有聊天记录吗？此操作不可恢复。', async () => {         
+                deleteChatHistory();            
+        });
+        }
+        
+        // 删除聊天记录
+        async function deleteChatHistory() {
+            if (!currentChatUser) return;
+            
+            try {
+                showLoadingMessage('正在删除聊天记录...');
+                
+                // 调用真实的删除聊天记录API
+                const response = await apiRequest(`/chat/messages/user/${currentChatUser.id}`, 'DELETE');
+                
+                // 清空聊天消息区域
+                document.getElementById('chatMessages').innerHTML = '';
+                
+                // 重置分页状态
+                currentPage = 1;
+                hasMoreMessages = true;
+                
+                // 显示成功消息
+                const messagesContainer = document.getElementById('chatMessages');
+                const successMessage = document.createElement('div');
+                successMessage.className = 'no-more-messages';
+                successMessage.textContent = `聊天记录已删除（共${response.deletedCount || 0}条消息）`;
+                messagesContainer.appendChild(successMessage);
+                
+                // 更新未读消息计数
+                await Utils.loadChatUnreadCount();
+                
+                // 滚动到底部
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } catch (error) {
+                console.error('删除聊天记录失败:', error);
+                showError('删除聊天记录失败，请重试');
+            } finally {
+                hideLoadingMessage();
+            }
+        }
+
+        // 加载聊天记录
+        async function loadChatMessages(append = false, preservePage = false) {
+            // 参数检查
+            if (!currentChatUser) {
+                console.error('加载聊天记录失败：currentChatUser为空');
+                showError('加载聊天记录失败，请重新选择聊天对象');
+                return;
+            }
+            if (isLoadingMessages) {
+                console.log('正在加载聊天记录，跳过重复请求');
+                return;
+            }
+
+            try {
+                isLoadingMessages = true;
+                
+                // 创建加载提示元素（当append为true时）
+                const messagesContainer = document.getElementById('chatMessages');                
+                if (append) {
+                    // 检查是否已有加载提示
+                    let loadingIndicator = messagesContainer.querySelector('.loading-indicator');
+                    if (!loadingIndicator) {
+                        loadingIndicator = document.createElement('div');
+                        loadingIndicator.className = 'loading-indicator';
+                        loadingIndicator.innerHTML = `
+                            <div class="spinner"></div>
+                            <span>加载更多消息...</span>
+                        `;
+                        messagesContainer.insertBefore(loadingIndicator, messagesContainer.firstChild);
+                    }
+                }
+                
+                console.log(`开始加载聊天记录：用户ID=${currentChatUser.id}，页码=${currentPage}，追加=${append}`);
+                const response = await apiRequest(`/chat/messages/${currentChatUser.id}?page=${currentPage}&limit=20`, 'GET');
+                
+                if (!messagesContainer) {
+                    console.error('加载聊天记录失败：messagesContainer元素不存在');
+                    showError('加载聊天记录失败，请刷新页面重试');
+                    return;
+                }
+
+                if (!append) {
+                    messagesContainer.innerHTML = '';
+                    if (!preservePage) {
+                        currentPage = 1;
+                    }
+                    hasMoreMessages = true;
+                }
+                
+                console.log('聊天记录加载成功：', response);
+
+                if (response.messages.length === 0 && !append) {
+                    messagesContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-comments"></i>
+                            <p>暂无聊天记录</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 获取已加载消息的ID集合（仅在追加模式下需要去重）
+                const existingMessageIds = new Set();
+                if (append) {
+                    const existingMessages = messagesContainer.querySelectorAll('.message');
+                    existingMessages.forEach(msgElement => {
+                        // 从消息元素中获取data-message-id属性作为唯一标识符
+                        const messageId = msgElement.getAttribute('data-message-id');
+                        if (messageId) {
+                            existingMessageIds.add(messageId);
+                        }
+                    });
+                }
+
+                let html = '';
+                let newMessagesCount = 0;
+                response.messages.forEach(msg => {
+                    const isSent = msg.sender_id === getCurrentUserId();
+                    const time = formatMessageTime(msg.created_at);
+                    // 获取当前用户和对方用户的头像
+                    const senderAvatar = msg.sender_avatar || '/images/default-avatar.png';
+                    const currentUser = Utils.getUser();
+                    const currentUserAvatar = currentUser?.avatar || '/images/default-avatar.png';
+                    
+                    // 使用数据库记录的id作为唯一标识符
+                    const messageId = msg.id.toString();
+                    
+                    // 如果是追加模式且消息已存在，则跳过
+                    if (append && existingMessageIds.has(messageId)) {
+                        console.log('跳过已存在的消息:', messageId);
+                        return;
+                    }
+                    
+                    newMessagesCount++;
+                    
+                    html += `
+                        <div class="message ${isSent ? 'sent' : 'received'}" data-message-id="${messageId}">
+                            <div class="message-avatar">
+                                <div class="user-avatar" style="width: 30px; height: 30px; border-radius: 50%;">
+                                    ${(isSent ? currentUserAvatar : senderAvatar) !== '/images/default-avatar.png' ? 
+                                        `<img src="${isSent ? currentUserAvatar : senderAvatar}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : 
+                                        '<i class="fas fa-user"></i>'}
+                                </div>
+                            </div>
+                            <div class="message-body">
+                                <div class="message-header">
+                                    <span class="sender-name">${isSent ? (currentUser.fullName || currentUser.username) : msg.sender_name}</span>
+                                    <span class="sender-account-type">${isSent ? getAccountTypeText(currentUser.accountType) : getAccountTypeText(msg.sender_account_type)}</span>
+                                </div>
+                                <div class="message-bubble">
+                                    ${msg.message_type === 'text' ? msg.content : 
+                                      msg.message_type === 'image' ? 
+                                      `<img src="${msg.file_url}" alt="图片" class="message-image" onclick="previewImage('${msg.file_url}')">` :
+                                      `<div class="message-file" onclick="downloadFile('${msg.file_url}', '${msg.content}')">
+                                          <i class="fas fa-file"></i>
+                                          <span>${msg.content}</span>
+                                      </div>`}
+                                    <div class="message-time">${time}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if (newMessagesCount > 0) {
+                    if (append) {
+                        // 插入到现有消息前面
+                        messagesContainer.insertAdjacentHTML('afterbegin', html);
+                        // 使用服务器返回的hasMore值
+                        hasMoreMessages = response.hasMore;
+                        // 加载到新消息时，增加页码以请求下一页
+                        currentPage++;
+                    } else {
+                        messagesContainer.innerHTML = html;
+                        // 滚动到底部
+                        setTimeout(() => {
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }, 100);
+                        hasMoreMessages = response.hasMore;
+                    }
+                } else {
+                    console.log('当前请求没有新的消息需要加载，继续检查是否有更多消息');
+                    // 即使当前页没有新消息，也应该使用服务器返回的hasMore值
+                    // 因为可能还有更早的历史消息没有加载
+                    hasMoreMessages = response.hasMore;
+                    
+                    // 如果服务器提示还有更多消息，应该增加页码继续加载
+                    if (hasMoreMessages) {
+                        console.log('服务器提示还有更多消息，继续请求下一页');
+                        currentPage++;
+                        // 短暂延迟后继续加载，避免请求过快
+                        setTimeout(() => loadChatMessages(true), 500);
+                    } else {
+                        console.log('服务器提示没有更多消息了');
+                    }
+                }
+                
+                // 移除加载提示
+                const loadingIndicator = messagesContainer.querySelector('.loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.remove();
+                }
+                
+                if (!hasMoreMessages) {
+                    // 如果没有更多消息，移除滚动加载事件
+                    messagesContainer.removeEventListener('scroll', handleScrollLoad);
+                    // 添加没有更多消息的提示
+                    if (!messagesContainer.querySelector('.no-more-messages')) {
+                        const noMoreElement = document.createElement('div');
+                        noMoreElement.className = 'no-more-messages';
+                        noMoreElement.textContent = '没有更多消息了';
+                        messagesContainer.insertBefore(noMoreElement, messagesContainer.firstChild);
+                    }
+                } else if (!append) {
+                    // 添加滚动加载事件
+                    messagesContainer.addEventListener('scroll', handleScrollLoad);
+                }
+
+                // 不再在这里统一增加页码，而是在加载到新消息或继续加载下一页时分别处理
+                // 这样可以避免页码错误地增加
+
+            } catch (error) {
+                console.error('加载聊天记录失败:', error);
+                // 确保messagesContainer存在
+                const messagesContainer = document.getElementById('chatMessages');
+                if (messagesContainer) {
+                    // 移除加载提示
+                    const loadingIndicator = messagesContainer.querySelector('.loading-indicator');
+                    if (loadingIndicator) {
+                        loadingIndicator.remove();
+                    }
+                    
+                    if (!append) {
+                        messagesContainer.innerHTML = `
+                            <div class="error-state">
+                                <p>加载聊天记录失败</p>
+                                <button onclick="loadChatMessages()" class="btn btn-primary btn-sm">重试</button>
+                            </div>
+                        `;
+                    } else {
+                        // 添加加载失败的提示
+                        const errorElement = document.createElement('div');
+                        errorElement.className = 'load-error-indicator';
+                        errorElement.innerHTML = `
+                            <p>加载更多消息失败</p>
+                            <button onclick="loadChatMessages(true)" class="btn btn-primary btn-xs">重试</button>
+                        `;
+                        messagesContainer.insertBefore(errorElement, messagesContainer.firstChild);
+                    }
+                }
+                // 显示错误信息
+                showError('加载聊天记录失败，请重试');
+            } finally {
+                isLoadingMessages = false;
+                console.log('加载聊天记录请求完成');
+            }
+        }
+
+        // 滚动加载更多消息
+        function handleScrollLoad(event) {
+            const container = event.target;
+            if (container.scrollTop === 0 && hasMoreMessages && !isLoadingMessages) {
+                loadChatMessages(true);
+            }
+        }
+
+        // 消息发送状态标志，防止重复发送
+        let isSendingMessage = false;
+        
+        // 发送消息
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const textContent = messageInput.value.trim();
+            const isoDate = Utils.formatDateTimeForBackend(); // 使用统一的时间处理函数，确保东八区时间格式
+            
+            // 检查是否有文本或文件要发送，或者是否正在发送中
+            if ((!textContent && !selectedFile) || !currentChatUser || isSendingMessage) return;
+            
+            // 当发送信息时，立即清理聊天框里显示的所有提示元素
+            const messagesContainer = document.getElementById('chatMessages');
+            if (messagesContainer) {
+                // 移除所有提示元素
+                const hintElements = messagesContainer.querySelectorAll('.empty-state, .error-state, .load-error-indicator, .no-more-messages');
+                hintElements.forEach(element => {
+                    element.remove();
+                });
+            }
+            
+            // 标记为正在发送中
+            isSendingMessage = true;
+            // 获取发送按钮并禁用它，提供视觉反馈
+            const sendButton = document.querySelector('.chat-btn.send');
+            if (sendButton) {
+                sendButton.disabled = true;
+                sendButton.style.opacity = '0.6';
+            }
+
+            try {
+                // 如果有选择的文件，发送文件消息
+                if (selectedFile) {
+                    await sendFileMessage(selectedFile, textContent);
+                    selectedFile = null;
+                    
+                    // 移除附件预览
+                    const inputArea = messageInput.parentElement;
+                    const attachmentPreview = inputArea.querySelector('.attachment-preview');
+                    if (attachmentPreview) {
+                        attachmentPreview.remove();
+                    }
+                } 
+                // 如果只有文本，发送文本消息
+                else if (textContent) {
+                    const response = await apiRequest(`/chat/messages/${currentChatUser.id}`, 'POST', {
+                        content: textContent,
+                        createdAt: isoDate, // 传递包含时区信息的ISO格式时间
+                        updatedAt: isoDate // 传递包含时区信息的ISO格式时间，与createdAt一致
+                    });
+                    
+
+                    if (response.messageId) {
+                        // 直接在聊天容器底部添加新消息，而不是重新加载整个聊天记录
+                        const messagesContainer = document.getElementById('chatMessages');
+                        if (messagesContainer) {
+                            const currentUser = Utils.getUser();
+                            const currentUserAvatar = currentUser?.avatar || '/images/default-avatar.png';
+                            const time = formatMessageTime(new Date());
+                            
+                            // 清理逻辑已移至函数开头
+                            
+                            // 创建新消息的HTML
+                            const newMessageHtml = `
+                                <div class="message sent" data-message-id="${response.messageId}">
+                                    <div class="message-avatar">
+                                        <div class="user-avatar" style="width: 30px; height: 30px; border-radius: 50%;">
+                                            ${currentUserAvatar !== '/images/default-avatar.png' ? 
+                                                `<img src="${currentUserAvatar}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : 
+                                                '<i class="fas fa-user"></i>'}
+                                        </div>
+                                    </div>
+                                    <div class="message-body">
+                                        <div class="message-header">
+                                            <span class="sender-name">${currentUser.fullName || currentUser.username}</span>
+                                            <span class="sender-account-type">${getAccountTypeText(currentUser.accountType)}</span>
+                                        </div>
+                                        <div class="message-bubble">
+                                            ${textContent}
+                                            <div class="message-time">${time}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // 移除空状态提示（保留以保持兼容性）
+                            const emptyState = messagesContainer.querySelector('.empty-state');
+                            if (emptyState) {
+                                emptyState.remove();
+                            }
+                            
+                            // 添加新消息到聊天容器底部
+                            messagesContainer.insertAdjacentHTML('beforeend', newMessageHtml);
+                            
+                            // 滚动到底部
+                            setTimeout(() => {
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            }, 100);
+                        }
+                    }
+                }
+                
+                // 更新用户列表中的未读数
+                await loadUserList();
+                // 清空输入框
+                messageInput.value = '';
+
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                showError('发送消息失败，请重试');
+            } finally {
+                // 标记为发送完成，无论成功失败
+                isSendingMessage = false;
+                // 重新启用发送按钮
+                const sendButton = document.querySelector('.chat-btn.send');
+                if (sendButton) {
+                    sendButton.disabled = false;
+                    sendButton.style.opacity = '1';
+                }
+            }
+        }
+
+        // 发送文件消息 - 点击发送时调用
+        async function sendFileMessage(file, textContent = '') {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('content', textContent); // 可选的文本说明
+                formData.append('createdAt', Utils.formatDateTimeForBackend()); // 使用统一的时间处理函数，确保东八区时间格式
+                formData.append('updatedAt', Utils.formatDateTimeForBackend()); // 使用统一的时间处理函数，确保东八区时间格式
+
+           // 当发送信息时，立即清理聊天框里显示的所有提示元素
+            const messagesContainer = document.getElementById('chatMessages');
+            if (messagesContainer) {
+                // 移除所有提示元素
+                const hintElements = messagesContainer.querySelectorAll('.empty-state, .error-state, .load-error-indicator, .no-more-messages');
+                hintElements.forEach(element => {
+                    element.remove();
+                });
+            }
+
+
+                // 在附件图标处显示上传状态
+                const messageInput = document.getElementById('messageInput');
+                const inputArea = messageInput.parentElement;
+                const attachmentPreview = inputArea.querySelector('.attachment-preview');
+                
+                if (attachmentPreview) {
+                    // 添加上传中状态
+                    attachmentPreview.style.opacity = '0.7';
+                    
+                    // 查找附件图标
+                    const fileIcon = attachmentPreview.querySelector('i');
+                    if (fileIcon) {
+                        // 添加上传动画
+                        fileIcon.style.animation = 'spin 1s linear infinite';
+                    }
+                    
+                    // 禁用删除按钮
+                    const removeBtn = attachmentPreview.querySelector('button');
+                    if (removeBtn) {
+                        removeBtn.style.pointerEvents = 'none';
+                        removeBtn.style.opacity = '0.5';
+                    }
+                }
+
+                const response = await fetch(`/api/chat/messages/${currentChatUser.id}/file`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.messageId) {
+                    // 直接在聊天容器底部添加文件消息，而不是重新加载整个聊天记录
+                    const messagesContainer = document.getElementById('chatMessages');
+                    if (messagesContainer) {
+                        const currentUser = Utils.getUser();
+                        const currentUserAvatar = currentUser?.avatar || '/images/default-avatar.png';
+                        const time = formatMessageTime(new Date());
+                        
+                        // 创建文件消息的HTML，使用与正常加载消息相同的结构
+                        let fileMessageHtml;
+                        if (file.type.startsWith('image/')) {
+                            // 图片文件
+                            fileMessageHtml = `
+                                <div class="message sent" data-message-id="${result.messageId}">
+                                    <div class="message-avatar">
+                                        <div class="user-avatar" style="width: 30px; height: 30px; border-radius: 50%;">
+                                            ${currentUserAvatar !== '/images/default-avatar.png' ? 
+                                                `<img src="${currentUserAvatar}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : 
+                                                '<i class="fas fa-user"></i>'}
+                                        </div>
+                                    </div>
+                                    <div class="message-body">
+                                        <div class="message-header">
+                                            <span class="sender-name">${currentUser.fullName || currentUser.username}</span>
+                                            <span class="sender-account-type">${getAccountTypeText(currentUser.accountType)}</span>
+                                        </div>
+                                        <div class="message-bubble">
+                                            ${textContent ? `<div class="file-description">${textContent}</div>` : ''}
+                                            <img src="${result.fileUrl}" alt="图片" class="message-image" onclick="previewImage('${result.fileUrl}')">
+                                            <div class="message-time">${time}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // 其他文件类型
+                            fileMessageHtml = `
+                                <div class="message sent" data-message-id="${result.messageId}">
+                                    <div class="message-avatar">
+                                        <div class="user-avatar" style="width: 30px; height: 30px; border-radius: 50%;">
+                                            ${currentUserAvatar !== '/images/default-avatar.png' ? 
+                                                `<img src="${currentUserAvatar}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : 
+                                                '<i class="fas fa-user"></i>'}
+                                        </div>
+                                    </div>
+                                    <div class="message-body">
+                                        <div class="message-header">
+                                            <span class="sender-name">${currentUser.fullName || currentUser.username}</span>
+                                            <span class="sender-account-type">${getAccountTypeText(currentUser.accountType)}</span>
+                                        </div>
+                                        <div class="message-bubble">
+                                            ${textContent ? `<div class="file-description">${textContent}</div>` : ''}
+                                            <div class="message-file" onclick="downloadFile('${result.fileUrl}', '${file.name}')">
+                                                <i class="fas fa-file"></i>
+                                                <span>${file.name}</span>
+                                            </div>
+                                            <div class="message-time">${time}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // 移除空状态提示
+                        const emptyState = messagesContainer.querySelector('.empty-state');
+                        if (emptyState) {
+                            emptyState.remove();
+                        }
+                        
+                        // 添加新消息到聊天容器底部
+                        messagesContainer.insertAdjacentHTML('beforeend', fileMessageHtml);
+                        
+                        // 滚动到底部
+                        setTimeout(() => {
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }, 100);
+                    }
+                    
+                } else {
+                    throw new Error(result.error || '上传失败');
+                }
+
+            } catch (error) {
+                console.error('文件上传失败:', error);
+                showError('文件上传失败，请重试');
+            } finally {
+                // 移除附件预览
+                const messageInput = document.getElementById('messageInput');
+                const inputArea = messageInput.parentElement;
+                const attachmentPreview = inputArea.querySelector('.attachment-preview');
+                
+                if (attachmentPreview) {
+                    attachmentPreview.remove();
+                }
+                
+                // 清空文件输入
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+                
+                // 重置选中的文件
+                selectedFile = null;
+            }
+        }
+
+        // 处理回车键发送消息
+        function handleInputKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // 全局变量存储选择的文件
+        let selectedFile = null;
+
+        // 处理文件上传 - 选择后显示附件图标，不立即上传
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !currentChatUser) return;
+
+            selectedFile = file;
+            
+            // 在输入框显示附件图标
+            const messageInput = document.getElementById('messageInput');
+            const inputArea = messageInput.parentElement;
+            
+            // 检查是否已存在附件预览
+            let attachmentPreview = inputArea.querySelector('.attachment-preview');
+            if (!attachmentPreview) {
+                attachmentPreview = document.createElement('div');
+                attachmentPreview.className = 'attachment-preview';
+                attachmentPreview.style.cssText = `
+                    position: absolute;
+                    left: 15px;
+                    top: -40px;
+                    background: rgba(0, 0, 0, 0.7);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 15px;
+                    font-size: 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    z-index: 100;
+                `;
+                
+                // 添加附件图标
+                const fileIcon = document.createElement('i');
+                fileIcon.className = file.type.startsWith('image/') ? 'fas fa-image' : 'fas fa-file';
+                fileIcon.style.color = '#667eea';
+                fileIcon.style.fontSize = '14px';
+                
+                // 添加文件名
+                const fileName = document.createElement('span');
+                fileName.textContent = file.name;
+                
+                // 添加删除按钮
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.style.cssText = `
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    padding: 0;
+                    font-size: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    selectedFile = null;
+                    attachmentPreview.remove();
+                    // 清空文件输入
+                    document.getElementById('fileInput').value = '';
+                };
+                
+                attachmentPreview.appendChild(fileIcon);
+                attachmentPreview.appendChild(fileName);
+                attachmentPreview.appendChild(removeBtn);
+                inputArea.style.position = 'relative';
+                inputArea.appendChild(attachmentPreview);
+            } else {
+                // 更新现有预览
+                const fileIcon = attachmentPreview.querySelector('i');
+                fileIcon.className = file.type.startsWith('image/') ? 'fas fa-image' : 'fas fa-file';
+                
+                const fileName = attachmentPreview.querySelector('span');
+                fileName.textContent = file.name;
+            }
+            
+            // 清空文件输入，以便可以选择相同的文件
+            event.target.value = '';
+        }
+
+        // 预览图片
+        function previewImage(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageUrl;
+            modal.classList.add('show');
+        }
+
+        // 关闭图片预览
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('show');
+        }
+
+        // 下载文件
+        function downloadFile(fileUrl, fileName) {
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = fileName || '文件';
+            link.target = '_blank';
+            link.click();
+        }
+
+        // 标记消息为已读
+        async function markMessagesAsRead() {
+            if (!currentChatUser) return;
+
+            try {
+                await apiRequest('/chat/unread-count', 'GET');
+                await Utils.loadChatUnreadCount();
+                // 重新加载用户列表以更新各用户的未读消息数量
+                await loadUserList();
+            } catch (error) {
+                console.error('标记消息已读失败:', error);
+            }
+        }
+
+        // 建立SSE连接
+        // 直接添加新消息到聊天框
+        function addNewMessageToChat(msg) {
+            const messagesContainer = document.getElementById('chatMessages');
+            if (!messagesContainer) {
+                console.error('添加新消息失败：messagesContainer元素不存在');
+                return;
+            }
+            
+            // 获取当前消息ID集合，避免重复添加
+            const existingMessageIds = new Set();
+            const existingMessages = messagesContainer.querySelectorAll('.message');
+            existingMessages.forEach(msgElement => {
+                const messageId = msgElement.getAttribute('data-message-id');
+                if (messageId) {
+                    existingMessageIds.add(messageId);
+                }
+            });
+            
+            // 如果消息已存在，跳过
+            const messageId = msg.id.toString();
+            if (existingMessageIds.has(messageId)) {
+                console.log('跳过已存在的消息:', messageId);
+                return;
+            }
+            
+            const isSent = msg.sender_id === getCurrentUserId();
+            const time = formatMessageTime(msg.created_at);
+            // 获取当前用户和对方用户的头像
+            const senderAvatar = msg.sender_avatar || '/images/default-avatar.png';
+            const currentUser = Utils.getUser();
+            const currentUserAvatar = currentUser?.avatar || '/images/default-avatar.png';
+            
+           // 当发送信息时，立即清理聊天框里显示的所有提示元素
+            const messagesContainer1 = document.getElementById('chatMessages');
+            if (messagesContainer1) {
+                // 移除所有提示元素
+                const hintElements = messagesContainer1.querySelectorAll('.empty-state, .error-state, .load-error-indicator, .no-more-messages');
+                hintElements.forEach(element => {
+                    element.remove();
+                });
+            }
+
+            // 创建消息HTML
+            const messageHtml = `
+                <div class="message ${isSent ? 'sent' : 'received'}" data-message-id="${messageId}">
+                    <div class="message-avatar">
+                        <div class="user-avatar" style="width: 30px; height: 30px; border-radius: 50%;">
+                            ${(isSent ? currentUserAvatar : senderAvatar) !== '/images/default-avatar.png' ? 
+                                `<img src="${isSent ? currentUserAvatar : senderAvatar}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : 
+                                '<i class="fas fa-user"></i>'}
+                        </div>
+                    </div>
+                    <div class="message-body">
+                        <div class="message-header">
+                            <span class="sender-name">${isSent ? (currentUser.fullName || currentUser.username) : msg.sender_name}</span>
+                            <span class="sender-account-type">${isSent ? getAccountTypeText(currentUser.accountType) : getAccountTypeText(msg.sender_account_type)}</span>
+                        </div>
+                        <div class="message-bubble">
+                            ${msg.message_type === 'text' ? msg.content : 
+                              msg.message_type === 'image' ? 
+                              `<img src="${msg.file_url}" alt="图片" class="message-image" onclick="previewImage('${msg.file_url}')">` :
+                              `<div class="message-file" onclick="downloadFile('${msg.file_url}', '${msg.content}')">
+                                  <i class="fas fa-file"></i>
+                                  <span>${msg.content}</span>
+                              </div>`}
+                            <div class="message-time">${time}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到聊天框底部
+            messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+            
+            // 滚动到底部
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
+            
+            // 刷新未读消息数量
+            if (typeof Utils.loadChatUnreadCount === 'function') {
+                Utils.loadChatUnreadCount();
+            }
+        }
+
+        // 获取最新的单条消息并添加到聊天框
+        async function fetchLatestMessage() {
+            try {
+                // 请求最新的一条消息
+                const response = await apiRequest(`/chat/messages/${currentChatUser.id}?page=1&limit=1`, 'GET');
+                if (response.messages && response.messages.length > 0) {
+                    const latestMessage = response.messages[0];
+                    addNewMessageToChat(latestMessage);
+                }
+            } catch (error) {
+                console.error('获取最新消息失败:', error);
+                // 如果获取失败，回退到重新加载聊天记录
+                loadChatMessages();
+            }
+        }
+
+        function establishSSEConnection() {
+            const userId = getCurrentUserId();
+            if (!userId) return;
+
+            try {
+                sseConnection = new EventSource(`/api/notifications/stream?userId=${userId}`);
+                
+                sseConnection.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'notification' && data.data.type === 'new_message') {
+                            // 如果是当前聊天用户的消息，直接添加到聊天框且不显示通知
+                            if (currentChatUser && data.data.senderId === currentChatUser.id) {
+                                // 直接使用SSE推送的消息数据
+                                const message = data.data.message;
+                                if (message) {
+                                    addNewMessageToChat(message);
+                                } else {
+                                    // 如果推送中没有完整的消息数据，则获取最新消息
+                                    fetchLatestMessage();
+                                }
+                                // 对于当前聊天用户的消息，不播放提示音，不显示通知
+                            } else {
+                                // 否则更新用户列表、未读数并显示通知
+                                loadUserList();       
+                            }
+                                        // 播放提示音
+                                if (localStorage.getItem('notificationSoundEnabled') !== 'false') {
+                                    playNotificationSound();
+                                }
+                        }             
+                    } catch (error) {
+                        console.error('SSE消息处理失败:', error);
+                    }
+                };
+
+                sseConnection.onerror = function(event) {
+                    console.error('SSE连接错误:', event);
+                    // 5秒后重连
+                    setTimeout(establishSSEConnection, 5000);
+                };
+
+            } catch (error) {
+                console.error('建立SSE连接失败:', error);
+            }
+        }
+
+        // 处理正在输入状态
+        let typingTimeout;
+        function handleTyping() {
+            // 这里可以实现正在输入的提示功能
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                // 停止输入提示
+            }, 1000);
+        }
+
+        // 辅助函数
+        function getCurrentUserId() {
+            const userInfo = Utils.getUser();
+            return userInfo ? userInfo.id : null;
+        }
+
+        function getAccountTypeText(accountType) {
+            const typeMap = {
+                'admin': '管理员',
+                'engineer': '工程师',
+                'customer_service': '客服',
+                'user': '用户'
+            };
+            return typeMap[accountType] || '用户';
+        }
+
+        function formatMessageTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            if (messageDate.getTime() === today.getTime()) {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            } else if (messageDate.getTime() === today.getTime() - 86400000) {
+                return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) + 
+                       ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+
+        // 将文件大小转换为人类可读的格式
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showLoading(containerId) {
+            document.getElementById(containerId).innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            `;
+        }
+
+        function showLoadingMessage(message) {
+            // 这个函数已废弃，改为在附件预览处显示上传状态
+            console.log('文件上传中:', message);
+        }
+
+        function hideLoadingMessage() {
+            // 这个函数已废弃，改为在附件预览处显示上传状态
+        }
+
+        function showError(message) {
+            if (typeof Utils !== 'undefined' && Utils.showError) {
+                Utils.showError(message);
+            } else {
+                alert(message); // 降级方案
+            }
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 播放通知声音
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('/sounds/notification.mp3');
+                audio.volume = 0.3;
+                audio.play().catch(err => console.log('播放声音失败:', err));
+            } catch (error) {
+                console.log('播放通知声音失败:', error);
+            }
+        }
+
+        // 页面卸载时关闭SSE连接
+        window.addEventListener('beforeunload', function() {
+            if (sseConnection) {
+                sseConnection.close();
+            }
+        });
+        
+        // 禁用浏览器下拉刷新和其他手势功能
+        // 1. 监听touchstart记录初始位置
+        let startY;
+        
+        // 2. 监听touchmove阻止默认行为
+        document.addEventListener('touchmove', function(e) {
+            // 仅允许特定元素（如聊天消息区域）的正常滚动
+            const isInScrollableArea = e.target.closest('.chat-messages, .user-list');
+            if (!isInScrollableArea) {
+                // 对非滚动区域，阻止所有默认触摸行为
+                e.preventDefault();
+            } else {
+                // 对滚动区域，仍然阻止可能触发刷新的顶部下拉
+                const scrollable = isInScrollableArea;
+                const scrollTop = scrollable.scrollTop;
+                const currentY = e.touches[0].clientY;
+                
+                // 当在滚动区域顶部且向下拉动时，阻止默认行为
+                if (scrollTop <= 0 && currentY > startY) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+        
+        // 3. 监听touchstart更新起始位置
+        document.addEventListener('touchstart', function(e) {
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        // 4. 禁用双指缩放
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // 5. 添加额外的触摸事件监听器确保完全禁用浏览器手势
+        document.addEventListener('touchstart', function(e) {
+            // 记录起始位置用于判断方向
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+    </script>
+</body>
+</html>

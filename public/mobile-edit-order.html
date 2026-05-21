@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>编辑工单 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+             <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>  
+            <h1 class="app-title">编辑工单</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <!-- 主内容区 -->
+    <main class="main-content" >
+        <div class="content-scroll">
+            <!-- 加载状态 -->
+            <div class="loading-spinner" id="loadingIndicator" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; font-size: 16px; color: #667eea;">
+                <i class="fas fa-spinner fa-spin mr-2" style="font-size: 20px;"></i>
+                <span>加载工单信息...</span>
+            </div>
+            <!-- 编辑工单表单 -->
+            <section class="orders-section" >
+                <form id="orderEditForm">
+                    <input type="hidden" id="editOrderId" name="id">    
+             
+                    <div>
+                        <label for="editServiceTime">服务时间 <span class="required">*</span></label>
+                        <input type="datetime-local" id="editServiceTime" name="serviceTime">
+                    </div>
+                    
+                    <div>
+                        <label for="editCustomerName">客户姓名 <span class="required">*</span></label>
+                        <input type="text" id="editCustomerName" name="customerName" placeholder="请输入客户姓名">
+                    </div>
+                    
+                    <div>
+                        <label for="editCustomerPhone">客户电话 <span class="required">*</span></label>
+                        <input type="tel" id="editCustomerPhone" name="customerPhone" placeholder="请输入客户电话">
+                    </div>
+                    
+                    <div class="full-width">
+                        <label for="editCustomerAddress">客户地址</label>
+                        <textarea id="editCustomerAddress" name="customerAddress" rows="2" placeholder="请输入客户地址"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="editWorkType">工单类型 <span class="required">*</span></label>
+                        <select id="editWorkType" name="workType">
+                            <option value="维修">维修</option>
+                            <option value="送货">送货</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="full-width">
+                        <label for="editWorkDescription">工单说明 <span class="required">*</span></label>
+                        <textarea id="editWorkDescription" name="workDescription" rows="2" placeholder="请输入工单详细说明"></textarea>
+                    </div>
+                    
+                    <div class="full-width">
+                        <label for="editNotes">备注</label>
+                        <textarea id="editNotes" name="notes" rows="2" placeholder="选填备注信息"></textarea>
+                    </div>
+                    
+                    <div class="full-width">
+                        <label>图片附件 <span class="image-count" id="editImageCount">(0/5)</span></label>
+                        <div class="image-upload-container">
+                            <input type="file" id="editImageUpload" accept="image/*" multiple style="display: none;" onchange="handleEditImageSelect(event)">
+                            <button type="button" class="upload-btn" id="editUploadBtn" onclick="document.getElementById('editImageUpload').click()">
+                                <i class="fas fa-camera"></i>
+                                <span>添加图片</span>
+                            </button>
+                            <div id="editImagePreview" class="image-preview"></div>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- 操作按钮区域 -->
+            <section class="action-section">
+                <button class="btn btn-primary btn-block" onclick="saveOrder()">
+                    <i class="fas fa-check"></i>
+                    保存
+                </button>
+            </section>
+        </div>
+    </main>
+
+    <!-- 成功提示 -->
+    <div class="toast-message success" id="successToast" style="display: none;">
+        <i class="fas fa-check-circle"></i>
+        <span>操作成功</span>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="toast-message error" id="errorToast" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>操作失败</span>
+    </div>
+
+    <style>
+
+        
+        /* 内容滚动区域样式 */
+        .content-scroll {
+            padding-bottom: 20px;
+        }
+        
+        /* 表单样式 - 使用与工单列表相同的容器样式 */
+        .orders-section {
+            padding: 16px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            margin: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #orderEditForm {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 所有表单行都是两列布局 */
+        #orderEditForm > div {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* 标签固定宽度，左对齐 */
+        #orderEditForm label {
+            flex-shrink: 0;
+            width: 110px;
+            text-align: left;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        /* 输入框无边框，靠右对齐 */
+        #orderEditForm select,
+        #orderEditForm input,
+        #orderEditForm textarea {
+            flex: 1;
+            margin: 0;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            box-sizing: border-box;
+            font-family: inherit;
+            text-align: right;
+        }
+        
+        /* 表单行分隔线 */
+        #orderEditForm > div {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 12px;
+        }
+        
+        /* textarea特殊处理 */
+        #orderEditForm textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        /* 移动端适配：即使小屏也保持两列布局 */
+        @media (max-width: 480px) {
+            #orderEditForm {
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            #orderEditForm > div {
+                gap: 10px;
+            }
+            
+            #orderEditForm label {
+                width: 90px;
+                font-size: 12px;
+                text-align: left;
+            }
+            
+            #orderEditForm select,
+            #orderEditForm input,
+            #orderEditForm textarea {
+                font-size: 13px;
+                padding: 6px 8px;
+                text-align: right;
+            }
+            
+            #orderEditForm > div {
+                padding-bottom: 8px;
+            }
+        }
+        
+        /* 移除表单控件聚焦效果 */
+        #orderEditForm select:focus,
+        #orderEditForm input:focus,
+        #orderEditForm textarea:focus {
+            outline: none;
+        }
+        
+        /* 必填字段标识 */
+        .required {
+            color: #dc3545;
+            font-size: 12px;
+        }
+        
+        /* 操作按钮区域 */
+        .action-section {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-block {
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+        }
+        
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        /* 返回按钮样式 */
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 页面标题调整 */
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 图片上传样式 */
+        .image-upload-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        
+        .upload-btn {
+            background-color: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            color: #6c757d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .upload-btn:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+            color: #495057;
+        }
+        
+        .upload-btn i {
+            font-size: 16px;
+        }
+        
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+            width: 100%;
+        }
+        
+        .image-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .image-item .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        /* 图片查看器样式 */
+        .image-viewer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .image-viewer-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .image-viewer-content {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .image-viewer-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        
+        .image-viewer-close {
+            position: absolute;
+            top: -40px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        
+        .image-viewer-close:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        /* 图片导航按钮样式 */
+        .image-viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            transition: background-color 0.2s ease;
+        }
+        
+        .image-viewer-nav:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .image-viewer-prev {
+            left: 20px;
+        }
+        
+        .image-viewer-next {
+            right: 20px;
+        }
+        
+        /* 图片计数器样式 */
+        .image-viewer-counter {
+            position: absolute;
+            top: -40px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            z-index: 1001;
+        }
+        
+        /* 图片计数样式 */
+        .image-count {
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: normal;
+        }
+        
+        /* 禁用状态的上传按钮 */
+        .upload-btn:disabled {
+            background-color: #e9ecef !important;
+            border-color: #dee2e6 !important;
+            color: #adb5bd !important;
+            cursor: not-allowed;
+        }
+        
+        .upload-btn:disabled:hover {
+            background-color: #e9ecef !important;
+            border-color: #dee2e6 !important;
+            color: #adb5bd !important;
+        }
+    </style>
+
+    <script src="/js/utils.js"></script>
+    <script>
+        // 编辑模式下选中的图片
+        let editSelectedImages = [];
+        let deletedImages = [];
+        let workOrder = null;
+        let orderId = null;
+        
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查用户是否登录
+            if (!Utils.getToken()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+             await checkAuth();
+             setupNavigation();
+            // 初始化用户信息
+            initUserInfo();
+            
+            // 获取URL中的工单ID
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get('id');
+            
+            if (!orderId) {
+                showError('工单ID不存在');
+                // 隐藏加载指示器
+                document.getElementById('loadingIndicator').style.display = 'none';
+                return;
+            }
+            
+            // 加载工单信息
+            await loadWorkOrderDetail();
+        });
+        
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+            
+           
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // 点击遮罩层关闭侧边栏
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'sidebarOverlay') {
+                closeSidebar();
+            }
+        });
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+
+        // 初始化用户信息
+        function initUserInfo() {
+            const user = Utils.getUser();
+            if (user) {
+                // 用户信息初始化代码保持不变
+            }
+        }
+        
+        
+        // 加载工单详情
+        async function loadWorkOrderDetail() {
+            try {
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                const orderEditForm = document.getElementById('orderEditForm');
+                
+                // 确保所有元素正确初始化
+                if (!loadingIndicator || !orderEditForm) {
+                    console.error('页面元素未正确加载');
+                    alert('页面加载失败，请刷新重试');
+                    return;
+                }
+                
+                loadingIndicator.style.display = 'flex';
+                orderEditForm.style.display = 'none';
+                
+                console.log('开始加载工单详情，订单ID:', orderId);
+                
+                try {
+                    // 使用Utils.request方法调用API，确保正确处理认证和URL
+                    // 添加前导斜杠，因为utils.js中的BASE_URL是'/api'，需要通过斜杠连接
+                    const response = await Utils.request(`/work-orders/${orderId}`, {
+                        method: 'GET'
+                    });
+                    
+                    console.log('API响应:', response);
+                    
+                    if (!response) {
+                        throw new Error('获取工单详情失败（无响应）');
+                    }
+                    
+                    workOrder = response;
+                    
+                    // 填充表单数据
+                    fillFormData();
+                    
+                    loadingIndicator.style.display = 'none';
+                    orderEditForm.style.display = 'block';
+                } catch (apiError) {
+                    console.error('API调用失败:', apiError);
+                    throw apiError;
+                }
+            } catch (error) {
+                console.error('加载工单详情失败:', error);
+                // 确保隐藏加载指示器
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                
+                // 显示错误信息，并且即使在错误情况下也显示表单框架
+                const orderEditForm = document.getElementById('orderEditForm');
+                if (orderEditForm) {
+                    orderEditForm.style.display = 'block';
+                }
+                
+                // 显示错误信息
+                showError(error.message || '加载工单详情失败，请检查网络连接或重试');
+            }
+        }
+    
+    // 当前查看的图片索引
+    let currentImageIndex = 0;
+    // 所有可查看的图片列表
+    let currentImageList = [];
+    
+    // 查看图片大图
+    function viewImage(imageIndex) {
+        // 收集所有可查看的图片
+        currentImageList = [];
+        editSelectedImages.forEach((image, index) => {
+            let imageUrl = '';
+            if (image.isExisting) {
+                // 处理现有图片的路径
+                imageUrl = image.path;
+                if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+                    imageUrl = '/uploads/work-order-images/' + imageUrl;
+                }
+            } else {
+                // 处理新选择的图片
+                imageUrl = image.url;
+            }
+            currentImageList.push({
+                url: imageUrl,
+                alt: `工单图片 ${index + 1}`
+            });
+        });
+        
+        // 设置当前图片索引
+        currentImageIndex = imageIndex;
+        
+        // 创建图片查看器元素
+        const viewerHtml = `
+            <div class="image-viewer-modal" id="imageViewerModal">
+                <div class="image-viewer-content">
+                    <img src="${currentImageList[currentImageIndex].url}" alt="${currentImageList[currentImageIndex].alt}">
+                    <button class="image-viewer-close" onclick="closeImageViewer()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    ${currentImageList.length > 1 ? `
+                        <button class="image-viewer-nav image-viewer-prev" onclick="navigateImage(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="image-viewer-nav image-viewer-next" onclick="navigateImage(1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <div class="image-viewer-counter">
+                            ${currentImageIndex + 1} / ${currentImageList.length}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        // 移除现有的图片查看器（如果存在）
+        const existingViewer = document.getElementById('imageViewerModal');
+        if (existingViewer) {
+            existingViewer.remove();
+        }
+        
+        // 添加图片查看器到页面
+        document.body.insertAdjacentHTML('beforeend', viewerHtml);
+        
+        // 显示图片查看器
+        setTimeout(() => {
+            const modal = document.getElementById('imageViewerModal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }, 100);
+        
+        // 添加键盘事件监听
+        document.addEventListener('keydown', handleImageViewerKeydown);
+    }
+    
+    // 关闭图片查看器
+    function closeImageViewer() {
+        const modal = document.getElementById('imageViewerModal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(modal);
+                document.removeEventListener('keydown', handleImageViewerKeydown);
+                // 重置状态
+                currentImageList = [];
+                currentImageIndex = 0;
+            }, 300);
+        }
+    }
+    
+    // 导航到上一张或下一张图片
+    function navigateImage(direction) {
+        if (currentImageList.length <= 1) return;
+        
+        // 更新索引（循环导航）
+        currentImageIndex += direction;
+        if (currentImageIndex < 0) {
+            currentImageIndex = currentImageList.length - 1;
+        } else if (currentImageIndex >= currentImageList.length) {
+            currentImageIndex = 0;
+        }
+        
+        // 更新图片
+        const viewer = document.getElementById('imageViewerModal');
+        if (!viewer) return;
+        
+        const imgElement = viewer.querySelector('img');
+        const counterElement = viewer.querySelector('.image-viewer-counter');
+        
+        if (imgElement) {
+            // 添加过渡效果
+            imgElement.style.transform = direction > 0 ? 'translateX(20px)' : 'translateX(-20px)';
+            imgElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                const currentImage = currentImageList[currentImageIndex];
+                imgElement.src = currentImage.url;
+                imgElement.alt = currentImage.alt;
+                
+                // 恢复过渡
+                imgElement.style.transform = 'translateX(0)';
+                imgElement.style.opacity = '1';
+                
+                // 更新计数器
+                if (counterElement) {
+                    counterElement.textContent = `${currentImageIndex + 1} / ${currentImageList.length}`;
+                }
+            }, 150);
+        }
+    }
+    
+    // 处理图片查看器键盘事件
+    function handleImageViewerKeydown(event) {
+        switch (event.key) {
+            case 'Escape':
+                closeImageViewer();
+                break;
+            case 'ArrowLeft':
+                navigateImage(-1);
+                break;
+            case 'ArrowRight':
+                navigateImage(1);
+                break;
+        }
+    }
+        
+        // 填充表单数据
+        function fillFormData() {
+            if (!workOrder) return;
+            
+            // 重置图片状态
+            editSelectedImages = [];
+            deletedImages = [];
+            
+            // 填充表单数据
+            document.getElementById('editOrderId').value = workOrder.id;
+            document.getElementById('editServiceTime').value = Utils.formatDateTimeForInput(workOrder.service_time);
+            
+            // 处理工单类型，确保正确选择预定义的中文选项
+            const workTypeSelect = document.getElementById('editWorkType');
+            const workTypeValue = workOrder.work_type;
+            
+            // 英文类型值到中文选项的映射
+            const typeMap = {
+                'repair': '维修',
+                'delivery': '送货',
+                'other': '其他'
+            };
+            
+            // 获取对应的中文选项值
+            const chineseValue = typeMap[workTypeValue] || workTypeValue;
+            
+            // 直接设置为中文值，确保选择预定义的中文选项
+            workTypeSelect.value = chineseValue;
+            
+            document.getElementById('editWorkDescription').value = workOrder.work_description || '';
+            document.getElementById('editCustomerName').value = workOrder.customer_name || '';
+            document.getElementById('editCustomerPhone').value = workOrder.customer_phone || '';
+            document.getElementById('editCustomerAddress').value = workOrder.customer_address || '';
+            document.getElementById('editNotes').value = workOrder.notes || '';
+            
+            // 初始化现有图片
+            const preview = document.getElementById('editImagePreview');
+            preview.innerHTML = '';
+            
+            if (workOrder.images && workOrder.images.length > 0) {
+                workOrder.images.forEach((imagePath, index) => {
+                    const imageId = 'existing_' + index;
+                    editSelectedImages.push({
+                        id: imageId,
+                        path: imagePath,
+                        isExisting: true
+                    });
+                    
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-item';
+                    imageItem.id = 'edit-image-' + imageId;
+                    
+                    // 确保图片路径是完整的URL
+                    let fullImagePath = imagePath;
+                    if (!imagePath.startsWith('http') && !imagePath.startsWith('/')) {
+                        fullImagePath = '/uploads/work-order-images/' + imagePath;
+                    } else if (!imagePath.startsWith('http') && imagePath.startsWith('/')) {
+                        // 已经有斜杠前缀，保持不变
+                    }
+                    
+                    imageItem.innerHTML = `
+                        <img src="${fullImagePath}" alt="工单图片 ${index + 1}" onclick="viewImage(${index})">
+                        <button type="button" class="delete-btn" onclick="removeEditImage('${imageId}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    preview.appendChild(imageItem);
+                });
+            }
+            
+            // 更新上传按钮状态
+            updateEditUploadButton();
+        }
+        
+        
+        // 处理编辑模式下的图片选择
+        function handleEditImageSelect(event) {
+            const files = Array.from(event.target.files);
+            const preview = document.getElementById('editImagePreview');
+            
+            // 检查是否超过5张图片限制
+            const currentImageCount = editSelectedImages.length;
+            const maxImages = 5;
+            
+            if (currentImageCount >= maxImages) {
+                showToast('error', `最多只能添加${maxImages}张图片`);
+                event.target.value = '';
+                return;
+            }
+            
+            // 计算还可以添加多少张图片
+            const remainingSlots = maxImages - currentImageCount;
+            const filesToProcess = files.slice(0, remainingSlots);
+            
+            if (files.length > remainingSlots) {
+                showToast('error', `最多只能添加${maxImages}张图片，已选择${files.length}张，将只添加前${remainingSlots}张`);
+            }
+            
+            filesToProcess.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageId = 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        editSelectedImages.push({
+                            id: imageId,
+                            file: file,
+                            url: e.target.result,
+                            isExisting: false
+                        });
+                        
+                        const imageItem = document.createElement('div');
+                        imageItem.className = 'image-item';
+                        imageItem.id = 'edit-image-' + imageId;
+                        // 计算当前图片在列表中的索引
+                        const currentIndex = editSelectedImages.length - 1;
+                        imageItem.innerHTML = `
+                            <img src="${e.target.result}" alt="预览图片" onclick="viewImage(${currentIndex})">
+                            <button type="button" class="delete-btn" onclick="removeEditImage('${imageId}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                        preview.appendChild(imageItem);
+                        
+                        // 更新上传按钮状态
+                        updateEditUploadButton();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 清空input，允许重复选择同一文件
+            event.target.value = '';
+        }
+        
+        // 删除编辑模式下的图片
+        function removeEditImage(imageId) {
+            const imageIndex = editSelectedImages.findIndex(img => img.id === imageId);
+            if (imageIndex !== -1) {
+                const image = editSelectedImages[imageIndex];
+                
+                // 如果是现有图片，添加到删除列表
+                if (image.isExisting && image.path) {
+                    deletedImages.push(image.path);
+                }
+                
+                // 从选中列表中移除
+                editSelectedImages.splice(imageIndex, 1);
+                
+                // 移除DOM元素
+                const imageItem = document.getElementById('edit-image-' + imageId);
+                if (imageItem) {
+                    imageItem.remove();
+                }
+                
+                // 更新上传按钮状态
+                updateEditUploadButton();
+            }
+        }
+        
+        // 更新编辑模式下的上传按钮状态和图片计数
+        function updateEditUploadButton() {
+            const uploadBtn = document.getElementById('editUploadBtn');
+            const imageCount = document.getElementById('editImageCount');
+            const currentCount = editSelectedImages.length;
+            const maxImages = 5;
+            
+            // 更新计数显示
+            imageCount.textContent = `(${currentCount}/${maxImages})`;
+            
+            // 如果已达到最大数量，禁用上传按钮
+            if (currentCount >= maxImages) {
+                uploadBtn.disabled = true;
+                uploadBtn.style.backgroundColor = '#e9ecef';
+                uploadBtn.style.borderColor = '#dee2e6';
+                uploadBtn.style.color = '#adb5bd';
+                uploadBtn.querySelector('span').textContent = '已达到上限';
+            } else {
+                uploadBtn.disabled = false;
+                uploadBtn.style.backgroundColor = '#f8f9fa';
+                uploadBtn.style.borderColor = '#dee2e6';
+                uploadBtn.style.color = '#6c757d';
+                uploadBtn.querySelector('span').textContent = '添加图片';
+            }
+        }
+        
+        // 保存工单
+        async function saveOrder() {
+            try {
+                const form = document.getElementById('orderEditForm');
+                
+                // 表单验证
+                const { isValid, errors } = Utils.validateForm(form);
+                if (!isValid) {
+                    showToast('error', errors[0]);
+                    return;
+                }
+
+                const formDataObject = Utils.serializeForm(form);
+                
+                // 使用统一的时间处理函数格式化服务时间
+                if (formDataObject.serviceTime && formDataObject.serviceTime.trim() !== '') {
+                    formDataObject.serviceTime = Utils.formatDateTimeForBackend(formDataObject.serviceTime);
+                    if (!formDataObject.serviceTime) {
+                        delete formDataObject.serviceTime;
+                    }
+                }
+                
+                // 创建FormData对象以支持文件上传
+                const submitData = new FormData();
+                
+                // 工单类型映射：中文 -> 英文
+                const workTypeMap = {
+                    '维修': 'repair',
+                    '送货': 'delivery',
+                    '其他': 'other'
+                };
+                
+                // 添加表单字段
+                Object.keys(formDataObject).forEach(key => {
+                    // 跳过id字段，因为它已经在URL中
+                    if (key === 'id') return;
+                    
+                    // 即使字段值为空，也应该发送，以便后端能正确处理
+                    if (key === 'workType' && formDataObject[key]) {
+                        // 转换工单类型为英文
+                        submitData.append(key, workTypeMap[formDataObject[key]] || formDataObject[key]);
+                    } else {
+                        // 确保所有字段都被添加，包括空值字段
+                        submitData.append(key, formDataObject[key] || '');
+                    }
+                });
+                
+                // 添加删除的图片信息
+                if (deletedImages.length > 0) {
+                    submitData.append('deleted_images', JSON.stringify(deletedImages));
+                }
+                
+                // 添加新上传的图片
+                editSelectedImages.forEach(image => {
+                    if (!image.isExisting && image.file) {
+                        submitData.append('images', image.file);
+                    }
+                });
+                
+                // 使用fetch发送请求
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/work-orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: submitData
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || '保存工单失败');
+                }
+                
+                showToast('success', '工单保存成功');
+                setTimeout(() => {
+                    window.location.href = '/mobile-work-order-detail.html?id=' + orderId;
+                }, 1000);
+                
+            } catch (error) {
+                console.error('保存工单失败:', error);
+                showToast('error', error.message || '保存工单失败');
+            }
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            // 确保隐藏加载指示器
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // 直接使用alert显示错误消息
+            alert(message);
+        }
+        
+        // 显示提示消息
+        function showToast(type, message) {
+            const toastId = type === 'success' ? 'successToast' : 'errorToast';
+            const toast = document.getElementById(toastId);
+            const toastMessage = toast.querySelector('span');
+            
+            toastMessage.textContent = message;
+            toast.style.display = 'flex';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

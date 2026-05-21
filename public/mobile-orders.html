@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>工单列表 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+<body style="overflow: hidden;">
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">工单管理</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item active">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+
+        <!-- 搜索栏 -->
+        <section class="search-section">
+            <div class="search-container">
+                <input type="text" id="mobileSearch" class="search-input" placeholder="搜索客户姓名、电话或工单说明...">
+                <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="search-btn" onclick="performSearch()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- 状态筛选按钮 -->
+        <section class="status-filter-section">
+            <div class="status-filters">
+                <button class="status-btn" data-status="" onclick="filterByStatus('')">
+                    <i class="fas fa-list"></i>
+                    <span>全部</span>
+                    <span class="status-count" id="allCount">0</span>
+                </button>
+                <button class="status-btn pending" data-status="未完成" onclick="filterByStatus('未完成')">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>未完成</span>
+                    <span class="status-count" id="pendingCount">0</span>
+                </button>
+                <button class="status-btn waiting" data-status="等待服务" onclick="filterByStatus('等待服务')">
+                    <i class="fas fa-clock"></i>
+                    <span>等待服务</span>
+                    <span class="status-count" id="waitingCount">0</span>
+                </button>
+                <button class="status-btn assigned" data-status="派单成功" onclick="filterByStatus('派单成功')">
+                    <i class="fas fa-user-check"></i>
+                    <span>派单成功</span>
+                    <span class="status-count" id="assignedCount">0</span>
+                </button>
+                <button class="status-btn progress" data-status="服务中" onclick="filterByStatus('服务中')">
+                    <i class="fas fa-wrench"></i>
+                    <span>服务中</span>
+                    <span class="status-count" id="progressCount">0</span>
+                </button>
+                <button class="status-btn completed" data-status="完成" onclick="filterByStatus('完成')">
+                    <i class="fas fa-check-circle"></i>
+                    <span>完成</span>
+                    <span class="status-count" id="completedCount">0</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 工单内容区域 -->
+        <div class="content-scroll">
+            <!-- 工单列表 -->
+        <section class="orders-section">
+            <div class="orders-header">
+                <h2>工单列表</h2>
+                <div class="view-toggle">
+                    <!--卡片模式-->
+                    <button class="view-btn active" id="cardViewBtn" onclick="setCardView()">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <!--平铺模式-->
+                    <button class="view-btn" id="listViewBtn" onclick="setListView()">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <!--表格模式-->
+                    <button class="view-btn" id="tableViewBtn" onclick="setTableView()">
+                            <i class="fas fa-table"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="orders-container" id="ordersContainer" >
+                <!-- 加载动画 -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>加载中...</span>
+                </div>
+            </div>
+
+             <!-- 表格视图容器 -->
+            <div style="padding-right: 10px;padding-left: 10px;">
+                <div class="orders-table-container" id="OrdersTableContainer" style="display: none;">
+                    <!-- 表格内容将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 分页控制 -->
+            <div class="pagination-section" id="paginationSection">
+                <div class="pagination-controls">
+                    <button class="page-btn" id="prevPageBtn" onclick="loadPrevPage()" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="page-numbers" id="pageNumbers"></div>
+                    <button class="page-btn" id="nextPageBtn" onclick="loadNextPage()" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+        </div>
+
+        <!-- 浮动新建按钮 -->
+        <button class="fab-create-order" id="fabCreateBtn" onclick="window.location.href='/mobile-create-order.html'">
+            <i class="fas fa-plus"></i>
+        </button>
+    </main>
+
+        <!-- 工单详情模态框 -->
+    <div class="modal" id="orderDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>工单详情</h3>
+                <button class="close-btn" onclick="closeOrderDetail()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- 动态加载内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 拨打电话确认模态框 -->
+    <div class="modal" id="phoneCallModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>拨打电话</h3>
+                <button class="close-btn" onclick="closePhoneCallModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="phone-confirmation">
+                    <div class="phone-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <div class="phone-info">
+                        <p>您确定要拨打电话吗？</p>
+                        <p class="phone-number" id="confirmPhoneNumber"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePhoneCallModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmPhoneCall()">
+                    <i class="fas fa-phone"></i>
+                    拨打
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script src="/js/utils.js"></script>
+    <style>
+        /* 覆盖原有的悬浮按钮样式以保持一致性 */
+        .fab-create-order {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 18px !important;
+            bottom:60px !important;
+            transition: all 0.3s ease !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3) !important;
+        }
+        
+        .fab-create-order:hover {
+            transform: translateY(-4px) scale(1.05) !important;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4) !important;
+        }
+        
+        .fab-create-order:active {
+            transform: translateY(-2px) scale(0.95) !important;
+        }
+    </style>
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let workOrders = [];
+        let currentFilter = '未完成';
+        let currentSearch = '';
+        let currentCustomerPhone = '';
+        let isCardView = true;
+        let isTableView = false;
+        
+        // 防误触机制
+        let isProcessing = false;
+        let lastClickTime = 0;
+        const CLICK_DEBOUNCE_TIME = 1000; // 1秒防抖时间
+        
+        // 防误触检查函数
+        function checkClickDebounce() {
+            const currentTime = Date.now();
+            if (isProcessing) {
+                Utils.showError('操作进行中，请稍候...');
+                return false;
+            }
+            if (currentTime - lastClickTime < CLICK_DEBOUNCE_TIME) {
+                Utils.showError('操作过于频繁，请稍后再试');
+                return false;
+            }
+            lastClickTime = currentTime;
+            return true;
+        }
+        
+        // 设置处理状态
+        function setProcessingState(processing) {
+            isProcessing = processing;
+            // 这里可以添加处理状态的视觉反馈
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+                       
+            await checkAuth();
+           
+            
+            // 从URL中获取参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlStatus = urlParams.get('status');
+            const urlAction = urlParams.get('action');
+            const urlCustomerPhone = urlParams.get('customerPhone');
+            
+            // 优先级：URL参数 > 保存的状态 > 默认值
+            if (urlStatus) {
+                // 如果URL中存在status参数，使用它作为初始筛选条件
+                currentFilter = urlStatus;
+                console.log('从URL获取筛选条件:', currentFilter);
+            } else {
+                // 从localStorage获取保存的筛选状态，包括空字符串
+                const savedFilter = localStorage.getItem('mobile_orders_filter');
+                if (savedFilter !== null) {
+                    currentFilter = savedFilter;
+                    console.log('从localStorage获取筛选条件:', currentFilter);
+                }
+            }
+            
+            // 检查是否有客户电话筛选参数
+            if (urlCustomerPhone) {
+                currentCustomerPhone = urlCustomerPhone;
+                console.log('从URL获取客户电话筛选:', currentCustomerPhone);
+            }
+            
+             setupNavigation();
+            
+            // 设置默认视图模式（卡片视图）
+            setCardView();
+            
+            // 设置默认激活的筛选按钮
+            updateActiveStatusButton(currentFilter);
+            await loadWorkOrders();
+                        
+            // 如果URL中存在action=create参数，自动跳转到新建工单页面
+            if (urlAction === 'create' && Utils.hasPermission('新建')) {
+                console.log('检测到新建工单请求，自动跳转到新建工单页面');
+                setTimeout(() => {
+                    window.location.href = '/mobile-create-order.html';
+                }, 500); // 延迟执行，确保页面完全加载
+            }
+        });
+
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (!Utils.hasPermission('查看')) {
+                Utils.showError('您没有权限访问此页面');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+                return;
+            }
+
+            // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+            
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }  
+              if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 加载工单列表
+        async function loadWorkOrders(page = 1) {
+            try {
+                currentPage = page;
+                
+                const params = new URLSearchParams({
+                    page: page,
+                    limit: 10,
+                    sortBy: 'create_time',
+                    sortOrder: 'DESC'
+                });
+                
+                if (currentSearch) params.append('search', currentSearch);
+                if (currentFilter) params.append('status', currentFilter);
+                if (currentCustomerPhone) params.append('customerPhone', currentCustomerPhone);
+                
+                // 获取筛选后的工单数据用于显示
+                const response = await Utils.get(`/work-orders?${params}`);
+                workOrders = response.workOrders || [];
+                totalPages = response.totalPages || 1;
+                
+                // 获取所有工单数据用于计算状态数量
+                const allParams = new URLSearchParams({
+                    page: 1,
+                    limit: 1000 // 足够大的数量以获取所有工单
+                });
+                if (currentSearch) allParams.append('search', currentSearch);
+                
+                const allResponse = await Utils.get(`/work-orders?${allParams}`);
+                const allWorkOrders = allResponse.workOrders || [];
+                
+                updateStatusCounts(allWorkOrders);
+                renderOrders();
+                updatePagination();
+                
+            } catch (error) {
+                console.error('加载工单列表失败:', error);
+                Utils.showError('加载工单列表失败');
+            }
+        }
+
+        // 更新状态计数
+        function updateStatusCounts(allWorkOrders) {
+            const counts = {
+                all: allWorkOrders.length,
+                pending: allWorkOrders.filter(o => ['等待服务', '派单成功', '服务中'].includes(o.currentStatus)).length,
+                waiting: allWorkOrders.filter(o => o.currentStatus === '等待服务').length,
+                assigned: allWorkOrders.filter(o => o.currentStatus === '派单成功').length,
+                progress: allWorkOrders.filter(o => o.currentStatus === '服务中').length,
+                completed: allWorkOrders.filter(o => o.currentStatus === '完成').length
+            };
+
+            document.getElementById('allCount').textContent = counts.all;
+            document.getElementById('pendingCount').textContent = counts.pending;
+            document.getElementById('waitingCount').textContent = counts.waiting;
+            document.getElementById('assignedCount').textContent = counts.assigned;
+            document.getElementById('progressCount').textContent = counts.progress;
+            document.getElementById('completedCount').textContent = counts.completed;
+        }
+
+        // 渲染工单
+        function renderOrders() {
+            if (workOrders.length === 0) {
+                // 如果是表格模式，清空表格容器
+                if (isTableView) {
+                    const tableContainer = document.getElementById('OrdersTableContainer');
+                    tableContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>暂无工单数据</p>
+                        </div>
+                    `;
+                } else {
+                    // 卡片和列表模式
+                    const container = document.getElementById('ordersContainer');
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>暂无工单数据</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (isCardView) {
+                const container = document.getElementById('ordersContainer');
+                container.style.display = 'block';
+                document.getElementById('OrdersTableContainer').style.display = 'none';
+                renderCardView(container);
+            } else if (isTableView) {
+                const container = document.getElementById('OrdersTableContainer');
+                container.style.display = 'block';
+                document.getElementById('ordersContainer').style.display = 'none';
+                renderTableView(container);
+            } else {
+                const container = document.getElementById('ordersContainer');
+                container.style.display = 'block';
+                document.getElementById('OrdersTableContainer').style.display = 'none';
+                renderListView(container);
+            }
+        }
+
+        // 卡片视图渲染
+        function renderCardView(container) {
+            let html = '<div class="orders-grid">';
+            
+            workOrders.forEach(order => {
+                const statusClass = getStatusClass(order.currentStatus);
+                const workTypeClass = getWorkTypeClass(order.work_type);
+                
+                html += `
+                    <div class="order-card" >
+                        <div class="order-card-header">
+                            <div class="order-id">#${order.id}</div>
+                            <div class="order-status ${statusClass}">
+                                ${getStatusText(order.currentStatus)}
+                            </div>
+                        </div>
+                        
+                        <div class="order-card-body">
+                            
+                            <div class="customer-info"> 
+                                ${order.customer_name ? `
+                                <div class="customer-name">
+                                    <i class="fas fa-user"></i>
+                                    ${order.customer_name || '-'}
+                                </div>` : ''}
+                             ${order.customer_phone ? `
+                                <div class="customer-phone ">
+                                    <i class="fas fa-phone"></i>
+                                    ${order.customer_phone + `<a style="color: #007bff;" onclick="event.stopPropagation(); makePhoneCall('${order.customer_phone}')" title="点击拨打电话">拨打</a>` || '-'}
+                                </div>` : ''}
+                            </div>
+                                                        
+                            ${order.work_description ? `
+                                <div class="order-description">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span class="description-text">${order.work_description}</span>
+                                </div>
+                            ` : ''}                           
+                                                  
+                            ${order.customer_address ? `
+                                <div class="order-address">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    ${order.customer_address}
+                                </div>
+                            ` : ''}
+                            
+                            ${order.notes ? `
+                                <div class="order-notes">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <span class="notes-text" style="white-space: pre-line;">${order.notes}</span>
+                                </div>
+                            ` : ''}
+                           
+                           ${(() => {
+                                const images = order.images;
+                                let imageArray = [];
+                                
+                                // 统一转换为数组格式
+                                if (images) {
+                                    if (Array.isArray(images)) {
+                                        imageArray = images;
+                                    } else if (typeof images === 'string') {
+                                        // 先尝试JSON解析，失败则按分隔符分割
+                                        try {
+                                            imageArray = JSON.parse(images);
+                                        } catch (e) {
+                                            // 支持多种分隔符
+                                            imageArray = images.split(/[,|]/);
+                                        }
+                                    }
+                                }
+                                
+                                // 过滤有效图片路径
+                                const validCount = imageArray.filter(img => 
+                                    img && typeof img === 'string' && img.trim().length > 0
+                                ).length;
+                                
+                                return validCount > 0 ? `
+                                <div class="order-attachment">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>图片(${validCount})</span>
+                                </div>
+                            ` : '';
+                            })()}                            
+
+                            <div class="order-info">
+                                <div class="order-type ${workTypeClass}">
+                                    ${getWorkTypeText(order.work_type)}
+                                </div>
+                                <div class="order-time">
+                                    <i class="fas fa-clock"></i>
+                                    ${formatDateTime(order.create_time)}
+                                </div>
+                            </div>
+
+
+                        </div>
+                        
+
+                        <div class="order-card-footer">
+                            <div class="engineer-info">
+                                <i class="fas fa-wrench"></i>
+                                ${order.engineer_full_name || '未分配'}
+                            </div>
+                            <div class="order-actions">
+                                ${getActionButtons(order)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 列表视图渲染
+        function renderListView(container) {
+            let html = '<div class="orders-list">';
+            
+            workOrders.forEach(order => {
+                const statusClass = getStatusClass(order.currentStatus);
+                const workTypeClass = getWorkTypeClass(order.work_type);
+                
+                html += `
+                    <div class="order-list-item" >
+                        <div class="order-item-header">
+                            <div class="order-id">#${order.id}</div>
+                            <div class="order-status ${statusClass}">
+                                ${getStatusText(order.currentStatus)}
+                            </div>
+                            <div class="order-type ${workTypeClass}">
+                                ${getWorkTypeText(order.work_type)}
+                            </div>
+                        </div>
+
+                        
+                        <div class="order-item-body">
+                        ${order.customer_name ? `
+                            <div class="customer-info">                       
+                                <span class="customer-name">${order.customer_name || '-'}</span>                           
+                            </div>
+                         ` : ''}
+
+                         ${order.customer_phone ? `
+                           <div class="customer-info">                           
+                                <span class="customer-phone clickable-phone" onclick="event.stopPropagation(); makePhoneCall('${order.customer_phone}')" title="点击拨打电话">${order.customer_phone || '-'}</span>
+                          </div>
+                            ` : ''}
+                            
+                            ${order.work_description ? `
+                                <div class="order-description">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span class="description-text">${order.work_description}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${(() => {
+                                const images = order.images;
+                                let imageArray = [];
+                                
+                                // 统一转换为数组格式
+                                if (images) {
+                                    if (Array.isArray(images)) {
+                                        imageArray = images;
+                                    } else if (typeof images === 'string') {
+                                        // 先尝试JSON解析，失败则按分隔符分割
+                                        try {
+                                            imageArray = JSON.parse(images);
+                                        } catch (e) {
+                                            // 支持多种分隔符
+                                            imageArray = images.split(/[,|]/);
+                                        }
+                                    }
+                                }
+                                
+                                // 过滤有效图片路径
+                                const validCount = imageArray.filter(img => 
+                                    img && typeof img === 'string' && img.trim().length > 0
+                                ).length;
+                                
+                                return validCount > 0 ? `
+                                <div class="order-attachment">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>图片(${validCount})</span>
+                                </div>
+                            ` : '';
+                            })()}
+                            
+                            ${order.customer_address ? `
+                                <div class="order-address">
+                                    ${order.customer_address}
+                                </div>
+                            ` : ''}
+                            
+                            ${order.notes ? `
+                                <div class="order-notes">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <span class="notes-text" style="white-space: pre-line;">${order.notes}</span>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="order-meta">
+                                <span class="order-time">${formatDateTime(order.create_time)}</span>
+                                <span class="order-engineer">
+                                    ${order.engineer_full_name || '未分配'}
+                                </span>
+                            </div>
+                            
+                            <div class="order-actions">
+                                ${getActionButtons(order)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 表格视图渲染
+        function renderTableView(container) {
+            let html = `
+                <div class="orders-table-wrapper">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th class="col-id">工单号</th>
+                                <th class="col-status">状态</th>
+                                <th class="col-type">类型</th>
+                                <th class="col-customer">客户</th>
+                                <th class="col-phone">电话</th>
+                                <th class="col-address">地址</th>
+                                <th class="col-time">创建时间</th>
+                                <th class="col-actions">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            workOrders.forEach(order => {
+                const statusClass = getStatusClass(order.currentStatus);
+                const workTypeClass = getWorkTypeClass(order.work_type);
+                const statusText = getStatusText(order.currentStatus);
+                const workTypeText = getWorkTypeText(order.work_type);
+                const createTime = formatDateTime(order.create_time);
+                const address = order.address || '-';
+                
+                html += `
+                    <tr>
+                        <td class="col-id">#${order.id}</td>
+                        <td class="col-status">
+                            <span class="table-status-badge ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="col-type">
+                            <span class="table-work-type-badge ${workTypeClass}">${workTypeText}</span>
+                        </td>
+                        <td class="col-customer">${order.customer_name || '-'}</td>
+                        <td class="col-phone">
+                            ${order.customer_phone ? `
+                                <a style="color: #007bff;" onclick="event.stopPropagation(); makePhoneCall('${order.customer_phone}')" title="点击拨打电话">
+                                    ${order.customer_phone}
+                                </a>
+                            ` : '-'}
+                        </td>
+                        <td class="col-address">${address}</td>
+                        <td class="col-time">${createTime}</td>
+                        <td class="col-actions">
+                            <div class="table-actions">                               
+                                ${getActionButtons(order)}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // 获取操作按钮
+        function getActionButtons(order) {
+            const user = Utils.getUser();
+            const isAdmin = Utils.hasAccountType('admin');
+            const isEngineer = Utils.hasAccountType('engineer');
+            const isAssignedEngineer = isEngineer && order.engineer_id == user.id;
+            
+            let buttons = '';
+            
+            if (Utils.hasPermission('承接') && isEngineer && order.currentStatus === '等待服务' && !order.engineer_id) {
+                buttons += `<button class="action-btn primary" onclick="event.stopPropagation(); assignOrder(${order.id})">
+                    <i class="fas fa-handshake"></i> 承接
+                </button>`;
+            }
+
+            if(Utils.hasPermission('查看') ) {
+                buttons += `<button class="action-btn success" onclick="window.location.href='/mobile-work-order-detail.html?id=${order.id}'">
+                    <i class="fas fa-eye"></i> 查看
+                </button>`;
+            }
+            
+            if (Utils.hasPermission('修改') && (isAdmin || isAssignedEngineer) && order.currentStatus !== '完成') {
+                buttons += `<button class="action-btn secondary" onclick="event.stopPropagation(); editOrder(${order.id})">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>`;
+            }
+            
+            return buttons;
+        }
+        
+        // 为按钮图标添加样式
+        (function() {
+            const style = document.createElement('style');
+            style.textContent = `.action-btn i.fas { margin-right: 6px; }`;
+            document.head.appendChild(style);
+        })();
+
+        // 更新激活状态按钮的函数
+        function updateActiveStatusButton(status) {
+            // 更新按钮状态
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const targetBtn = document.querySelector(`[data-status="${status}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+        }
+
+        // 保存筛选状态到localStorage
+        function saveFilterStatus(status) {
+            try {
+                localStorage.setItem('mobile_orders_filter', status);
+                console.log('筛选状态已保存:', status);
+            } catch (error) {
+                console.warn('保存筛选状态失败:', error);
+            }
+        }
+
+        // 状态筛选
+        function filterByStatus(status) {
+            currentFilter = status;
+            currentPage = 1;
+            
+            // 更新按钮状态
+            updateActiveStatusButton(status);
+            
+            // 保存筛选状态
+            saveFilterStatus(status);
+            
+            loadWorkOrders();
+        }
+
+        // 搜索
+        function performSearch() {
+            currentSearch = document.getElementById('mobileSearch').value.trim();
+            currentPage = 1;
+            loadWorkOrders();
+        }
+
+        // 清空搜索框
+        function clearSearch() {
+            const searchInput = document.getElementById('mobileSearch');
+            searchInput.value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            currentSearch = '';
+            currentPage = 1;
+            loadWorkOrders();
+        }
+
+        // 搜索框输入事件监听
+        document.getElementById('mobileSearch').addEventListener('input', function() {
+            const clearBtn = document.getElementById('clearSearchBtn');
+            clearBtn.style.display = this.value.trim() ? 'block' : 'none';
+        });
+
+        // 切换视图
+
+        // 卡片视图
+        function setCardView() {
+            isCardView = true;
+            isTableView = false;
+            document.getElementById('cardViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('tableViewBtn').classList.remove('active');
+            renderOrders();
+        }
+
+        // 列表视图
+        function setListView() {
+            isCardView = false;
+            isTableView = false;
+            document.getElementById('listViewBtn').classList.add('active');
+            document.getElementById('cardViewBtn').classList.remove('active');
+            document.getElementById('tableViewBtn').classList.remove('active');
+            renderOrders();
+        }
+
+        // 表格视图
+        function setTableView() {
+            isCardView = false;
+            isTableView = true;
+            document.getElementById('tableViewBtn').classList.add('active');
+            document.getElementById('cardViewBtn').classList.remove('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+            renderOrders();
+        }
+
+        // 更新分页
+        function updatePagination() {
+            const paginationInfo = document.getElementById('paginationInfo');
+            if (paginationInfo) {
+                paginationInfo.textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+            }
+            
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+            
+            // 生成页码按钮
+            const pageNumbers = document.getElementById('pageNumbers');
+            let pageHtml = '';
+            
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                pageHtml += `<button class="page-number ${activeClass}" onclick="loadWorkOrders(${i})">${i}</button>`;
+            }
+            
+            pageNumbers.innerHTML = pageHtml;
+        }
+
+        // 分页控制
+        function loadPrevPage() {
+            if (currentPage > 1) {
+                loadWorkOrders(currentPage - 1);
+            }
+        }
+
+        function loadNextPage() {
+            if (currentPage < totalPages) {
+                loadWorkOrders(currentPage + 1);
+            }
+        }
+
+        // 显示工单详情
+        async function showOrderDetail(orderId) {
+            window.location.href = `/mobile-work-order-detail.html?id=${orderId}`;            
+        }
+
+        function displayOrderDetail(order) {
+            const content = document.getElementById('orderDetailContent');
+            content.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-item">
+                        <label>工单ID</label>
+                        <span>#${order.id}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>工单类型</label>
+                        <span class="work-type-badge ${getWorkTypeClass(order.work_type)}">${getWorkTypeText(order.work_type)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>当前状态</label>
+                        <span class="status-badge ${getStatusClass(order.currentStatus)}">${getStatusText(order.currentStatus)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>客户姓名</label>
+                        <span>${order.customer_name || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>客户电话</label>
+                        <span>${order.customer_phone || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>客户地址</label>
+                        <span>${order.customer_address || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>工单说明</label>
+                        <span>${order.work_description || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>服务工程师</label>
+                        <span>${order.engineer_full_name || '未分配'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>创建时间</label>
+                        <span>${formatDateTime(order.create_time)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+
+
+        // 辅助函数
+        function getStatusClass(status) {
+            const classes = {
+                '等待服务': 'waiting',
+                '派单成功': 'assigned',
+                '服务中': 'progress',
+                '完成': 'completed'
+            };
+            return classes[status] || 'waiting';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                '等待服务': '等待服务',
+                '派单成功': '派单成功',
+                '服务中': '服务中',
+                '完成': '完成'
+            };
+            return texts[status] || status;
+        }
+
+        function getWorkTypeClass(type) {
+            return `type-${type}`;
+        }
+
+        function getWorkTypeText(type) {
+            const texts = {
+                'repair': '维修',
+                'delivery': '送货',
+                'other': '其他'
+            };
+            return texts[type] || type;
+        }
+
+        // 拨打电话
+        function makePhoneCall(phoneNumber) {
+            if (!phoneNumber || phoneNumber === '-') {
+                Utils.showError('电话号码无效');
+                return;
+            }
+            
+            // 显示确认模态框
+            showPhoneCallModal(phoneNumber);
+        }
+
+        // 显示拨打电话确认模态框
+        function showPhoneCallModal(phoneNumber) {
+            document.getElementById('confirmPhoneNumber').textContent = phoneNumber;
+            document.getElementById('phoneCallModal').classList.add('show');
+            
+            // 保存当前要拨打的电话号码
+            window.currentPhoneNumber = phoneNumber;
+        }
+
+        // 关闭拨打电话模态框
+        function closePhoneCallModal() {
+            document.getElementById('phoneCallModal').classList.remove('show');
+            window.currentPhoneNumber = null;
+        }
+
+        // 确认拨打电话
+        function confirmPhoneCall() {
+            const phoneNumber = window.currentPhoneNumber;
+            if (!phoneNumber) {
+                Utils.showError('电话号码无效');
+                return;
+            }
+            
+            // 移除所有非数字字符（保留+号）
+            const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+            
+            if (cleanPhone) {
+                // 创建电话链接
+                const phoneLink = document.createElement('a');
+                phoneLink.href = `tel:${cleanPhone}`;
+                phoneLink.style.display = 'none';
+                document.body.appendChild(phoneLink);
+                
+                // 触发点击事件
+                phoneLink.click();
+                
+                // 清理元素
+                setTimeout(() => {
+                    document.body.removeChild(phoneLink);
+                }, 100);
+                
+                console.log(`正在拨打电话: ${phoneNumber}`);
+                closePhoneCallModal();
+            } else {
+                Utils.showError('电话号码格式无效');
+            }
+        }
+
+        // 使用统一的时间处理函数
+        function formatDateTime(dateString) {
+            if (!dateString) return '';
+            
+            // 使用Utils类中的统一时间处理函数
+            return Utils.formatDateTime(dateString);
+        }
+        
+        // 对于特殊格式需求（今天只显示时分，非今天显示月日时分），添加专用函数
+        function formatDateTimeWithRelative(dateTime) {
+            if (!dateTime) return '未设置';
+            
+            // 使用统一的时间处理先转换为Date对象
+            const date = new Date(Utils.formatDateTime(dateTime) === '' ? dateTime : Utils.formatDateTime(dateTime));
+            
+            // 检查是否是有效日期
+            if (!isNaN(date.getTime())) {
+                // 获取当前日期（不包含时间部分）
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                
+                // 比较日期部分
+                const isToday = targetDate.getTime() === today.getTime();
+                
+                // 今天的时间只显示时分，非今天显示月日时分
+                if (isToday) {
+                    return date.toLocaleString('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                } else {
+                    return date.toLocaleString('zh-CN', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                }
+            }
+            
+            // 如果所有尝试都失败，返回原始值或错误信息
+            return String(dateTime) || '无效日期';
+        }
+
+        // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+        
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+          
+        // 点击遮罩层关闭侧边栏
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('sidebarOverlay');
+            overlay.addEventListener('click', closeSidebar);
+            
+            // 设置导航权限和加载未读消息
+            setupNavigation();
+        });
+
+        // 其他功能
+        function closeOrderDetail() {
+            document.getElementById('orderDetailModal').classList.remove('show');
+        }
+
+        function assignOrder(orderId) {
+            if (!checkClickDebounce()) return;
+            
+            Utils.confirm('承接工单', '确定要承接这个工单吗？', async () => {
+                setProcessingState(true);
+                try {
+                    await Utils.post(`/work-orders/${orderId}/assign`);
+                    Utils.showSuccess('承接成功');
+                    await loadWorkOrders(currentPage);
+                    closeOrderDetail();
+                } catch (error) {
+                    Utils.showError(error.message || '承接失败');
+                } finally {
+                    setProcessingState(false);
+                }
+            });
+        }
+
+        function editOrder(orderId) {
+            window.location.href = `/mobile-edit-order.html?id=${orderId}`;
+        }
+
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+        // 搜索事件绑定
+        document.getElementById('mobileSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // 点击模态框外部关闭（排除新建工单模态框，避免误触）
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal') && e.target.id !== 'createOrderModal') {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

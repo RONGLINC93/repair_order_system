@@ -1,0 +1,38 @@
+{
+  "name": "repair-order-system",
+  "version": "1.0.0",
+  "description": "维修工单系统后端API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "setup": "node auto-setup.js",
+    "install-db": "node -e \"require('./config/database').initializeDatabase()\"",
+    "init-db": "node init-database.js",
+    "configure": "node configure-db.js"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "axios": "^1.13.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.6.0",
+    "node-fetch": "^2.7.0",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "repair",
+    "order",
+    "system"
+  ],
+  "author": "",
+  "license": "MIT"
+}

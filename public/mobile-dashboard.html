@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>大数据仪表盘 - 维修工单系统</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 仪表盘特定样式 */
+        .dashboard-container {
+            margin: 0 auto;
+            padding: 0 16px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .stats-overview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            flex: 1;
+            min-width: calc(25% - 12px);
+            max-width: calc(25% - 12px);
+            box-sizing: border-box;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: #667eea;
+        }
+
+        .stat-content {
+            margin-bottom: 12px;
+        }
+
+        .stat-count {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: #28a745;
+        }
+
+        .stat-change.negative {
+            color: #dc3545;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            height: 600px;
+            min-height: 600px;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-actions button {
+            padding: 6px 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chart-actions button.active,
+        .chart-actions button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chart {
+            flex: 1;
+            min-height: 250px;
+            width: 100%;
+        }
+
+        .data-table-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table-container {
+            display: block;
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table td {
+            color: #333;
+            font-size: 14px;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .charts-section {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            /* 在中等屏幕上，最近工单改为占满一行 */
+            .chart-container[style*="grid-column: span 2"] {
+                grid-column: span 2;
+            }
+            
+            /* 表格响应式调整 */
+            .table-container {
+                max-height: 600px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-overview {
+                gap: 12px;
+            }
+
+            .stat-count {
+                font-size: 24px;
+            }
+
+            .stat-card {
+                padding: 16px 12px !important;
+                min-width: calc(50% - 6px) !important;
+                max-width: calc(50% - 6px) !important;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .stat-change {
+                font-size: 10px;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            /* 在移动屏幕上，所有图表都占满一行 */
+            .chart-container,
+            .chart-container[style*="grid-column: span 2"] {
+                grid-column: span 1 !important;
+            }
+
+            .chart {
+                height: 250px;
+            }
+            
+            /* 优化小屏幕下的图表头部布局 */
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            /* 优化小屏幕下的图表操作按钮 */
+            .chart-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .chart-actions button {
+                flex: 1;
+                text-align: center;
+                padding: 8px 4px;
+                font-size: 11px;
+            }
+            
+            /* 优化小屏幕下的图表容器内边距 */
+            .chart-container {
+                padding: 16px !important;
+                height: 500px !important;
+                min-height: 500px !important;
+                max-height: 500px !important;
+            }
+            
+            /* 最近工单相关组件保持较低高度 */
+            .chart-container.recent-orders-list,
+            .chart-container.rotating-orders {
+                height: 400px !important;
+                min-height: 400px !important;
+                max-height: 400px !important;
+            }
+            
+            /* 确保图表区域文字不会溢出 */
+            .chart-title,
+            .view-all-link {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+            
+            /* 优化查看全部链接显示 */
+            .view-all-link {
+                font-size: 11px;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+            
+            /* 确保图表在小屏幕下有合适的显示比例 */
+            .chart {
+                height: 220px;
+                width: 100%;
+            }
+            
+            /* 表格移动设备响应式调整 */
+            .table-container {
+                max-height: 300px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+            
+            /* 在小屏幕上隐藏部分列 */
+            .table th:nth-child(3),
+            .table td:nth-child(3) {
+                display: none;
+            }
+            
+            /* 简化客户名称显示 */
+            .table td:nth-child(2) {
+                max-width: 100px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* 确保表格保持table布局，表头sticky定位才能生效 */
+            .table {
+                display: table;
+                width: 100%;
+            }
+        }
+
+        /* 3D环形轮播容器样式 */
+        .cards-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 宽高比 */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .rotating-cards {
+            position: absolute;
+            width: 280px;
+            height: 150px;
+            transform-style: preserve-3d;
+            transform: perspective(100%);
+        }
+
+        /* 1层旋转容器样式 - 正常尺寸 */
+        .rotating-cards-outer {
+            top: calc(50% - 80px);
+            left: 50%;
+            transform: translateY(-100px);
+            width: 240px;
+            height: 110px;
+        }
+
+        /* 2层旋转容器样式 - 稍小的卡片尺寸 */
+        .rotating-cards-inner {
+            top: calc(50% - 70px);
+            left: 50%;
+            transform: translateY(0);
+            width: 240px;
+            height: 110px;
+        }
+
+        /* 3层旋转容器样式 - 最小的卡片尺寸 */
+        .rotating-cards-innermost {
+            top: calc(50% - 40px);
+            left: 50%;
+            transform: translateY(100px);
+            width: 240px;
+            height: 110px;
+        }
+
+        /* 三层旋转动画 - 不同的速度形成层次感 */
+        /* 1层旋转动画 - 最慢的速度 */
+        .rotating-cards-outer {
+            animation: autoRunOuter 75s linear infinite;
+        }
+
+        /* 2层旋转动画 - 中等速度 */
+        .rotating-cards-inner {
+            animation: autoRunInner 65s linear infinite;
+        }
+
+        /* 3层旋转动画 - 最快的速度 */
+        .rotating-cards-innermost {
+            animation: autoRunInnermost 85s linear infinite;
+        }
+
+        /* 环形旋转动画 - 1层 */
+        @keyframes autoRunOuter {
+            from {
+                transform: perspective(4000px) translateX(-50%) translateY(-100px) rotateX(-10deg) rotateY(0deg);
+            }
+
+            to {
+                transform: perspective(4000px) translateX(-50%) translateY(-100px) rotateX(-10deg) rotateY(360deg);
+            }
+        }
+
+        /* 环形旋转动画 - 2层 */
+        @keyframes autoRunInner {
+            from {
+                transform: perspective(4000px) translateX(-50%) translateY(0) rotateX(-10deg) rotateY(0deg);
+            }
+
+            to {
+                transform: perspective(4000px) translateX(-50%) translateY(0) rotateX(-10deg) rotateY(360deg);
+            }
+        }
+
+        /* 环形旋转动画 - 3层 */
+        @keyframes autoRunInnermost {
+            from {
+                transform: perspective(4000px) translateX(-50%) translateY(100px) rotateX(-10deg) rotateY(0deg);
+            }
+
+            to {
+                transform: perspective(4000px) translateX(-50%) translateY(100px) rotateX(-10deg) rotateY(360deg);
+            }
+        }
+
+        .order-card {
+            position: absolute;
+            inset: 0 0 0 0;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            padding: 0px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        /* 1层卡片样式 - 使用屏幕宽度单位实现响应式 */
+        .rotating-cards-outer .order-card {
+            transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(18vw);
+        }
+
+        /* 2层卡片样式 - 使用屏幕宽度单位实现响应式 */
+        .rotating-cards-inner .order-card {
+            transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(20vw);
+        }
+
+        /* 3层卡片样式 - 使用屏幕宽度单位实现响应式 */
+        .rotating-cards-innermost .order-card {
+            transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(18vw);
+        }
+
+        /* 卡片悬停效果 - 当鼠标移到具体的旋转容器上时停止旋转 */
+        .rotating-cards-outer:hover,
+        .rotating-cards-inner:hover,
+        .rotating-cards-innermost:hover {
+            animation-play-state: paused;
+        }
+
+        /* 1层卡片悬停效果 - 使用屏幕宽度单位实现响应式 */
+        .rotating-cards-outer .order-card:hover {
+            transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(35vw) scale(1.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        /* 2层卡片悬停效果 - 使用屏幕宽度单位实现响应式 */
+        .rotating-cards-inner .order-card:hover {
+            transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(40vw) scale(1.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        /* 3层卡片悬停效果 - 使用屏幕宽度单位实现响应式 */
+        .rotating-cards-innermost .order-card:hover {
+            transform: rotateY(calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)) translateZ(35vw) scale(1.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        /*卡片头部样式*/
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f0f0f0;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        .order-id {
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .order-time {
+            font-size: 10px;
+            color: #999;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .customer-info i {
+            color: #007bff;
+            font-size: 12px;
+        }
+
+        .order-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .detail-item i {
+            color: #007bff;
+            font-size: 11px;
+        }
+
+        /* 1层卡片内容样式  */
+        .rotating-cards-outer .order-id {
+            font-size: 12px;
+        }
+
+        .rotating-cards-outer .order-time {
+            font-size: 9px;
+        }
+
+        .rotating-cards-outer .customer-info {
+            font-size: 11px;
+        }
+
+        .rotating-cards-outer .customer-info i {
+            font-size: 11px;
+        }
+
+
+        /* 2层卡片内容样式  */
+        .rotating-cards-inner .order-id {
+            font-size: 12px;
+        }
+
+        .rotating-cards-inner .order-time {
+            font-size: 9px;
+        }
+
+        .rotating-cards-inner .customer-info {
+            font-size: 11px;
+        }
+
+        .rotating-cards-inner .customer-info i {
+            font-size: 11px;
+        }
+
+        .rotating-cards-inner .detail-item {
+            font-size: 10px;
+        }
+
+        .rotating-cards-inner .detail-item i {
+            font-size: 10px;
+        }
+
+        /* 3层卡片内容样式  */
+        .rotating-cards-innermost .order-id {
+            font-size: 10px;
+        }
+
+        .rotating-cards-innermost .order-time {
+            font-size: 8px;
+        }
+
+        .rotating-cards-innermost .customer-info {
+            font-size: 10px;
+        }
+
+        .rotating-cards-innermost .customer-info i {
+            font-size: 10px;
+        }
+
+        .rotating-cards-innermost .detail-item {
+            font-size: 9px;
+        }
+
+        .rotating-cards-innermost .detail-item i {
+            font-size: 9px;
+        }
+
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #ccc;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .loading-spinner i {
+            font-size: 32px;
+            margin-bottom: 16px;
+            color: #007bff;
+        }
+
+        @media (max-width: 480px) {
+            .stats-overview {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 12px 10px !important;
+                min-width: calc(50% - 5px) !important;
+                max-width: calc(50% - 5px) !important;
+            }
+
+            .stat-icon {
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+
+            .stat-count {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .stat-change {
+                font-size: 9px;
+            }
+            
+            /* 确保在超小屏幕上图表仍然占1行 */
+            .charts-section {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            /* 确保所有图表都占满一行 */
+            .chart-container,
+            .chart-container[style*="grid-column: span 2"] {
+                grid-column: span 1 !important;
+            }
+            
+            /* 优化超小屏幕下的图表容器 */
+            .chart-container {
+                padding: 14px !important;
+                height: 450px !important;
+                min-height: 450px !important;
+                max-height: 450px !important;
+            }
+            
+            /* 最近工单相关组件保持较低高度 */
+            .chart-container.recent-orders-list,
+            .chart-container.rotating-orders {
+                height: 380px !important;
+                min-height: 380px !important;
+                max-height: 380px !important;
+            }
+            
+            /* 确保统计卡片文字不会溢出 */
+            .stat-label,
+            .stat-change {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+            
+            /* 优化超小屏幕下的图表高度 */
+            .chart {
+                height: 200px;
+            }
+            
+            /* 优化超小屏幕下的图表标题 */
+            .chart-title {
+                font-size: 14px;
+            }
+        }
+
+        /* 超小屏幕优化 */
+        @media (max-width: 320px) {
+            .stat-card {
+                padding: 10px 8px !important;
+            }
+
+            .stat-count {
+                font-size: 18px;
+            }
+
+            .stat-label {
+                font-size: 10px;
+            }
+
+            .stat-change {
+                font-size: 8px;
+            }
+            
+            /* 确保在超小屏幕上图表仍然占1行 */
+            .charts-section {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            /* 确保所有图表都占满一行 */
+            .chart-container,
+            .chart-container[style*="grid-column: span 2"] {
+                grid-column: span 1 !important;
+            }
+            
+            /* 优化超小屏幕下的图表容器内边距 */
+            .chart-container {
+                padding: 12px !important;
+                height: 420px !important;
+                min-height: 420px !important;
+                max-height: 420px !important;
+            }
+            
+            /* 最近工单相关组件保持较低高度 */
+            .chart-container.recent-orders-list,
+            .chart-container.rotating-orders {
+                height: 350px !important;
+                min-height: 350px !important;
+                max-height: 350px !important;
+            }
+            
+            /* 进一步优化超小屏幕下的文字显示 */
+            .chart-title {
+                font-size: 14px;
+            }
+            
+            .chart-actions button {
+                font-size: 10px;
+                padding: 6px 3px;
+            }
+            
+            /* 优化超小屏幕下的图表高度 */
+            .chart {
+                height: 180px;
+            }
+            
+            /* 优化超小屏幕下的图表标题 */
+            .chart-title {
+                font-size: 13px;
+            }
+            
+            /* 优化超小屏幕下的图表操作按钮 */
+            .chart-actions button {
+                font-size: 10px;
+                padding: 6px 2px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <h1 class="app-title">大数据仪表盘</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage"
+                        style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                        alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+            <a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content" style="margin-top: 60px;">
+        <div class="dashboard-container">
+            <!-- 统计概览 -->
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="totalOrders">0</div>
+                        <div class="stat-label">总工单量</div>
+                    </div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>12% 较上月</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="completedOrders">0</div>
+                        <div class="stat-label">已完成工单</div>
+                    </div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>8% 较上月</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="pendingOrders">0</div>
+                        <div class="stat-label">待处理工单</div>
+                    </div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>5% 较上月</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="activeEngineers">0</div>
+                        <div class="stat-label">活跃工程师</div>
+                    </div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>3% 较上月</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-section">
+                <!-- 工单创建趋势 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">工单创建趋势</h3>
+                        <div class="chart-actions">
+                            <button class="active" data-period="week">本周</button>
+                            <button data-period="month">本月</button>
+                            <button data-period="year">本年</button>
+                        </div>
+                    </div>
+                    <canvas id="trendChart" class="chart"></canvas>
+                </div>
+
+                <!-- 最近工单 -->
+                <div class="chart-container rotating-orders" style="grid-column: span 2; width: 100%; box-sizing: border-box;">
+                    <div class="chart-header">
+                        <h3 class="chart-title">最近工单</h3>
+                        <a href="/mobile-orders.html" class="view-all-link">查看全部</a>
+                    </div>
+                    <div class="cards-container" style="height: calc(100% - 50px); padding-bottom: 0; width: 100%;">
+                        <div class="rotating-cards rotating-cards-innermost" id="recentOrdersTableInnermost">
+                            <!-- 加载动画 -->
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>加载中...</span>
+                            </div>
+                        </div>
+                        <div class="rotating-cards rotating-cards-inner" id="recentOrdersTableInner">
+                            <!-- 加载动画 -->
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>加载中...</span>
+                            </div>
+                        </div>
+                        <div class="rotating-cards rotating-cards-outer" id="recentOrdersTableOuter">
+                            <!-- 加载动画 -->
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>加载中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最近工单列表 -->
+                <div class="chart-container recent-orders-list">
+                    <div class="chart-header">
+                        <h3 class="chart-title">最近工单列表</h3>
+                        <a href="/mobile-orders.html" class="view-all-link">查看全部</a>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>工单编号</th>
+                                    <th>客户名称</th>
+                                    <th>工单类型</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentOrdersTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>加载中...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 工单类型分布 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">工单类型</h3>
+                        <div class="chart-actions">
+                            <button class="active" data-period="month">本月</button>
+                            <button data-period="quarter">本季度</button>
+                            <button data-period="year">本年</button>
+                        </div>
+                    </div>
+                    <canvas id="typeChart" class="chart"></canvas>
+                </div>
+
+                <!-- 工单状态分布 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">工单状态分布</h3>
+                        <div class="chart-actions">
+                            <button class="active" data-period="day">今日</button>
+                            <button data-period="week">本周</button>
+                            <button data-period="month">本月</button>
+                        </div>
+                    </div>
+                    <canvas id="statusChart" class="chart"></canvas>
+                </div>
+
+                <!-- 工程师工作量 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">工程师工作量</h3>
+                        <div class="chart-actions">
+                            <button class="active" data-period="month">本月</button>
+                            <button data-period="quarter">本季度</button>
+                        </div>
+                    </div>
+                    <canvas id="workloadChart" class="chart"></canvas>
+                </div>
+
+                <!-- 用户统计 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">用户统计</h3>
+                    </div>
+                    <canvas id="userStatisticsChart" class="chart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        // 全局变量
+        let statusChart, typeChart, trendChart, workloadChart, userStatisticsChart;
+        let currentData = {
+            status: 'day',
+            type: 'month',
+            trend: 'week',
+            workload: 'month'
+        };
+
+        // 全局变量
+        let recentOrdersRefreshInterval;
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function () {
+            // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+            await MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+            await loadMockData();
+            initializeCharts();
+
+            // 添加图表周期按钮事件监听
+            // 工单状态分布图表
+            const statusChartContainer = document.querySelector('#statusChart').closest('.chart-container');
+            statusChartContainer.addEventListener('click', async function (event) {
+                if (event.target.closest('.chart-actions button')) {
+                    const button = event.target.closest('.chart-actions button');
+                    const period = button.dataset.period;
+                    await updateStatusChart(event, period);
+                }
+            });
+
+            // 工单类型分布图表
+            const typeChartContainer = document.querySelector('#typeChart').closest('.chart-container');
+            typeChartContainer.addEventListener('click', async function (event) {
+                if (event.target.closest('.chart-actions button')) {
+                    const button = event.target.closest('.chart-actions button');
+                    const period = button.dataset.period;
+                    await updateTypeChart(event, period);
+                }
+            });
+
+            // 工单趋势图表
+            const trendChartContainer = document.querySelector('#trendChart').closest('.chart-container');
+            trendChartContainer.addEventListener('click', async function (event) {
+                if (event.target.closest('.chart-actions button')) {
+                    const button = event.target.closest('.chart-actions button');
+                    const period = button.dataset.period;
+                    await updateTrendChart(event, period);
+                }
+            });
+
+            // 工程师工作量图表
+            const workloadChartContainer = document.querySelector('#workloadChart').closest('.chart-container');
+            workloadChartContainer.addEventListener('click', async function (event) {
+                if (event.target.closest('.chart-actions button')) {
+                    const button = event.target.closest('.chart-actions button');
+                    const period = button.dataset.period;
+                    await updateWorkloadChart(event, period);
+                }
+            });
+
+            // 加载最近工单（卡片形式和表格形式）
+            await loadRecentOrders();
+            await loadRecentOrdersTable();
+
+            // 设置最近工单每分钟自动刷新
+            recentOrdersRefreshInterval = setInterval(async () => {
+                await loadRecentOrders();
+                await loadRecentOrdersTable();
+            }, 60000); // 60000毫秒 = 1分钟
+
+            // 页面加载完成后触发图表大小调整
+            setTimeout(() => {
+                if (statusChart) statusChart.resize();
+                if (typeChart) typeChart.resize();
+                if (trendChart) trendChart.resize();
+                if (workloadChart) workloadChart.resize();
+                if (userStatisticsChart) userStatisticsChart.resize();
+            }, 100);
+        });
+
+        // 页面关闭时清除定时器
+        window.addEventListener('beforeunload', function () {
+            if (recentOrdersRefreshInterval) {
+                clearInterval(recentOrdersRefreshInterval);
+            }
+        });
+
+
+        // 加载表格形式的最近工单列表
+        async function loadRecentOrdersTable() {
+            try {
+                const params = new URLSearchParams({
+                    page: 1,
+                    limit: 10, // 表格中显示10条记录
+                    sortBy: 'create_time',
+                    sortOrder: 'DESC'
+                });
+
+                const response = await Utils.get(`/work-orders?${params}`);
+                const recentOrders = response.workOrders || [];
+                const tableBody = document.getElementById('recentOrdersTableBody');
+
+                if (recentOrders.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="empty-state">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <p>暂无工单数据</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // 渲染表格行
+                let tableHtml = '';
+                recentOrders.forEach(order => {
+                    const statusClass = getStatusClass(order.currentStatus);
+                    const workTypeClass = getWorkTypeClass(order.work_type);
+
+                    tableHtml += `
+                        <tr onclick="window.location.href='/mobile-work-order-detail.html?id=${order.id}'">
+                            <td>#${order.id}</td>
+                            <td>${order.customer_name || '未知客户'}</td>
+                            <td class="work-type ${workTypeClass}">${getWorkTypeText(order.work_type)}</td>
+                            <td class="order-status ${statusClass}">${getStatusText(order.currentStatus)}</td>
+                            <td>${Utils.formatDateTime(order.create_time)}</td>
+                        </tr>
+                    `;
+                });
+
+                tableBody.innerHTML = tableHtml;
+            } catch (error) {
+                console.error('加载最近工单列表失败:', error);
+                const tableBody = document.getElementById('recentOrdersTableBody');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>加载失败，请稍后重试</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 加载真实数据
+        async function loadMockData() {
+            try {
+                // 获取总工单量
+                const totalOrdersResponse = await Utils.get('/work-orders?limit=1');
+                const totalOrders = totalOrdersResponse.total || 0;
+                document.getElementById('totalOrders').textContent = totalOrders.toLocaleString();
+
+                // 获取已完成工单
+                const completedOrdersResponse = await Utils.get('/work-orders?status=完成&limit=1');
+                const completedOrders = completedOrdersResponse.total || 0;
+                document.getElementById('completedOrders').textContent = completedOrders.toLocaleString();
+
+                // 获取待处理工单
+                const pendingOrdersResponse = await Utils.get('/work-orders?status=等待服务&limit=1');
+                const pendingOrders = pendingOrdersResponse.total || 0;
+                document.getElementById('pendingOrders').textContent = pendingOrders.toLocaleString();
+
+                // 获取活跃工程师
+                const activeEngineersResponse = await Utils.get('/users?accountType=engineer');
+                const activeEngineers = activeEngineersResponse.total || 0;
+                document.getElementById('activeEngineers').textContent = activeEngineers;
+
+                // 加载最近工单
+                loadRecentOrders();
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                // 加载失败时使用默认数据
+                document.getElementById('totalOrders').textContent = '0';
+                document.getElementById('completedOrders').textContent = '0';
+                document.getElementById('pendingOrders').textContent = '0';
+                document.getElementById('activeEngineers').textContent = '0';
+            }
+        }
+
+        // 获取工单状态分布数据
+        async function getStatusData(period) {
+            try {
+                // 获取所有工单
+                const allOrders = await Utils.get(`/work-orders?limit=1000`);
+                let orders = allOrders.workOrders || [];
+
+                // 根据时间周期筛选
+                const now = new Date();
+                const startDate = new Date();
+
+                if (period === 'day') {
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'week') {
+                    startDate.setDate(now.getDate() - now.getDay());
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'month') {
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                }
+
+                // 筛选时间范围内的工单，添加日期字段检查
+                orders = orders.filter(order => {
+                    if (!order.create_time) return false;
+                    const orderDate = new Date(order.create_time);
+                    return !isNaN(orderDate.getTime()) && orderDate >= startDate;
+                });
+
+                // 统计各状态数量
+                const statusCounts = {
+                    '等待服务': 0,
+                    '派单成功': 0,
+                    '服务中': 0,
+                    '完成': 0,
+                    '已取消': 0
+                };
+
+                orders.forEach(order => {
+                    if (order.currentStatus) {
+                        // 处理各种可能的状态值
+                        if (order.currentStatus.includes('取消')) {
+                            statusCounts['已取消']++;
+                        } else if (statusCounts.hasOwnProperty(order.currentStatus)) {
+                            statusCounts[order.currentStatus]++;
+                        } else {
+                            console.warn('未知状态值:', order.currentStatus);
+                        }
+                    }
+                });
+
+                return [
+                    statusCounts['等待服务'],
+                    statusCounts['派单成功'] + statusCounts['服务中'],
+                    statusCounts['完成'],
+                    statusCounts['已取消']
+                ];
+            } catch (error) {
+                console.error('获取状态数据失败:', error);
+                showToast('获取工单状态数据失败，请稍后重试', 'error');
+                return [0, 0, 0, 0];
+            }
+        }
+
+        // 获取工单类型分布数据
+        async function getTypeData(period) {
+            try {
+                // 获取所有工单
+                const allOrders = await Utils.get(`/work-orders?limit=1000`);
+                let orders = allOrders.workOrders || [];
+
+                // 根据时间周期筛选
+                const now = new Date();
+                const startDate = new Date();
+
+                if (period === 'month') {
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'quarter') {
+                    // 计算当前季度的第一天
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    startDate.setMonth(quarter * 3);
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'year') {
+                    startDate.setMonth(0);
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                }
+
+                // 筛选时间范围内的工单，添加日期字段检查
+                orders = orders.filter(order => {
+                    if (!order.create_time) return false;
+                    const orderDate = new Date(order.create_time);
+                    return !isNaN(orderDate.getTime()) && orderDate >= startDate;
+                });
+
+                // 统计各类型数量
+                const typeCounts = {
+                    'repair': 0,
+                    'installation': 0,
+                    'maintenance': 0,
+                    'consultation': 0,
+                    'other': 0
+                };
+
+                orders.forEach(order => {
+                    if (order.work_type && typeCounts.hasOwnProperty(order.work_type)) {
+                        typeCounts[order.work_type]++;
+                    }
+                });
+
+                return [
+                    typeCounts['repair'],
+                    typeCounts['installation'],
+                    typeCounts['maintenance'],
+                    typeCounts['consultation'],
+                    typeCounts['other']
+                ];
+            } catch (error) {
+                console.error('获取类型数据失败:', error);
+                showToast('获取工单类型数据失败，请稍后重试', 'error');
+                return [0, 0, 0, 0, 0];
+            }
+        }
+
+        // 获取工单趋势数据
+        async function getTrendData(period) {
+            try {
+                // 获取所有工单
+                const allOrders = await Utils.get(`/work-orders?limit=1000`);
+                const orders = allOrders.workOrders || [];
+
+                const now = new Date();
+                let labels = [];
+                let data = [];
+
+                if (period === 'week') {
+                    // 本周趋势（按天）
+                    labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                    data = [0, 0, 0, 0, 0, 0, 0];
+
+                    // 计算本周的起始时间（周一）
+                    const now = new Date();
+                    const dayOfWeek = now.getDay();
+                    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // 调整到周一
+                    const weekStart = new Date(now.setDate(diff));
+                    weekStart.setHours(0, 0, 0, 0);
+                    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+                    orders.forEach(order => {
+                        if (!order.create_time) return;
+                        const orderDate = new Date(order.create_time);
+                        if (isNaN(orderDate.getTime())) return;
+
+                        // 只统计本周内的工单
+                        if (orderDate >= weekStart && orderDate < weekEnd) {
+                            let dayOfWeek = orderDate.getDay();
+                            // 调整：周日(0)应该对应索引6，周一(1)对应索引0，以此类推
+                            const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                            if (adjustedDay >= 0 && adjustedDay <= 6) {
+                                data[adjustedDay]++;
+                            }
+                        }
+                    });
+                } else if (period === 'month') {
+                    // 本月趋势（按周）
+                    labels = ['第1周', '第2周', '第3周', '第4周'];
+                    data = [0, 0, 0, 0];
+
+                    orders.forEach(order => {
+                        if (!order.create_time) return;
+                        const orderDate = new Date(order.create_time);
+                        if (isNaN(orderDate.getTime())) return;
+                        if (orderDate.getMonth() === now.getMonth()) {
+                            const weekOfMonth = Math.ceil(orderDate.getDate() / 7);
+                            if (weekOfMonth >= 1 && weekOfMonth <= 4) {
+                                data[weekOfMonth - 1]++;
+                            }
+                        }
+                    });
+                } else {
+                    // 本年趋势（按月）
+                    labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+                    data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                    const currentYear = now.getFullYear();
+
+                    orders.forEach(order => {
+                        if (!order.create_time) return;
+                        const orderDate = new Date(order.create_time);
+                        if (isNaN(orderDate.getTime())) return;
+                        // 只统计本年的工单
+                        if (orderDate.getFullYear() === currentYear) {
+                            const month = orderDate.getMonth();
+                            if (month >= 0 && month <= 11) {
+                                data[month]++;
+                            }
+                        }
+                    });
+                }
+
+                return { labels, data };
+            } catch (error) {
+                console.error('获取趋势数据失败:', error);
+                showToast('获取工单趋势数据失败，请稍后重试', 'error');
+                return { labels: [], data: [] };
+            }
+        }
+
+        // 获取工程师工作量数据
+        async function getWorkloadData(period) {
+            try {
+                // 获取所有工单
+                const allOrders = await Utils.get(`/work-orders?status=完成&limit=1000`);
+                let orders = allOrders.workOrders || [];
+
+                // 根据时间周期筛选
+                const now = new Date();
+                const startDate = new Date();
+
+                if (period === 'month') {
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'quarter') {
+                    // 计算当前季度的第一天
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    startDate.setMonth(quarter * 3);
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
+                }
+
+                // 筛选时间范围内的工单，添加日期字段检查
+                orders = orders.filter(order => {
+                    if (!order.create_time) return false;
+                    const orderDate = new Date(order.create_time);
+                    return !isNaN(orderDate.getTime()) && orderDate >= startDate;
+                });
+
+                // 统计各工程师工作量
+                const workload = {};
+
+                orders.forEach(order => {
+                    const engineerName = order.engineer_full_name || order.engineer_name || '未知';
+                    if (workload[engineerName]) {
+                        workload[engineerName]++;
+                    } else {
+                        workload[engineerName] = 1;
+                    }
+                });
+
+                // 转换为图表所需格式
+                const labels = Object.keys(workload).sort((a, b) => workload[b] - workload[a]).slice(0, 6);
+                const data = labels.map(label => workload[label]);
+
+                return { labels, data };
+            } catch (error) {
+                console.error('获取工作量数据失败:', error);
+                showToast('获取工程师工作量数据失败，请稍后重试', 'error');
+                return { labels: [], data: [] };
+            }
+        }
+
+        // 初始化图表
+        async function initializeCharts() {
+            // 获取初始数据
+            const statusData = await getStatusData('day');
+            const typeData = await getTypeData('month');
+            const trendData = await getTrendData('week');
+            const workloadData = await getWorkloadData('month');
+
+            // 工单状态分布（饼图）
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['待处理', '处理中', '已完成', '已取消'],
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: [
+                            '#ffc107',
+                            '#17a2b8',
+                            '#28a745',
+                            '#dc3545'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 工单类型分布（柱状图）
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            typeChart = new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['维修', '送货', '其他'],
+                    datasets: [{
+                        label: '工单数量',
+                        data: typeData,
+                        backgroundColor: '#667eea',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    resizeDelay: 250,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+
+            // 工单创建趋势（折线图）
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendData.labels,
+                    datasets: [{
+                        label: '工单数量',
+                        data: trendData.data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+
+            // 工程师工作量（水平柱状图）
+            const workloadCtx = document.getElementById('workloadChart').getContext('2d');
+            workloadChart = new Chart(workloadCtx, {
+                type: 'bar',
+                data: {
+                    labels: workloadData.labels,
+                    datasets: [{
+                        label: '完成工单',
+                        data: workloadData.data,
+                        backgroundColor: '#667eea',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // 获取用户统计数据
+            const userStatisticsData = await getUserStatisticsData();
+            
+            // 用户统计（条形图）
+            const userStatisticsCtx = document.getElementById('userStatisticsChart').getContext('2d');
+            userStatisticsChart = new Chart(userStatisticsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['普通用户', '客服', '工程师', '管理员', '仓储管理'],
+                    datasets: [{
+                        label: '账号类型分布',
+                        data: userStatisticsData.data,
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新工单状态图表
+        async function updateStatusChart(event, period) {
+            currentData.status = period;
+
+            // 更新按钮状态
+            const buttons = document.querySelector('#statusChart').closest('.chart-container').querySelectorAll('.chart-actions button');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            try {
+                // 获取真实数据
+                const data = await getStatusData(period);
+                statusChart.data.datasets[0].data = data;
+                statusChart.update();
+            } catch (error) {
+                console.error('Error in updateStatusChart:', error);
+                showToast('更新图表失败，请稍后重试', 'error');
+            }
+        }
+
+        // 更新工单类型图表
+        async function updateTypeChart(event, period) {
+            currentData.type = period;
+
+            // 更新按钮状态
+            document.querySelector('#typeChart').closest('.chart-container').querySelectorAll('.chart-actions button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 获取真实数据
+            const data = await getTypeData(period);
+            typeChart.data.datasets[0].data = data;
+            typeChart.update();
+        }
+
+        // 更新工单趋势图表
+        async function updateTrendChart(event, period) {
+            currentData.trend = period;
+
+            // 更新按钮状态
+            document.querySelector('#trendChart').closest('.chart-container').querySelectorAll('.chart-actions button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 获取真实数据
+            const trendData = await getTrendData(period);
+            trendChart.data.labels = trendData.labels;
+            trendChart.data.datasets[0].data = trendData.data;
+            trendChart.update();
+        }
+
+        // 更新工程师工作量图表
+        async function updateWorkloadChart(event, period) {
+            currentData.workload = period;
+
+            // 更新按钮状态
+            document.querySelector('#workloadChart').closest('.chart-container').querySelectorAll('.chart-actions button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 获取真实数据
+            const workloadData = await getWorkloadData(period);
+            workloadChart.data.labels = workloadData.labels;
+            workloadChart.data.datasets[0].data = workloadData.data;
+            workloadChart.update();
+        }
+
+        // 获取用户统计数据
+        async function getUserStatisticsData() {
+            try {
+                // 尝试从API获取用户类型统计数据
+                // 使用系统现有的/users API获取所有用户数据
+                // 注意：API直接返回用户数组，不包含在data属性中
+                const userData = await Utils.get('/users');
+                // 确保是数组格式
+                const users = Array.isArray(userData) ? userData : userData.data || [];
+
+                // 计算各账号类型的数量
+                const typeCount = {
+                    '普通用户': 0,
+                    '客服': 0,
+                    '工程师': 0,
+                    '管理员': 0,
+                    '仓储管理': 0
+                };
+
+                users.forEach(user => {
+                    // 兼容两种可能的字段名
+                    const accountType = user.accountType || user.account_type;
+                    switch (accountType) {
+                        case 'user':
+                            typeCount['普通用户']++;
+                            break;
+                        case 'customer_service':
+                            typeCount['客服']++;
+                            break;
+                        case 'engineer':
+                            typeCount['工程师']++;
+                            break;
+                        case 'admin':
+                            typeCount['管理员']++;
+                            break;
+                        case 'warehouse_manager':
+                            typeCount['仓储管理']++;
+                            break;
+                    }
+                });
+
+                const data = Object.values(typeCount);
+                return { data };
+            } catch (error) {
+                console.error('获取用户统计数据失败:', error);
+                // 发生错误时返回空数据，不返回模拟数据
+                return { data: [0, 0, 0, 0, 0] };
+            }
+        }
+
+        // 加载最近工单
+        async function loadRecentOrders() {
+            try {
+                const params = new URLSearchParams({
+                    page: 1,
+                    limit: 24, // 24张卡片，三层各约8张
+                    sortBy: 'create_time',
+                    sortOrder: 'DESC'
+                });
+
+                const response = await Utils.get(`/work-orders?${params}`);
+                const recentOrders = response.workOrders || [];
+                const innermostContainer = document.getElementById('recentOrdersTableInnermost');
+                const innerContainer = document.getElementById('recentOrdersTableInner');
+                const outerContainer = document.getElementById('recentOrdersTableOuter');
+
+                if (recentOrders.length === 0) {
+                    innermostContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>暂无工单数据</p>
+                        </div>
+                    `;
+                    innerContainer.innerHTML = '';
+                    outerContainer.innerHTML = '';
+                    return;
+                }
+
+                // 将数据分成三组：3层、2层和1层
+                const thirdLength = Math.ceil(recentOrders.length / 3);
+                const innermostOrders = recentOrders.slice(0, thirdLength);
+                const innerOrders = recentOrders.slice(thirdLength, thirdLength * 2);
+                const outerOrders = recentOrders.slice(thirdLength * 2);
+
+                // 渲染3层卡片（最内层）
+                let innermostHtml = '';
+                const innermostTotalCards = innermostOrders.length;
+                innermostContainer.style.setProperty('--quantity', innermostTotalCards);
+
+                innermostOrders.forEach((order, index) => {
+                    const statusClass = getStatusClass(order.currentStatus);
+                    const workTypeClass = getWorkTypeClass(order.work_type);
+                    const position = index + 1;
+
+                    innermostHtml += `
+                        <div class="order-card" 
+                             onclick="window.location.href='/mobile-work-order-detail.html?id=${order.id}'"
+                             style="--position: ${position};">
+                            <div class="card-header">
+                                <div class="order-id">#${order.id}</div>
+                                <div class="order-time">${Utils.formatDateTime(order.create_time)}</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="customer-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>${order.customer_name || '未知客户'}</span>
+                                           <i class="fas fa-tools"></i>
+                                        <span class="work-type ${workTypeClass}">
+                                            ${getWorkTypeText(order.work_type)}
+                                        </span>
+                                          <i class="fas fa-check-circle"></i>
+                                        <span class="order-status ${statusClass}">
+                                            ${getStatusText(order.currentStatus)}
+                                        </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // 渲染2层卡片（内层）
+                let innerHtml = '';
+                const innerTotalCards = innerOrders.length;
+                innerContainer.style.setProperty('--quantity', innerTotalCards);
+
+                innerOrders.forEach((order, index) => {
+                    const statusClass = getStatusClass(order.currentStatus);
+                    const workTypeClass = getWorkTypeClass(order.work_type);
+                    const position = index + 1;
+
+                    innerHtml += `
+                        <div class="order-card" 
+                             onclick="window.location.href='/mobile-work-order-detail.html?id=${order.id}'"
+                             style="--position: ${position};">
+                            <div class="card-header">
+                                <div class="order-id">#${order.id}</div>
+                                <div class="order-time">${Utils.formatDateTime(order.create_time)}</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="customer-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>${order.customer_name || '未知客户'}</span>
+                                           <i class="fas fa-tools"></i>
+                                        <span class="work-type ${workTypeClass}">
+                                            ${getWorkTypeText(order.work_type)}
+                                        </span>
+                                          <i class="fas fa-check-circle"></i>
+                                        <span class="order-status ${statusClass}">
+                                            ${getStatusText(order.currentStatus)}
+                                        </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // 渲染1层卡片（外层）
+                let outerHtml = '';
+                const outerTotalCards = outerOrders.length;
+                outerContainer.style.setProperty('--quantity', outerTotalCards);
+
+                outerOrders.forEach((order, index) => {
+                    const statusClass = getStatusClass(order.currentStatus);
+                    const workTypeClass = getWorkTypeClass(order.work_type);
+                    const position = index + 1;
+
+                    outerHtml += `
+                        <div class="order-card" 
+                             onclick="window.location.href='/mobile-work-order-detail.html?id=${order.id}'"
+                             style="--position: ${position};">
+                            <div class="card-header">
+                                <div class="order-id">#${order.id}</div>
+                                <div class="order-time">${Utils.formatDateTime(order.create_time)}</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="customer-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>${order.customer_name || '未知客户'}</span>
+                                           <i class="fas fa-tools"></i>
+                                        <span class="work-type ${workTypeClass}">
+                                            ${getWorkTypeText(order.work_type)}
+                                        </span>
+                                          <i class="fas fa-check-circle"></i>
+                                        <span class="order-status ${statusClass}">
+                                            ${getStatusText(order.currentStatus)}
+                                        </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                innermostContainer.innerHTML = innermostHtml;
+                innerContainer.innerHTML = innerHtml;
+                outerContainer.innerHTML = outerHtml;
+            } catch (error) {
+                console.error('加载最近工单失败:', error);
+                const innermostContainer = document.getElementById('recentOrdersTableInnermost');
+                const innerContainer = document.getElementById('recentOrdersTableInner');
+                const outerContainer = document.getElementById('recentOrdersTableOuter');
+
+                innermostContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败，请稍后重试</p>
+                    </div>
+                `;
+                innerContainer.innerHTML = '';
+                outerContainer.innerHTML = '';
+            }
+        }
+
+        // 辅助函数：获取状态类名
+        function getStatusClass(status) {
+            switch (status) {
+                case '等待服务': return 'waiting';
+                case '派单成功': return 'assigned';
+                case '服务中': return 'progress';
+                case '完成': return 'completed';
+                case '已取消': return 'cancelled';
+                default: return '';
+            }
+        }
+
+        // 辅助函数：获取状态文本
+        function getStatusText(status) {
+            return status || '未知状态';
+        }
+
+        // 辅助函数：获取工单类型类名
+        function getWorkTypeClass(workType) {
+            switch (workType) {
+                case 'repair': return 'type-repair';
+                case 'installation': return 'type-installation';
+                case 'maintenance': return 'type-maintenance';
+                case 'consultation': return 'type-consultation';
+                case 'other': return 'type-other';
+                default: return '';
+            }
+        }
+
+        // 辅助函数：获取工单类型文本
+        function getWorkTypeText(workType) {
+            switch (workType) {
+                case 'repair': return '维修';
+                case 'installation': return '安装';
+                case 'maintenance': return '保养';
+                case 'consultation': return '咨询';
+                case 'other': return '其他';
+                default: return '未知类型';
+            }
+        }
+
+    </script>
+</body>
+
+</html>

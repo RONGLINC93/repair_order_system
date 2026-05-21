@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>应用中心 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        .app-center-container {
+            padding: 15px;
+        }
+
+        .app-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        @media (min-width: 480px) {
+            .app-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .app-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .app-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .app-grid {
+                grid-template-columns: repeat(7, 1fr);
+            }
+        }
+
+        @media (min-width: 1440px) {
+            .app-grid {
+                grid-template-columns: repeat(8, 1fr);
+            }
+        }
+
+        @media (min-width: 1900px) {
+            .app-grid {
+                grid-template-columns: repeat(9, 1fr);
+            }
+        }
+
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .app-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .app-icon.seedling {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+        }
+
+        .app-name {
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .app-desc {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* 特殊应用图标颜色 */
+        .app-icon.work-order {
+            background: linear-gradient(135deg, #667eea, #1976D2);
+        }
+
+        .app-icon.material {
+            background: linear-gradient(135deg, #28a745, #388E3C);
+        }
+
+        .app-icon.chat {
+            background: linear-gradient(135deg, #ffc107, #FBC02D);
+        }
+
+        .app-icon.address {
+            background: linear-gradient(135deg, #dc3545, #D32F2F);
+        }
+
+        .app-icon.profile {
+            background: linear-gradient(135deg, #17a2b8, #0288D1);
+        }
+
+        .app-icon.settings {
+            background: linear-gradient(135deg, #6c757d, #546E7A);
+        }
+
+        .app-icon.notification {
+            background: linear-gradient(135deg, #e83e8c, #C2185B);
+        }
+
+        .app-icon.admin {
+            background: linear-gradient(135deg, #f44336, #E53935);
+        }
+
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">应用中心</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage"
+                        style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                        alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+            <a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="app-center-container">
+            <!-- 常用应用 -->
+            <div class="app-section">
+                <div class="section-title">常用应用</div>
+                <div class="app-grid">
+                    <div class="app-item" id="appMyOrders" onclick="window.location.href='/mobile-my-orders.html'">
+                        <div class="app-icon work-order">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="app-name">我的工单</div>
+                        <div class="app-desc">管理我的工单</div>
+                    </div>
+                    <div class="app-item" id="appAllOrders" onclick="window.location.href='/mobile-orders.html'">
+                        <div class="app-icon work-order">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="app-name">所有工单</div>
+                        <div class="app-desc">查看所有工单</div>
+                    </div>
+                    <div class="app-item" id="appCalendar" onclick="window.location.href='/mobile-calendar.html'">
+                        <div class="app-icon calendar">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="app-name">工作台历</div>
+                        <div class="app-desc">查看和管理日程</div>
+                    </div>
+                    <div class="app-item" id="appMaterialRequests"
+                        onclick="window.location.href='/mobile-material-requests.html'">
+                        <div class="app-icon material">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="app-name">物料管理</div>
+                        <div class="app-desc">申请和管理物料</div>
+                    </div>
+                    <div class="app-item" id="appChat" onclick="window.location.href='/mobile-chat.html'">
+                        <div class="app-icon chat">
+                            <i class="fas fa-comment"></i>
+                        </div>
+                        <div class="app-name">内部聊天</div>
+                        <div class="app-desc">与同事沟通</div>
+                    </div>
+                    <div class="app-item" id="appCustomerContacts"
+                        onclick="window.location.href='/mobile-customer-contacts.html'">
+                        <div class="app-icon contacts">
+                            <i class="fas fa-address-book"></i>
+                        </div>
+                        <div class="app-name">客户通讯录</div>
+                        <div class="app-desc">管理客户信息</div>
+                    </div>
+                    <div class="app-item" id="appNotifications"
+                        onclick="window.location.href='/mobile-notifications.html'">
+                        <div class="app-icon notification">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="app-name">通知消息</div>
+                        <div class="app-desc">查看系统通知</div>
+                    </div>
+                    <div class="app-item" id="appProfile" onclick="window.location.href='/mobile-profile.html'">
+                        <div class="app-icon profile">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="app-name">个人资料</div>
+                        <div class="app-desc">编辑个人信息</div>
+                    </div>
+                    <div class="app-item" id="appSettings" onclick="window.location.href='/mobile-settings.html'">
+                        <div class="app-icon settings">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="app-name">设置</div>
+                        <div class="app-desc">配置选项</div>
+                    </div>
+                    <div class="app-item" id="appNotes" onclick="window.location.href='/mobile-notes.html'">
+                        <div class="app-icon">
+                            <i class="fas fa-sticky-note" style="color: #ffc107;"></i>
+                        </div>
+                        <div class="app-name">便签</div>
+                        <div class="app-desc">记录重要信息</div>
+                    </div>
+                    <div class="app-item" id="appStorage" onclick="window.location.href='/mobile-box.html'">
+                        <div class="app-icon storage">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="app-name">网盘</div>
+                        <div class="app-desc">管理网盘文件存储</div>
+                    </div>
+                    <div class="app-item" id="appFavorites" onclick="window.location.href='/mobile-favorites.html'">
+                        <div class="app-icon favorites">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="app-name">网址收藏</div>
+                        <div class="app-desc">收藏常用网址</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 休闲应用 -->
+            <div class="app-section">
+                <div class="section-title">劳逸结合</div>
+                <div class="app-grid">
+                    <div class="app-item" id="appseedling" onclick="window.location.href='/mobile-farm.html'">
+                        <div class="app-icon seedling">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <div class="app-name">我的农场</div>
+                        <div class="app-desc">休闲娱乐农场游戏</div>
+                    </div>
+                    <div class="app-item" id="appSlots" onclick="window.location.href='/mobile-slots.html'">
+                        <div class="app-icon slots">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="app-name">幸运水果机</div>
+                        <div class="app-desc">休闲娱乐水果机游戏</div>
+                    </div>
+                    <div class="app-item" id="appPoker" onclick="window.location.href='/mobile-poker.html'">
+                        <div class="app-icon poker">
+                            <i class="fas fa-card-deck"></i>
+                        </div>
+                        <div class="app-name">斗地主</div>
+                        <div class="app-desc">休闲娱乐斗地主游戏</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理应用 -->
+        <div class="app-section">
+            <div class="section-title">管理应用</div>
+            <div class="app-grid">
+                <div class="app-item" id="appDashboard" onclick="window.location.href='/mobile-dashboard.html'">
+                    <div class="app-icon dashboard">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="app-name">大数据仪表盘</div>
+                    <div class="app-desc">大数据仪表盘监控</div>
+                </div>
+                <div class="app-item" id="appLogs" onclick="window.location.href='/mobile-logs.html'">
+                    <div class="app-icon logs">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="app-name">系统日志</div>
+                    <div class="app-desc">管理系统日志</div>
+                </div>
+                <div class="app-item" id="appAddresses" onclick="window.location.href='/mobile-addresses.html'">
+                    <div class="app-icon address">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="app-name">服务地址</div>
+                    <div class="app-desc">管理服务地址</div>
+                </div>
+                <div class="app-item" id="appAdmin" onclick="window.location.href='/mobile-admin.html'">
+                    <div class="app-icon admin">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div class="app-name">系统管理</div>
+                    <div class="app-desc">管理系统用户</div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        // 初始化应用中心
+        document.addEventListener('DOMContentLoaded', async function () {
+            // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+            await MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+
+            // 根据用户权限控制显示内容
+            const user = Utils.getUser();
+            if (user) {
+                // 应用权限配置
+                const appPermissions = {
+                    'appMyOrders': [], // 工程师默认可以访问
+                    'appMaterialRequests': ['仓储管理'],
+                    'appChat': [],// 所有人都可以访问
+                    'appNotifications': [],// 所有人都可以访问
+                    'appCustomerContacts': [], // 所有人都可以访问
+                    'appProfile': [], // 所有人都可以访问
+                    'appSettings': [], // 所有人都可以访问
+                    'appNotes': [], // 所有人都可以访问
+                    'appAllOrders': ['查看'],
+                    'appAddresses': ['地址管理'],
+                    'appLogs': ['日志管理'],
+                    'appseedling': [], // 所有人都可以访问
+                    'appAdmin': ['用户管理'], // 管理员权限
+                    'appSlots': [], // 所有人都可以访问
+                    'appFavorites': [], // 所有人都可以访问
+                    'appDashboard': ['日志管理'], // 所有人都可以访问
+                    'appPoker': [] // 所有人都可以访问
+                };
+
+                // 检查每个应用的权限
+                Object.keys(appPermissions).forEach(appId => {
+                    const appElement = document.getElementById(appId);
+                    if (appElement) {
+                        let hasAccess = true;
+
+                        // 特殊处理：我的工单只对工程师显示
+                        if (appId === 'appMyOrders') {
+                            hasAccess = Utils.hasAccountType('engineer');
+                        } else {
+                            const requiredPermissions = appPermissions[appId];
+                            // 如果有需要的权限，则检查用户是否有权限
+                            if (requiredPermissions.length > 0) {
+                                hasAccess = requiredPermissions.some(permission => {
+                                    return Utils.hasPermission(permission);
+                                });
+                            }
+                        }
+
+                        // 根据权限显示或隐藏应用
+                        if (!hasAccess) {
+                            appElement.style.display = 'none';
+                        }
+                    }
+                });
+            } else {
+                // 未登录，重定向到登录页
+                window.location.href = '/mobile-login.html';
+            }
+        });
+    </script>
+</body>
+
+</html>

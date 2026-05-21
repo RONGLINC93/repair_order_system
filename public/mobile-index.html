@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>工单管理 - 首页</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <h1 class="app-title">维修工单系统</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage"
+                        style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                        alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+            <a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content" style="margin-top: 60px;">
+        <!-- 欢迎区域 -->
+        <section class="welcome-section">
+            <div class="welcome-content">
+                <h2 id="welcomeText">欢迎回来！</h2>
+                <p class="welcome-subtitle">今天是 <span id="currentDate"></span></p>
+            </div>
+        </section>
+
+        <!-- 统计卡片区域 -->
+        <section class="stats-section">
+            <h3 class="section-title">工单统计</h3>
+            <div class="stats-grid">
+                <div class="stat-card pending">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="waitingCount">0</div>
+                        <div class="stat-label">等待服务</div>
+                    </div>
+                </div>
+                <div class="stat-card assigned">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="assignedCount">0</div>
+                        <div class="stat-label">派单成功</div>
+                    </div>
+                </div>
+                <div class="stat-card progress">
+                    <div class="stat-icon">
+                        <i class="fas fa-wrench"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="progressCount">0</div>
+                        <div class="stat-label">服务中</div>
+                    </div>
+                </div>
+                <div class="stat-card completed">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-count" id="completedCount">0</div>
+                        <div class="stat-label">完成</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 快捷功能区域 -->
+        <section class="quick-actions-section">
+            <h3 class="section-title">快捷功能</h3>
+            <div class="quick-actions-grid">
+                <button class="quick-action-btn" onclick="handleQuickAction('myOrders')">
+                    <i class="fas fa-tasks"></i>
+                    <span>我的工单</span>
+                </button>
+                <button class="quick-action-btn" onclick="handleQuickAction('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>通知中心</span>
+                </button>
+                <button class="quick-action-btn" onclick="handleQuickAction('viewOrders')">
+                    <i class="fas fa-list"></i>
+                    <span>查看工单</span>
+                </button>
+                <button class="quick-action-btn" onclick="handleQuickAction('createOrder')">
+                    <i class="fas fa-plus"></i>
+                    <span>新建工单</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 最近工单区域 -->
+        <section class="recent-orders-section">
+            <div class="section-header">
+                <h3 class="section-title">最近工单</h3>
+                <a href="/mobile-orders.html" class="view-all-link">查看全部</a>
+            </div>
+            <div class="recent-orders-list" id="recentOrdersList">
+                <!-- 加载动画 -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>加载中...</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 浮动新建按钮已移除 -->
+
+    <script src="/js/utils.js"></script>
+    <script>
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function () {
+            await checkAuth();
+            setupNavigation();
+            updateWelcomeMessage();
+            updateCurrentDate();
+            await loadStats();
+            await loadRecentOrders();
+
+
+            // 点击遮罩层关闭侧边栏
+            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+        });
+
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+
+
+        // 更新欢迎消息
+        function updateWelcomeMessage() {
+            const hour = new Date().getHours();
+            let greeting;
+            if (hour < 6) greeting = '夜深了，注意休息';
+            else if (hour < 12) greeting = '早上好';
+            else if (hour < 14) greeting = '中午好';
+            else if (hour < 18) greeting = '下午好';
+            else if (hour < 22) greeting = '晚上好';
+            else greeting = '夜深了，注意休息';
+
+            const user = Utils.getUser();
+            const welcomeText = `${greeting}，${user?.fullName || user?.username || '用户'}！`;
+            document.getElementById('welcomeText').textContent = welcomeText;
+        }
+
+        // 更新当前日期
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+        }
+
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const user = Utils.getUser();
+                const isEngineer = Utils.hasAccountType('engineer');
+
+                // 根据用户角色更新统计标题
+                const sectionTitle = document.querySelector('.stats-section .section-title');
+                sectionTitle.textContent = isEngineer ? '我的工单统计' : '工单统计';
+
+                // 构建API请求参数
+                const params = new URLSearchParams({
+                    page: 1,
+                    limit: 1000, // 获取足够的数据用于统计
+                    sortBy: 'create_time',
+                    sortOrder: 'DESC'
+                });
+
+                let response;
+                let workOrders = [];
+
+                // 根据用户角色选择不同的API接口
+                if (isEngineer && user) {
+                    // 工程师使用"我的工单"接口
+                    console.log('工程师账号，使用我的工单接口');
+                    response = await Utils.get(`/work-orders/my?${params}`);
+                } else {
+                    // 非工程师使用普通工单接口
+                    response = await Utils.get(`/work-orders?${params}`);
+                }
+
+                workOrders = response.workOrders || [];
+                console.log('获取到的工单数量:', workOrders.length);
+                if (isEngineer) {
+                    console.log('工程师的工单数据:', workOrders);
+                }
+
+                // 获取所有工单数据用于等待服务统计
+                const allWorkOrdersResponse = await Utils.get(`/work-orders?${params}`);
+                const allWorkOrders = allWorkOrdersResponse.workOrders || [];
+                console.log('获取到的所有工单数量:', allWorkOrders.length);
+
+                // 计算各状态工单数量
+                const counts = {
+                    waiting: allWorkOrders.filter(o => o.currentStatus === '等待服务').length, // 等待服务统计所有工单
+                    assigned: workOrders.filter(o => o.currentStatus === '派单成功').length,
+                    progress: workOrders.filter(o => o.currentStatus === '服务中').length,
+                    completed: workOrders.filter(o => o.currentStatus === '完成').length
+                };
+
+                // 更新统计卡片
+                document.getElementById('waitingCount').textContent = counts.waiting;
+                document.getElementById('assignedCount').textContent = counts.assigned;
+                document.getElementById('progressCount').textContent = counts.progress;
+                document.getElementById('completedCount').textContent = counts.completed;
+
+                // 更新统计卡片点击事件
+                const statCards = document.querySelectorAll('.stat-card');
+                statCards.forEach(card => {
+                    // 移除之前的onclick属性
+                    card.removeAttribute('onclick');
+
+                    // 添加新的点击事件处理
+                    card.onclick = function () {
+                        const status = this.querySelector('.stat-label').textContent;
+
+                        // 特殊处理：所有用户点击等待服务卡片都跳转到工单列表页
+                        if (status === '等待服务') {
+                            window.location.href = `/mobile-orders.html?status=${encodeURIComponent(status)}`;
+                        } else {
+                            // 其他状态根据用户角色跳转
+                            if (isEngineer) {
+                                // 工程师跳转到我的工单页面
+                                window.location.href = `/mobile-my-orders.html?status=${encodeURIComponent(status)}`;
+                            } else {
+                                // 其他用户跳转到工单列表页面
+                                window.location.href = `/mobile-orders.html?status=${encodeURIComponent(status)}`;
+                            }
+                        }
+                    };
+                });
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+
+        // 加载最近工单
+        async function loadRecentOrders() {
+            try {
+                const params = new URLSearchParams({
+                    page: 1,
+                    limit: 5,
+                    sortBy: 'create_time',
+                    sortOrder: 'DESC'
+                });
+
+                const response = await Utils.get(`/work-orders?${params}`);
+                const recentOrders = response.workOrders || [];
+                const container = document.getElementById('recentOrdersList');
+
+                if (recentOrders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>暂无工单数据</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 渲染最近工单
+                let html = '';
+                recentOrders.forEach(order => {
+                    const statusClass = getStatusClass(order.currentStatus);
+                    const workTypeClass = getWorkTypeClass(order.work_type);
+
+                    html += `
+                        <div class="recent-order-item" onclick="window.location.href='/mobile-work-order-detail.html?id=${order.id}'">
+                            <div class="recent-order-header">
+                                <div class="recent-order-id">#${order.id}</div>
+                                <div class="recent-order-status ${statusClass}">
+                                    ${getStatusText(order.currentStatus)}
+                                </div>
+                            </div>
+                            <div class="recent-order-body">
+                                <div class="recent-order-customer">${order.customer_name || '未知客户'}</div>
+                                <div class="recent-order-type ${workTypeClass}">
+                                    ${getWorkTypeText(order.work_type)}
+                                </div>
+                            </div>
+                            <div class="recent-order-footer">
+                                <div class="recent-order-time">
+                                    ${Utils.formatDateTime(order.create_time)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('加载最近工单失败:', error);
+                document.getElementById('recentOrdersList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败，请稍后重试</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 辅助函数：获取状态类名
+        function getStatusClass(status) {
+            switch (status) {
+                case '等待服务': return 'waiting';
+                case '派单成功': return 'assigned';
+                case '服务中': return 'progress';
+                case '完成': return 'completed';
+                default: return '';
+            }
+        }
+
+        // 辅助函数：获取状态文本
+        function getStatusText(status) {
+            return status || '未知状态';
+        }
+
+        // 辅助函数：获取工单类型类名
+        function getWorkTypeClass(workType) {
+            switch (workType) {
+                case 'repair': return 'type-repair';
+                case 'delivery': return 'type-delivery';
+                case 'other': return 'type-other';
+                default: return '';
+            }
+        }
+
+        // 辅助函数：获取工单类型文本
+        function getWorkTypeText(workType) {
+            switch (workType) {
+                case 'repair': return '维修';
+                case 'delivery': return '送货';
+                case 'other': return '其他';
+                default: return '未知类型';
+            }
+        }
+
+        // 使用统一的时间处理函数，不再需要本地实现
+        // 相关函数已移至Utils类中: Utils.formatDateTime(dateString)
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+
+            if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+
+        // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // 侧边栏遮罩层点击事件
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+        // 处理快捷功能点击
+        function handleQuickAction(actionType) {
+            const user = Utils.getUser();
+            if (!user) {
+                Utils.showError('请先登录');
+                return;
+            }
+
+            switch (actionType) {
+                case 'myOrders':
+                    // 我的工单：只有工程师可以访问
+                    if (!Utils.hasAccountType('engineer')) {
+                        Utils.showError('无权限访问此功能');
+                        return;
+                    }
+                    window.location.href = '/mobile-my-orders.html';
+                    break;
+                case 'chat':
+                    // 内部聊天：默认允许所有用户访问
+                    window.location.href = '/mobile-chat.html';
+                    break;
+                case 'notifications':
+                    // 通知中心：默认允许访问
+                    window.location.href = '/mobile-notifications.html';
+                    break;
+                case 'viewOrders':
+                    // 查看工单：需要有查看权限
+                    if (!Utils.hasPermission('查看')) {
+                        Utils.showError('无权限访问此功能');
+                        return;
+                    }
+                    window.location.href = '/mobile-orders.html';
+                    break;
+                case 'createOrder':
+                    // 新建工单：需要有新建权限
+                    if (!Utils.hasPermission('新建')) {
+                        Utils.showError('无权限访问此功能');
+                        return;
+                    }
+                    // 修改为打开新建工单模态窗口
+                    window.location.href = '/mobile-create-order.html';
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,4945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>便签 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        /* 禁止页面滚动，只允许列表滚动 */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        main.main-content {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* 便签样式 */
+        .notes-container {
+            padding: 8px 0;
+            width: 100%;
+            height: calc(100vh - 60px); /* 减去header高度 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止容器本身滚动 */
+            box-sizing: border-box;
+            max-width: 100vw; /* 确保不超过视口宽度 */
+        }
+        
+        #notesListView {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 大屏幕时左右分栏布局 */
+        @media (min-width: 768px) {
+            body, html {
+                max-width: 100vw !important;
+                width: 100vw !important;
+                overflow-x: hidden;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .main-content {
+                max-width: 100vw !important;
+                width: 100vw !important;
+                padding: 0 !important;
+                margin: 60px 0 0 0 !important;
+                height: calc(100vh - 60px);
+                box-sizing: border-box;
+            }
+            
+            .notes-container {
+                max-width: 100vw !important;
+                width: 100vw !important;
+                box-sizing: border-box;
+                flex-direction: row;
+                height: calc(100vh - 60px);
+                padding: 0;
+            }
+            
+            * {
+                max-width: none !important;
+            }
+            
+            .notes-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px !important;
+                padding: 10px 15px !important;
+                margin-bottom: 0;
+                border-bottom: none;
+                border-right: 1px solid #e0e0e0;
+            }
+            
+            .notes-header-row-1,
+            .notes-header-row-2 {
+                flex-direction: row;
+                width: 100%;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .notes-header-row-1 {
+                margin-bottom: 0;
+                flex: 0 0 auto;
+            }
+            
+            .notes-title {
+                font-size: 18px !important;
+                text-align: left;
+                margin: 0;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            .search-container {
+                max-width: 300px;
+                width: 300px;
+                height: 28px !important;
+            }
+            
+            .color-picker-container {
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                margin-bottom: 0;
+            }
+            
+            .color-preset-btn {
+                width: 32px !important;
+                height: 32px !important;
+            }
+            
+            .show-all-btn {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 10px !important;
+            }
+            
+            .add-note-btn {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 16px !important;
+            }
+            
+            #notesListView {
+                flex: 1;
+                width: auto;
+                display: flex;
+                flex-direction: column;
+                border-right: 1px solid #e0e0e0;
+                overflow: hidden;
+            }
+            
+            #notesList {
+                flex: 1;
+                overflow-y: auto;
+            }
+            
+            #noteEditView {
+                flex: 0 0 480px;
+                width: 480px;
+                position: relative;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                border-left: 1px solid #e0e0e0;
+                z-index: 1;
+            }
+        }
+        
+        .notes-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 0 15px;
+            flex-wrap: wrap;
+        }
+        
+        /* 行容器基础样式 */
+        .notes-header-row-1,
+        .notes-header-row-2 {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            width: auto;
+            margin-bottom: 0;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 767px) {
+            .notes-header {
+                gap: 8px;
+                padding: 0 10px;
+                align-items: stretch;
+                flex-direction: column;
+                flex-wrap: nowrap;
+            }
+            
+            /* 行容器样式 */
+            .notes-header-row-1,
+            .notes-header-row-2 {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+            }
+            
+            /* 第一行：标题和搜索框 */
+            .notes-header-row-1 {
+                margin-bottom: 0;
+            }
+            
+            .notes-title {
+                font-size: 18px;
+                margin-right: 8px;
+                margin-bottom: 0;
+                width: auto;
+            }
+            
+            .search-container {
+                max-width: none;
+                width: auto;
+                flex: 1;
+                margin-bottom: 0;
+                min-width: 150px;
+                height: 32px;
+            }
+            
+            .search-box {
+                height: 32px;
+            }
+            
+            #searchInput {
+                height: 32px;
+                padding: 0 35px 0 12px;
+                font-size: 13px;
+                line-height: 32px;
+            }
+            
+            /* 调整搜索按钮和清除按钮大小 */
+            #searchBtn,
+            #clearSearchBtn {
+                font-size: 14px;
+                padding: 6px;
+            }
+            
+            #clearSearchBtn {
+                right: 35px;
+            }
+            
+            /* 第二行：筛选按钮和添加按钮 */
+            .notes-header-row-2 {
+                margin-bottom: 0;
+            }
+            
+            .color-picker-container {
+                gap: 6px;
+                margin-bottom: 0;
+                flex-wrap: wrap;
+                width: auto;
+                flex: 1;
+            }
+            
+            .color-preset-btn {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .show-all-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 9px;
+            }
+            
+            .add-note-btn {
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                font-size: 14px;
+                flex-shrink: 0;
+                margin-bottom: 0;
+            }
+        }
+        
+        /* 超小屏幕优化 */
+        @media (max-width: 480px) {
+            .notes-header {
+                padding: 0 8px;
+            }
+            
+            /* 行容器间距调整 */
+            .notes-header-row-1,
+            .notes-header-row-2 {
+                gap: 6px;
+            }
+            
+            .notes-title {
+                font-size: 18px;
+            }
+            
+            .search-container {
+                margin-bottom: 0;
+                min-width: 120px;
+                height: 28px;
+            }
+            
+            .search-box {
+                height: 28px;
+            }
+            
+            #searchInput {
+                height: 28px;
+                padding: 0 32px 0 10px;
+                font-size: 12px;
+                line-height: 28px;
+            }
+            
+            /* 调整超小屏幕上的搜索按钮和清除按钮 */
+            #searchBtn,
+            #clearSearchBtn {
+                font-size: 12px;
+                padding: 5px;
+            }
+            
+            #clearSearchBtn {
+                right: 32px;
+            }
+            
+            .color-picker-container {
+                gap: 4px;
+                margin-bottom: 0;
+                flex: 1;
+            }
+            
+            .color-preset-btn {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .show-all-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 8px;
+            }
+            
+            .add-note-btn {
+                width: 24px;
+                height: 24px;
+                padding: 0;
+                font-size: 12px;
+            }
+        }
+        
+        /* 搜索组件样式 */
+        .search-container {
+            flex: 1;
+            max-width: 300px;
+            height: 38px;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        
+        /* 大屏幕时增加搜索框最大宽度 */
+        @media (min-width: 768px) {
+            .search-container {
+                max-width: 400px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .search-container {
+                max-width: 500px;
+            }
+        }
+        
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        
+        #searchInput {
+            flex: 1;
+            height: 38px;
+            padding: 0 40px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            line-height: 38px;
+        }
+        
+        #searchInput:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+        
+        #searchBtn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 16px;
+            transition: color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        #searchBtn:hover {
+            color: #007bff;
+        }
+        
+        #clearSearchBtn {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 16px;
+            transition: color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        #clearSearchBtn:hover {
+            color: #dc3545;
+        }
+        
+        .notes-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+            margin-right: auto;
+        }
+        
+        .add-note-btn {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: none;
+        }
+        
+        .add-note-btn:hover {
+            background-color: #5a6fd8;
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* 便签颜色选择器 */
+        .color-picker-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .color-preset-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        /* 颜色预设按钮的背景色 */
+        .color-preset-btn.yellow { background-color: #ffc107; }
+        .color-preset-btn.blue { background-color: #2196f3; }
+        .color-preset-btn.green { background-color: #4caf50; }
+        .color-preset-btn.pink { background-color: #e91e63; }
+        .color-preset-btn.purple { background-color: #9c27b0; }
+        .color-preset-btn.orange { background-color: #ff9800; }
+        .color-preset-btn.red { background-color: #f44336; }
+        .color-preset-btn.teal { background-color: #009688; }
+        .color-preset-btn.none { background-color: transparent; border: 2px solid #e0e0e0; }
+
+        /* 编辑器颜色选择器增强 */
+        .editor-color-picker {
+            padding: 8px;
+            min-width: 160px;
+        }
+
+        .color-option {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+            display: inline-block;
+            margin: 2px;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+        }
+
+        .color-option.active {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .color-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 2px rgba(0,0,0,0.8);
+            font-size: 12px;
+        }
+
+        /* 下拉菜单增强 */
+        .editor-dropdown {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 140px;
+            max-height: 250px;
+            animation: dropdownFadeIn 0.2s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .editor-dropdown.show {
+            display: block;
+        }
+
+        /* 工具栏按钮增强 */
+        .editor-btn:hover {
+            background-color: #f0f8ff;
+            color: #007bff;
+            transform: translateY(-1px);
+        }
+
+        .editor-btn:active {
+            transform: translateY(0);
+        }
+
+        .editor-btn.active {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .show-all-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: conic-gradient(from 0deg, #ffc107, #2196f3, #4caf50, #e91e63, #9c27b0, #ff9800, #f44336, #009688, #ffc107);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 2px rgba(0,0,0,0.8);
+        }
+        
+        .show-all-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .show-all-btn.active {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+            transform: scale(1.05);
+        }
+        
+        .show-all-btn.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 2px rgba(0,0,0,0.8);
+            font-size: 12px;
+        }
+        
+        .color-preset-btn:hover {
+            transform: scale(1.1);
+            border-color: #333;
+        }
+        
+        .color-preset-btn.active {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .color-preset-btn.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        /* 便签卡片样式 */
+        .note-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            border-left: 4px solid #ffc107;
+            height: 150px; /* 统一高度 */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        /* 不同颜色的便签 */
+        .note-item.yellow { border-left-color: #ffc107; background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%); }
+        .note-item.blue { border-left-color: #2196f3; background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); }
+        .note-item.green { border-left-color: #4caf50; background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%); }
+        .note-item.pink { border-left-color: #e91e63; background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%); }
+        .note-item.purple { border-left-color: #9c27b0; background: linear-gradient(135deg, #f3e5f5 0%, #ffffff 100%); }
+        .note-item.orange { border-left-color: #ff9800; background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); }
+        .note-item.red { border-left-color: #f44336; background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%); }
+        .note-item.teal { border-left-color: #009688; background: linear-gradient(135deg, #e0f2f1 0%, #ffffff 100%); }
+        .note-item.none { border-left-color: #9e9e9e; background: white; }
+        
+        .note-item.yellow .note-title i { color: #f9a825; }
+        .note-item.blue .note-title i { color: #1976d2; }
+        .note-item.green .note-title i { color: #388e3c; }
+        .note-item.pink .note-title i { color: #c2185b; }
+        .note-item.purple .note-title i { color: #7b1fa2; }
+        .note-item.orange .note-title i { color: #f57c00; }
+        .note-item.red .note-title i { color: #d32f2f; }
+        .note-item.teal .note-title i { color: #00796b; }
+        .note-item.none .note-title i { color: #616161; }
+        
+        .note-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .note-item.pinned {
+            border-left-width: 6px;
+            border-left-style: double;
+        }
+        
+        .note-item.pinned::before {
+            content: '📌';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            z-index: 1;
+        }
+        
+        .note-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+            gap: 5px;
+        }
+        
+        .note-item.pinned .note-actions {
+            right: 40px;
+        }
+        
+        .note-item:hover .note-actions {
+            display: flex;
+        }
+        
+        .note-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: rgba(0,0,0,0.1);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+        
+        .note-action-btn:hover {
+            background: rgba(0,0,0,0.2);
+            transform: scale(1.1);
+        }
+        
+        .note-action-btn.pin { color: #ff9800; }
+        .note-action-btn.delete { color: #f44336; }
+        .note-action-btn.copy { color: #4caf50; }
+        
+        /* 便签内容中的链接样式 */
+        .note-link {
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+            transition: all 0.2s ease;
+        }
+        
+        .note-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0 15px;
+            scroll-behavior: smooth;
+            /* 确保滚动容器有明确的高度 */
+            min-height: 0;
+            /* 强制滚动在列表容器内 */
+            position: relative;
+            /* 重置max-height，让flex: 1自动计算 */
+        }
+        
+        /* 大屏幕响应式布局 */
+        @media (min-width: 768px) {
+            .notes-list {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 0 15px;
+                align-content: start;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .notes-list {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                padding: 0 15px;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .notes-list {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+                padding: 0 15px;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+        
+        /* 使用默认滚动条样式 */
+        
+        .note-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .note-content {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            flex: 1;
+            -webkit-line-clamp: 3; /* 限制显示3行 */
+            min-height: 0;
+        }
+        
+        .note-date {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        
+        /* 字数显示样式 */
+        .note-word-count {
+            font-size: 12px;
+            color: #bbb;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+        
+        .empty-state-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        /* 富文本编辑器样式 */
+        .rich-editor {
+            position: relative;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            overflow: visible;
+            min-height: auto;
+            max-height: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-toolbar {
+            border: none;
+            border-radius: 0;
+            padding: 8px 12px;
+            background-color: #fafbfc;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 4px;
+            min-height: auto;
+        }
+        
+        /* 桌面端默认显示所有功能 */
+        @media (min-width: 768px) {
+            .editor-toolbar {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+                min-height: 48px;
+                padding: 6px 12px;
+            }
+            
+            .mobile-toolbar-section {
+                width: auto;
+                background: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .mobile-basic-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            
+            .mobile-advanced-toolbar {
+                display: flex !important;
+                flex-direction: row !important;
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                gap: 4px !important;
+            }
+            
+            .mobile-expand-btn {
+                display: none;
+            }
+            
+            .mobile-color-section {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 16px;
+                padding-left: 8px;
+                border-left: 1px solid #e0e0e0;
+            }
+            
+            .mobile-basic-group {
+                background: transparent;
+                border: none;
+                border-right: 1px solid #e0e0e0;
+                padding: 0 8px;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 2px;
+            }
+            
+            .mobile-basic-group:last-child {
+                border-right: none;
+            }
+            
+            .editor-btn {
+                width: 34px !important;
+                height: 34px !important;
+                font-size: 14px !important;
+                margin: 0 1px;
+                border-width: 1px !important;
+            }
+            
+            .editor-btn i {
+                font-size: 14px !important;
+            }
+            
+            /* 字体大小选择器优化 */
+            .mobile-basic-group .font-size-selector-label {
+                margin-right: 8px;
+                font-size: 12px;
+                color: #666;
+            }
+            
+            .inline-size-btn {
+                padding: 4px 8px;
+                margin: 0 1px;
+                font-size: 12px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+                background: #fff;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .inline-size-btn:hover {
+                background: #f0f8ff;
+                border-color: #007bff;
+                color: #007bff;
+            }
+        }
+        
+        .editor-toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 0 4px;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .editor-toolbar-group:last-child {
+            border-right: none;
+        }
+        
+        .editor-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e0e0e0;
+            background: #ffffff;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #555;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .editor-btn:hover {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+            border-color: #4a90e2;
+            color: #2c5aa0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+        }
+        
+        .editor-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(74, 144, 226, 0.15);
+        }
+        
+        .editor-btn.active {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            border-color: #357abd;
+            color: white;
+            box-shadow: 0 3px 10px rgba(74, 144, 226, 0.3);
+        }
+        
+        .editor-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #f5f5f5;
+            border-color: #e0e0e0;
+            color: #999;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* 统一图标大小和对齐 */
+        .editor-btn i {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 图标特殊调整 */
+        .editor-btn i.fa-minus {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .editor-btn i.fa-code {
+            /* 保持FontAwesome字体，不改为等宽字体 */
+            font-size: 14px;
+        }
+        
+        /* 如果需要代码块图标更清晰，可以添加备用样式 */
+        .editor-btn i.fa-code::before {
+            content: "\f121"; /* FontAwesome 代码图标 */
+        }
+        
+        /* 工具栏组视觉效果增强 */
+        .mobile-basic-group {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            padding: 2px;
+            margin: 2px;
+            border: 1px solid rgba(224, 224, 224, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        
+        /* 按钮组间距优化 */
+        .mobile-basic-group .editor-btn {
+            margin: 1px;
+        }
+        
+        /* 编辑模式切换按钮样式 */
+        .mode-toggle-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+        
+        .mode-toggle-btn:hover {
+            background: #f0f8ff;
+            border-color: #007bff;
+            color: #007bff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+        }
+        
+        .mode-toggle-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 123, 255, 0.15);
+        }
+        
+        .mode-toggle-btn.active {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+        }
+        
+        /* 工具栏整体背景增强 */
+        .editor-toolbar {
+            background: linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .editor-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .editor-dropdown.show {
+            display: block;
+        }
+        
+        .editor-dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .editor-dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .editor-dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .editor-color-picker {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            padding: 8px;
+        }
+        
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+        
+        .editor-content {
+            padding: 16px;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            min-height: 100px;
+            max-height: none;
+            overflow: visible;
+            box-sizing: border-box;
+            flex: 1;
+            height: auto;
+            resize: none;
+            background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%); /* 默认黄色便签背景 */
+        }
+        
+        /* 为不同颜色的便签添加对应的内容编辑框背景 */
+        .editor-content.yellow { background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%); }
+        .editor-content.blue { background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); }
+        .editor-content.green { background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%); }
+        .editor-content.pink { background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%); }
+        .editor-content.purple { background: linear-gradient(135deg, #f3e5f5 0%, #ffffff 100%); }
+        .editor-content.orange { background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); }
+        .editor-content.red { background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%); }
+        .editor-content.teal { background: linear-gradient(135deg, #e0f2f1 0%, #ffffff 100%); }
+        .editor-content.none { background: white; }
+        
+        .editor-content:empty:before {
+            content: "开始输入...";
+            color: #999;
+            font-style: italic;
+        }
+        
+        .editor-content:focus {
+            background-color: inherit; /* 保持原有背景色 */
+        }
+        
+        .rich-editor:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        /* 确保编辑器内容区域不会覆盖底部圆角 */
+        .editor-content {
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        /* 源代码模式 */
+        .editor-source {
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%); /* 默认黄色便签背景 */
+            border: 1px solid #e0e0e0;
+            resize: none;
+            outline: none;
+                  width: 100%;
+            min-height: 100px;
+            /* 移除最大高度限制，让编辑器能显示所有内容 */
+            max-height: none;
+            /* 移除滚动条，让所有内容直接显示 */
+            overflow: hidden;
+            box-sizing: border-box;
+            flex: 1;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .editor-source:focus {        
+            border-color: #667eea;
+        }
+        
+        /* 为不同颜色的便签添加对应的源代码编辑框背景 */
+        .editor-source.yellow { background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%); }
+        .editor-source.blue { background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); }
+        .editor-source.green { background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%); }
+        .editor-source.pink { background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%); }
+        .editor-source.purple { background: linear-gradient(135deg, #f3e5f5 0%, #ffffff 100%); }
+        .editor-source.orange { background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); }
+        .editor-source.red { background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%); }
+        .editor-source.teal { background: linear-gradient(135deg, #e0f2f1 0%, #ffffff 100%); }
+        .editor-source.none { background: white; } 
+        
+        /* 自动保存提示 */
+        .auto-save-indicator {
+            position: fixed;
+            top: 70px; /* 位于header下方 */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: white;
+            background: rgba(40, 167, 69, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .auto-save-indicator.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        /* 移动端调整 */
+        @media (max-width: 767px) {
+            .auto-save-indicator {
+                top: 65px; /* 移动端header高度稍小 */
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+        }
+        
+
+        
+        /* 移动端优化 */
+        @media (max-width: 767px) {
+            /* 移动端置顶复选框优化 */
+            .pin-toggle-label {
+                padding: 8px 14px;
+                font-size: 13px;
+                gap: 6px;
+            }
+            
+            .pin-toggle-label i {
+                font-size: 11px;
+            }
+            
+            /* 移动端自动保存复选框优化 */
+            .auto-save-toggle-label {
+                padding: 6px 10px;
+                font-size: 11px;
+                gap: 5px;
+            }
+            
+            .auto-save-toggle-label i {
+                font-size: 10px;
+            }
+            
+            /* 移动端编辑器工具栏重新设计 */
+            .editor-toolbar {
+                padding: 0;
+                background: transparent;
+                border: none;
+                min-height: auto;
+                gap: 0;
+                flex-wrap: wrap;
+                position: relative;
+            }
+            
+            /* 移动端工具栏分组 */
+            .mobile-toolbar-section {
+                width: 100%;
+                background: #fafbfc;
+                padding: 8px;
+                margin-bottom: 0;
+                border-bottom: 1px solid #e0e0e0;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                margin-bottom: 8px;
+            }
+            
+            .mobile-toolbar-section:last-child {
+                margin-bottom: 0;
+            }
+            
+            .editor-toolbar-group {
+                padding: 0 6px;
+                border-right: 1px solid #e0e0e0;
+                flex-shrink: 0;
+            }
+            
+            .editor-toolbar-group:last-child {
+                border-right: none;
+            }
+            
+            .editor-btn {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 13px !important;
+                flex-shrink: 0;
+                border-width: 1px !important;
+            }
+            
+            .editor-btn i {
+                font-size: 13px !important;
+            }
+            
+            /* 移动端基础工具栏 - 始终显示最常用的功能 */
+            .mobile-basic-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            
+            /* 移动端高级工具栏 - 始终显示 */
+            .mobile-advanced-toolbar {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px;
+                background: #f8f9fa;
+                border-top: 1px solid #e0e0e0;
+            }
+            
+            /* 移动端展开按钮 */
+            .mobile-expand-btn {
+                background: #007bff;
+                color: white;
+                border: none;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                margin: 8px auto;
+                transition: all 0.2s ease;
+            }
+            
+            .mobile-expand-btn:hover {
+                background: #0056b3;
+            }
+            
+            /* 颜色选择器移动端优化 */
+            .mobile-color-section {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 4px 0;
+            }
+            
+            .color-selector-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 4px 0;
+                flex: 1;
+                min-width: 200px;
+            }
+            
+            .color-selector-label {
+                font-size: 12px;
+                color: #666;
+                min-width: 36px;
+                font-weight: 500;
+                text-align: right;
+            }
+            
+            /* 字体大小选择器优化 */
+            .font-size-selector-label {
+                font-size: 12px;
+                color: #666;
+                min-width: 50px;
+                font-weight: 500;
+                margin-right: 8px;
+            }
+            
+            .mobile-basic-group:has(.font-size-selector-label) {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+                padding: 4px 8px;
+            }
+            
+            /* 添加字体选择器样式 */
+            .font-selector-label {
+                font-size: 12px;
+                color: #666;
+                min-width: 40px;
+                font-weight: 500;
+                margin-right: 4px;
+                white-space: nowrap;
+            }
+            
+            .mobile-select {
+                padding: 4px 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background: white;
+                font-size: 12px;
+                margin: 0 4px;
+                min-width: 80px;
+                outline: none;
+                cursor: pointer;
+            }
+            
+            .mobile-select:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            }
+            
+            /* 工具栏选择器样式（参考notes.html） */
+            .toolbar-select {
+                padding: 4px 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background: white;
+                font-size: 12px;
+                margin: 0 4px;
+                min-width: 80px;
+                outline: none;
+                cursor: pointer;
+            }
+            
+            .toolbar-select:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            }
+            
+            .toolbar-color {
+                width: 32px;
+                height: 32px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: pointer;
+                padding: 0;
+                margin: 0 4px;
+                outline: none;
+            }
+            
+            .toolbar-color:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            }
+            
+            .toolbar-bg-color {
+                width: 32px;
+                height: 32px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: pointer;
+                padding: 0;
+                margin: 0 4px;
+                outline: none;
+            }
+            
+            .toolbar-bg-color:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            }
+
+
+
+            
+            /* 隐藏桌面端的复杂分组 */
+            .editor-toolbar-group {
+                border-right: none;
+                padding: 4px;
+            }
+            
+            /* 移动端特殊的工具栏布局 - 小屏幕平铺效果 */
+            .mobile-basic-group {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                padding: 0;
+                background: transparent;
+                border-radius: 0;
+                margin: 0;
+                border: none;
+            }
+            
+            .mobile-basic-group .editor-btn {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 12px !important;
+                border-width: 1px !important;
+            }
+            
+            .mobile-basic-group .editor-btn i {
+                font-size: 12px !important;
+            }
+        }
+        
+        /* 超小屏幕进一步优化 */
+        @media (max-width: 480px) {
+            .editor-btn {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 11px !important;
+                border-width: 1px !important;
+            }
+            
+            .editor-btn i {
+                font-size: 11px !important;
+            }
+            
+            .mobile-basic-group .editor-btn {
+                width: 26px !important;
+                height: 26px !important;
+                font-size: 10px !important;
+                border-width: 1px !important;
+            }
+            
+            .mobile-basic-group .editor-btn i {
+                font-size: 10px !important;
+            }
+            
+
+            
+            .mobile-expand-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+        }
+        
+        /* 置顶复选框优化样式 */
+        .pin-toggle-label:hover {
+            background: #fff3e0 !important;
+            border-color: #ff9800 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+        }
+        
+        .pin-toggle-label:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(255, 152, 0, 0.3);
+        }
+        
+        #isPinned:checked ~ .pin-toggle-label i {
+            color: #ff9800;
+            transform: rotate(45deg);
+        }
+        
+        #isPinned:checked ~ .pin-toggle-label span {
+            color: #ff9800;
+            font-weight: 500;
+        }
+        
+        /* 使用相邻选择器来处理复选框状态变化 */
+        input[type="checkbox"]:checked + i {
+            color: #ff9800;
+            transform: rotate(45deg);
+        }
+        
+        input[type="checkbox"]:checked + i + span {
+            color: #ff9800;
+            font-weight: 500;
+        }
+        
+        /* 为置顶标签添加活动状态指示 */
+        .pin-toggle-label.active {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #ff9800;
+        }
+        
+        .pin-toggle-label.active i {
+            color: #ff9800;
+            transform: rotate(45deg);
+        }
+        
+        /* 自动保存复选框优化样式 */
+        .auto-save-toggle-label:hover {
+            background: #e8f5e8 !important;
+            border-color: #28a745 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+        
+        .auto-save-toggle-label:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(40, 167, 69, 0.3);
+        }
+        
+        #autoSaveToggle:checked + i {
+            color: #28a745;
+        }
+        
+        #autoSaveToggle:checked + i + span {
+            color: #28a745;
+            font-weight: 500;
+        }
+        
+        .auto-save-toggle-label.active {
+            background: #e8f5e8;
+            border-color: #28a745;
+            color: #28a745;
+        }
+        
+        .auto-save-toggle-label.active i {
+            color: #28a745;
+        }
+        
+        /* 表单验证错误样式 */
+        .input-error {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important;
+        }
+        
+        .input-error:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.5) !important;
+        }
+        
+
+        
+
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">便签</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+            
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+            <a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="notes-container">
+            <!-- 便签列表视图 -->
+            <div id="notesListView">
+                <div class="notes-header">
+                    <!-- 第一行：标题和搜索框 -->
+                    <div class="notes-header-row-1">
+                        <div class="notes-title">我的便签</div>
+                        <div class="search-container">
+                            <div class="search-box">
+                                <input type="text" id="searchInput" placeholder="搜索便签..." oninput="searchNotes()">
+                                <button id="searchBtn" onclick="searchNotes()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button id="clearSearchBtn" onclick="clearSearch()" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 第二行：筛选按钮和添加按钮 -->
+                    <div class="notes-header-row-2">
+                        <!-- 颜色选择器 -->
+                        <div class="color-picker-container">                        
+                            <div class="show-all-btn" onclick="selectNoteColor('all', event)" title="显示全部"></div>
+                            <div class="color-preset-btn none" onclick="selectNoteColor('none', event)" title="无背景色"></div>
+                            <div class="color-preset-btn yellow" onclick="selectNoteColor('yellow', event)" title="黄色"></div>
+                            <div class="color-preset-btn blue" onclick="selectNoteColor('blue', event)" title="蓝色"></div>
+                            <div class="color-preset-btn green" onclick="selectNoteColor('green', event)" title="绿色"></div>
+                            <div class="color-preset-btn pink" onclick="selectNoteColor('pink', event)" title="粉色"></div>
+                            <div class="color-preset-btn purple" onclick="selectNoteColor('purple', event)" title="紫色"></div>
+                        </div>
+                        <!-- 添加便签按钮 -->
+                        <button class="add-note-btn" onclick="openAddNoteModal()">
+                            <i class="fas fa-plus"></i>                     
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="notes-list" id="notesList">
+                    <!-- 便签列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 便签编辑界面 -->
+            <div id="noteEditView" style="display: none; background: #ffffff; position: relative; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; padding: 0; margin: 0; overflow-y: auto; overflow-x: hidden; border-radius: 0; box-shadow: none; border: none;">
+                <div class="edit-header" style="display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; background: #fafafa; position: sticky; top: 0; z-index: 10;">
+                    <button class="back-btn" onclick="closeNoteModal()" style="background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; margin-right: 16px; transition: all 0.2s ease;"><i class="fas fa-arrow-left"></i></button>
+                    <h3 class="edit-title" id="editTitle" style="margin: 0; color: #2c3e50; font-size: 22px; font-weight: 600; flex: 1;">添加便签</h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <!-- 自动保存开关 -->
+                        <label class="auto-save-toggle-label" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: #666; background: #f8f9fa; padding: 6px 10px; border-radius: 16px; border: 1px solid #e9ecef; transition: all 0.2s ease; white-space: nowrap;">
+                            <input type="checkbox" id="autoSaveToggle" style="width: 14px; height: 14px; cursor: pointer; margin: 0;">
+                            <i class="fas fa-save" style="font-size: 11px; color: #666; transition: color 0.2s ease;"></i>
+                            <span>自动保存</span>
+                        </label>
+                        <button type="button" class="back-btn" id="deleteNoteBtn" onclick="deleteNote()" style="display: none; padding: 0; border: 1px solid #e0e0e0; background: #f5f5f5; color: #dc3545; cursor: pointer; font-size: 20px; transition: all 0.2s ease; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 12px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="back-btn" id="saveNoteBtn" onclick="saveNote()" style="padding: 0; border: 1px solid #e0e0e0; background: #f5f5f5; color: #007bff; cursor: pointer; font-size: 20px; transition: all 0.2s ease; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="edit-content" style="height: auto; display: flex; flex-direction: column;">
+            <form id="noteForm" style="height: 100%; display: flex; flex-direction: column;">
+                <input type="hidden" id="noteId">
+                <!-- 便签标题和置顶设置 -->
+                <div class="form-group" style="padding: 16px 20px 8px 20px; background: white; border-bottom: 1px solid #f0f0f0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
+                        <label for="noteTitle" style="font-weight: 500; color: #555; font-size: 14px; margin: 0;">标题</label>
+                        <label class="pin-toggle-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #666; background: #f8f9fa; padding: 6px 12px; border-radius: 20px; border: 1px solid #e9ecef; transition: all 0.2s ease;">
+                            <input type="checkbox" id="isPinned" style="width: 16px; height: 16px; cursor: pointer; margin: 0;">
+                            <i class="fas fa-thumbtack" style="font-size: 12px; color: #666; transition: transform 0.2s ease;"></i>
+                            <span>置顶</span>
+                        </label>
+                    </div>
+                    <input type="text" class="form-control" id="noteTitle" placeholder="请输入便签标题" required style="width: 100%; padding: 13px 15px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: all 0.3s ease; box-sizing: border-box;">
+                </div>
+                
+                <!-- 便签颜色选择 -->
+                <div class="form-group" style="padding: 12px 20px; background: white; border-bottom: 1px solid #f0f0f0;">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="font-size: 14px; color: #555; font-weight: 500;">便签颜色:</label>
+                        <div class="color-picker-container" style="justify-content: center;">
+                            <div class="color-preset-btn none" onclick="setNoteColor('none')" title="无背景色"></div>
+                            <div class="color-preset-btn yellow" onclick="setNoteColor('yellow')" title="黄色"></div>
+                            <div class="color-preset-btn blue" onclick="setNoteColor('blue')" title="蓝色"></div>
+                            <div class="color-preset-btn green" onclick="setNoteColor('green')" title="绿色"></div>
+                            <div class="color-preset-btn pink" onclick="setNoteColor('pink')" title="粉色"></div>
+                            <div class="color-preset-btn purple" onclick="setNoteColor('purple')" title="紫色"></div>
+                            <div class="color-preset-btn orange" onclick="setNoteColor('orange')" title="橙色"></div>
+                            <div class="color-preset-btn red" onclick="setNoteColor('red')" title="红色"></div>
+                            <div class="color-preset-btn teal" onclick="setNoteColor('teal')" title="青色"></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="form-group" style="flex: none; display: flex; flex-direction: column; padding: 0 20px 20px 20px; background: white; position: relative;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <label for="noteContent" style="display: block; font-weight: 500; color: #555; font-size: 14px; margin-bottom: 8px;">内容</label>
+                    
+                        <div style="display: flex; align-items: center; gap: 6px; padding:5px 0px;">
+                            <button type="button" class="editor-btn mode-toggle-btn" onclick="editor.showContentMode()" title="内容编辑" id="contentModeBtn">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="editor-btn mode-toggle-btn" onclick="editor.showSourceMode()" title="源代码" id="sourceModeBtn">
+                                <i class="fas fa-code"></i>
+                            </button>
+                        </div>
+                     </div>
+                    <!-- 新的富文本编辑器 -->
+                    <div id="richEditor" class="rich-editor" style="flex: 1; display: flex; flex-direction: column;">
+                        <!-- 移动端编辑器工具栏 -->
+                        <div class="editor-toolbar" id="editorToolbar">
+                            <!-- 移动端基础工具栏 -->
+                            <div class="mobile-toolbar-section mobile-basic-toolbar">
+                                <!-- 撤销重做组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.undo()" title="撤销">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.redo()" title="重做">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- 格式化组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.format('bold')" title="粗体">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('italic')" title="斜体">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('underline')" title="下划线">
+                                        <i class="fas fa-underline"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('strikeThrough')" title="删除线">
+                                        <i class="fas fa-strikethrough"></i>
+                                    </button>
+                                </div>                                                            
+                                
+                                <!-- 列表组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.format('insertUnorderedList')" title="无序列表">
+                                        <i class="fas fa-list-ul"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('insertOrderedList')" title="有序列表">
+                                        <i class="fas fa-list-ol"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- 缩进组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.format('outdent')" title="减少缩进">
+                                        <i class="fas fa-outdent"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('indent')" title="增加缩进">
+                                        <i class="fas fa-indent"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- 对齐组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.format('justifyLeft')" title="左对齐">
+                                        <i class="fas fa-align-left"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('justifyCenter')" title="居中">
+                                        <i class="fas fa-align-center"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('justifyRight')" title="右对齐">
+                                        <i class="fas fa-align-right"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.format('justifyFull')" title="两端对齐">
+                                        <i class="fas fa-align-justify"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- 插入组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.insertLink()" title="插入链接">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.insertImage()" title="插入图片">
+                                        <i class="fas fa-image"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.insertCheckbox()" title="复选框">
+                                        <i class="fas fa-check-square"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.insertDateTime()" title="日期时间">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.insertQuote()" title="引用">
+                                        <i class="fas fa-quote-left"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.insertCode()" title="代码块">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                    <button type="button" class="editor-btn" onclick="editor.insertHR()" title="水平线">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- 特殊格式组 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.insertHighlight()" title="高亮">
+                                        <i class="fas fa-highlighter"></i>
+                                    </button>                                    
+                                </div>              
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.setHeading('h1')" title="标题1">H1</button>
+                                    <button type="button" class="editor-btn" onclick="editor.setHeading('h2')" title="标题2">H2</button>
+                                    <button type="button" class="editor-btn" onclick="editor.setHeading('h3')" title="标题3">H3</button>
+                                    <button type="button" class="editor-btn" onclick="editor.setHeading('p')" title="正文">P</button>
+                                </div>
+                                
+                                <!-- 字体选择器（使用notes.html方式） -->
+                                <div class="mobile-basic-group">
+                                    <label for="fontName">字体</label>
+                                    <select class="mobile-select toolbar-select" data-command="fontName" title="字体选择">
+                                        <option value="inherit">默认</option>
+                                        <option value="Arial, sans-serif">Arial</option>
+                                        <option value="SimSun, serif">宋体</option>
+                                        <option value="Microsoft YaHei, sans-serif">微软雅黑</option>
+                                        <option value="Courier New, monospace">Courier New</option>
+                                        <option value="Georgia, serif">Georgia</option>
+                                    </select>
+                                </div>
+
+                                <!-- 颜色选择器（使用notes.html方式） -->
+                                <div class="mobile-basic-group">  
+                                    <label for="foreColor">颜色</label>
+                                    <input type="color" class="toolbar-color" data-command="foreColor" value="#000000" title="文本颜色" >
+                                </div>
+
+                                <!--背景选择器（使用notes.html方式）-->
+                                <div class="mobile-basic-group">
+                                    <label for="backColor">背景</label>
+                                    <input type="color" class="toolbar-bg-color" data-command="backColor" value="#ffffff" title="背景颜色">
+
+                                </div>
+                                <!-- 字体大小（使用notes.html方式） -->
+                                <div class="mobile-basic-group">
+                                    <label for="fontSize">字号</label>
+                                    <select class="mobile-select toolbar-select" data-command="fontSize" title="字体大小">
+                                        <option value="8px">8px</option>
+                                        <option value="10px">10px</option>
+                                        <option value="12px">12px</option>
+                                        <option value="16px" selected>16px</option>
+                                        <option value="20px">20px</option>
+                                        <option value="24px">24px</option>
+                                        <option value="32px">32px</option>
+                                        <option value="40px">40px</option>
+                                        <option value="48px">48px</option>
+                                        <option value="64px">64px</option>
+                                    </select>
+                                </div>
+
+                                   <!-- 清除格式 -->
+                                <div class="mobile-basic-group">
+                                    <button type="button" class="editor-btn" onclick="editor.clearFormat()" title="清除格式">
+                                        <i class="fas fa-eraser"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 编辑器内容区域 -->
+                        <div class="editor-content" id="editorContent" contenteditable="true"></div>                      
+                    </div>
+                    <div class="ritor-Source" id="ritorSource">
+                          <!-- 源代码区域 -->
+                        <textarea class="editor-source" id="editorSource" style="display: none;"></textarea>
+                    </div>
+                </div>                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+  
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        // 便签数据存储
+        let notes = [];
+        let currentNoteId = null;
+        let searchQuery = '';
+        let selectedColor = 'all'; // 默认显示全部便签
+        let currentNoteColor = 'none'; // 当前编辑便签的颜色
+        
+        // 自动保存功能
+        let autoSaveTimer = null;
+        const AUTO_SAVE_INTERVAL = 3000; // 自动保存间隔（毫秒）
+        let lastSavedContent = '';
+        let isEditing = false;
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+            await MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+            
+            // 从本地存储恢复筛选状态
+            const savedFilterColor = localStorage.getItem('notesFilterColor');
+            if (savedFilterColor) {
+                selectedColor = savedFilterColor;
+            }
+                       
+            // 加载便签数据
+            await loadNotes();
+            
+            
+            // 恢复筛选状态的UI显示
+            // 无论是否有保存的筛选状态，都设置UI状态
+            const colorToShow = savedFilterColor || 'all';
+            const event = { target: document.querySelector(colorToShow === 'all' ? '.show-all-btn' : `.color-preset-btn.${colorToShow}`) };
+            selectNoteColor(colorToShow, event);
+            
+            
+            // 初始化置顶复选框事件监听器
+            setupPinCheckbox();
+            
+            // 初始化自动保存复选框事件监听器
+            setupAutoSaveCheckbox();
+            
+            // 初始化编辑器，确保DOM元素都已准备好
+            try {
+                editor = new RichTextEditor({
+                    editorElement: document.getElementById('editorContent'),
+                    sourceElement: document.getElementById('editorSource'),
+                    toolbarElement: document.getElementById('editorToolbar'),
+                    autoSaveIndicator: document.getElementById('autoSaveIndicator')
+                });
+                console.log('富文本编辑器初始化成功');
+                console.log('编辑器方法:', Object.getOwnPropertyNames(editor.__proto__));
+                
+                // 验证必要方法是否存在
+                if (typeof editor.setTextColor === 'function') {
+                    console.log('✓ setTextColor 方法可用');
+                } else {
+                    console.error('✗ setTextColor 方法不可用');
+                }
+                
+                if (typeof editor.setBgColor === 'function') {
+                    console.log('✓ setBgColor 方法可用');
+                } else {
+                    console.error('✗ setBgColor 方法不可用');
+                }
+                
+                if (typeof editor.setFontSize === 'function') {
+                    console.log('✓ setFontSize 方法可用');
+                } else {
+                    console.error('✗ setFontSize 方法不可用');
+                }
+                
+                // 重新绑定工具栏事件
+                bindDirectToolbarEvents();
+                console.log('工具栏事件绑定完成');
+                
+                // 初始化模式按钮状态
+                editor.updateModeButtons();
+                
+            } catch (error) {
+                console.error('富文本编辑器初始化失败:', error);
+            }
+
+        });
+        
+        
+      
+        // 从API加载便签
+        async function loadNotes() {
+            try {
+                const response = await fetch('/api/notes', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${Utils.getToken()}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('加载便签失败');
+                }
+                
+                const result = await response.json();
+                if (result.success && Array.isArray(result.data)) {
+                    notes = result.data;
+                } else if (result.success && !Array.isArray(result.data)) {
+                    // 如果返回的数据不是数组，将其转换为数组
+                    notes = [result.data];
+                } else {
+                    throw new Error(result.message || '加载便签失败');
+                }
+            } catch (error) {
+                console.error('加载便签失败:', error);
+                Utils.showError(error.message || '加载便签失败');
+                // 确保notes始终是数组
+                notes = [];
+            } finally {
+                // 数据加载完成后，重新渲染便签列表
+                filterNotesByColor(selectedColor || 'all');
+            }
+        }
+        
+        
+        
+        
+
+
+        
+        // 新的富文本编辑器类
+        class RichTextEditor {
+            constructor(options = {}) {
+                this.editorElement = options.editorElement;
+                this.sourceElement = options.sourceElement;
+                this.toolbarElement = options.toolbarElement;
+                this.autoSaveIndicator = options.autoSaveIndicator;
+                this.isSourceMode = false;
+                this.history = [];
+                this.historyIndex = -1;
+                this.maxHistoryLength = 50;
+                this.lastContent = '';
+                
+                // 添加字体和大小配置（参考notes.html）
+                this.fontSizes = [
+                    { name: '小', value: '12px' },
+                    { name: '正常', value: '16px' },
+                    { name: '中', value: '20px' },
+                    { name: '大', value: '24px' },
+                    { name: '特大', value: '32px' }
+                ];
+                
+                this.fontFamilies = [
+                    { name: '默认', value: 'inherit' },
+                    { name: 'Arial', value: 'Arial, sans-serif' },
+                    { name: '宋体', value: 'SimSun, serif' },
+                    { name: '微软雅黑', value: 'Microsoft YaHei, sans-serif' },
+                    { name: 'Courier New', value: 'Courier New, monospace' },
+                    { name: 'Georgia', value: 'Georgia, serif' }
+                ];
+                
+                this.init();
+            }
+            
+            // 设置文字颜色（参考notes.html实现）
+            setTextColor(color) {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                document.execCommand('foreColor', false, color);
+                this.saveToHistory();
+                this.updateAutoSave();
+            }
+            
+            // 设置背景颜色（参考notes.html实现）
+            setBgColor(color) {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                document.execCommand('backColor', false, color);
+                this.saveToHistory();
+                this.updateAutoSave();
+            }
+            
+            // 设置字体大小（参考notes.html实现）
+            setFontSize(size) {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                document.execCommand('fontSize', false, 7); // 先设置默认大小
+                const fontElements = this.editorElement.querySelectorAll('font[size]');
+                fontElements.forEach(el => {
+                    el.removeAttribute('size');
+                    el.style.fontSize = size;
+                });
+                this.saveToHistory();
+                this.updateAutoSave();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.setupMobileToolbar();
+                this.autoResizeContent();
+                this.autoResizeSource();
+                this.saveToHistory();
+                
+                // 延迟更新工具栏状态，确保DOM完全加载
+                setTimeout(() => {
+                    this.updateToolbarState();
+                    this.updateModeButtons();
+                }, 100);
+            }
+            
+            bindEvents() {
+                const editor = this.editorElement;
+                const source = this.sourceElement;
+                
+                // 编辑器输入事件
+                editor.addEventListener('input', () => {
+                    this.onInput();
+                    this.updateToolbarState();
+                });
+                
+                editor.addEventListener('paste', (e) => {
+                    this.handlePaste(e);
+                });
+                                
+                // 编辑器鼠标事件，用于更新工具栏状态
+                editor.addEventListener('mouseup', () => {
+                    this.updateToolbarState();
+                });
+                
+                editor.addEventListener('keyup', () => {
+                    this.updateToolbarState();
+                });
+                
+                // 源代码模式输入事件
+                source.addEventListener('input', () => {
+                    this.onInput();
+                    this.autoResizeSource();
+                });
+                
+                // 绑定工具栏按钮事件
+                this.bindToolbarEvents();
+            }
+            
+            bindToolbarEvents() {
+                // 绑定下拉选择框事件（参考notes.html实现）
+                const selects = this.toolbarElement.querySelectorAll('.toolbar-select');
+                selects.forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const command = select.dataset.command;
+                        const value = select.value;
+                        
+                        if (command === 'fontSize') {
+                            this.setFontSize(value);
+                        } else if (command === 'fontName') {
+                            this.focus();
+                            document.execCommand('fontName', false, value);
+                            this.saveToHistory();
+                        }
+                        
+                        this.updateAutoSave();
+                    });
+                });
+                
+                // 绑定颜色选择器事件（参考notes.html实现）
+                const colorInput = this.toolbarElement.querySelector('.toolbar-color');
+                if (colorInput) {
+                    colorInput.addEventListener('input', (e) => {
+                        this.setTextColor(e.target.value);
+                    });
+                }
+ 
+                // 绑定背景颜色选择器事件（参考notes.html实现）
+                const bgColorInput = this.toolbarElement.querySelector('.toolbar-bg-color');
+                if (bgColorInput) {
+                    bgColorInput.addEventListener('input', (e) => {
+                        this.setBgColor(e.target.value);
+                    });
+                }
+                
+                // 注释掉重复的事件绑定，避免按钮被点击两次
+                // HTML中的onclick属性已经足够，不需要额外的addEventListener
+                /*
+                const buttonsWithOnclick = this.toolbarElement.querySelectorAll('.editor-btn[onclick]');
+                buttonsWithOnclick.forEach(btn => {
+                    // 为已有onclick的按钮添加额外的处理
+                    const originalOnclick = btn.getAttribute('onclick');
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // 执行原始的onclick函数
+                        try {
+                            eval(originalOnclick);
+                        } catch (err) {
+                            console.error('执行onclick函数失败:', err);
+                        }
+                    });
+                });
+                */
+            }
+            
+            // 设置移动端工具栏
+            setupMobileToolbar() {
+                // 检测是否为移动端
+                const isMobile = window.innerWidth <= 767;
+                const toolbar = this.toolbarElement;
+                
+                if (isMobile && toolbar) {
+                    // 添加移动端工具栏类
+                    toolbar.classList.add('mobile-toolbar');
+                    
+                    // 创建工具栏展开/收起按钮
+                    const toggleBtn = document.getElementById('toggleToolbarBtn');
+                    if (toggleBtn) {
+                        // 默认在移动端显示简化工具栏
+                        this.isMobileToolbarExpanded = false;
+                        toolbar.classList.remove('expanded');
+                        
+                        // 为收起/展开按钮添加移动端特殊处理
+                        toggleBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.toggleMobileToolbar();
+                        });
+                    }
+                    
+                    // 监听屏幕旋转
+                    window.addEventListener('orientationchange', () => {
+                        setTimeout(() => {
+                            this.setupMobileToolbar();
+                        }, 100);
+                    });
+                } else if (toolbar) {
+                    toolbar.classList.remove('mobile-toolbar', 'expanded');
+                }
+            }
+            
+            // 切换移动端工具栏显示状态
+            toggleMobileToolbar() {
+                if (window.innerWidth <= 767) {
+                    const toolbar = this.toolbarElement;
+                    if (toolbar) {
+                        this.isMobileToolbarExpanded = !this.isMobileToolbarExpanded;
+                        
+                        if (this.isMobileToolbarExpanded) {
+                            toolbar.classList.add('expanded');
+                        } else {
+                            toolbar.classList.remove('expanded');
+                        }
+                        
+                        // 更新按钮文本和图标
+                        const icon = document.getElementById('toolbarIcon');
+                        const text = document.getElementById('toolbarText');
+                        
+                        if (icon && text) {
+                            if (this.isMobileToolbarExpanded) {
+                                icon.className = 'fas fa-chevron-up';
+                                text.textContent = '收起工具栏';
+                            } else {
+                                icon.className = 'fas fa-chevron-down';
+                                text.textContent = '展开工具栏';
+                            }
+                        }
+                    }
+                }
+            }
+            
+
+            
+            onInput() {
+                this.autoResize();
+                clearTimeout(this.inputTimer);
+                this.inputTimer = setTimeout(() => {
+                    this.saveToHistory();
+                    this.updateAutoSave();
+                }, 500);
+            }
+            
+            // 自动调整编辑器高度
+            autoResize() {
+                if (this.isSourceMode) {
+                    this.autoResizeSource();
+                } else {
+                    this.autoResizeContent();
+                }
+            }
+            
+            // 调整内容编辑模式的高度
+            autoResizeContent() {
+                const editor = this.editorElement;
+                // 移除高度限制，让编辑器完全适应内容高度
+                editor.style.height = 'auto';
+                editor.style.height = editor.scrollHeight + 'px';
+            }
+            
+            // 调整源代码模式的高度
+            autoResizeSource() {
+                const source = this.sourceElement;
+                // 移除高度限制，让编辑器完全适应内容高度
+                source.style.height = 'auto';
+                
+                // 始终将高度设置为内容的总高度，确保所有文本都能显示
+                source.style.height = source.scrollHeight + 'px';
+            }
+            
+            saveToHistory() {
+                const content = this.getContent();
+                if (this.historyIndex >= 0 && this.history[this.historyIndex] === content) {
+                    return;
+                }
+                
+                // 清除当前索引之后的历史记录
+                if (this.historyIndex < this.history.length - 1) {
+                    this.history = this.history.slice(0, this.historyIndex + 1);
+                }
+                
+                this.history.push(content);
+                
+                if (this.history.length > this.maxHistoryLength) {
+                    this.history.shift();
+                } else {
+                    this.historyIndex++;
+                }
+            }
+            
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.setContent(this.history[this.historyIndex]);
+                }
+            }
+            
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    this.setContent(this.history[this.historyIndex]);
+                }
+            }
+            
+            format(command, value = null) {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                
+                if (selection.rangeCount === 0) return;
+                
+                const range = selection.getRangeAt(0);
+                
+                try {
+                    // 使用现代DOM API替代document.execCommand
+                    switch(command) {
+                        case 'bold':
+                            this.wrapSelection('b', 'font-weight: bold;');
+                            break;
+                        case 'italic':
+                            this.wrapSelection('i', 'font-style: italic;');
+                            break;
+                        case 'underline':
+                            this.wrapSelection('u', 'text-decoration: underline;');
+                            break;
+                        case 'strikeThrough':
+                            this.wrapSelection('s', 'text-decoration: line-through;');
+                            break;
+                        case 'insertUnorderedList':
+                            this.wrapInList('ul');
+                            break;
+                        case 'insertOrderedList':
+                            this.wrapInList('ol');
+                            break;
+                        case 'justifyLeft':
+                            this.setAlignment('left');
+                            break;
+                        case 'justifyCenter':
+                            this.setAlignment('center');
+                            break;
+                        case 'justifyRight':
+                            this.setAlignment('right');
+                            break;
+                        case 'justifyFull':
+                            this.setAlignment('justify');
+                            break;
+                        case 'indent':
+                            this.indentSelection();
+                            break;
+                        case 'outdent':
+                            this.outdentSelection();
+                            break;
+                        default:
+                            // 回退到execCommand
+                            document.execCommand(command, false, value);
+                    }
+                    
+                    this.saveToHistory();
+                    this.updateAutoSave();
+                } catch (error) {
+                    console.error('格式化失败:', error);
+                    // 如果现代方法失败，回退到execCommand
+                    try {
+                        document.execCommand(command, false, value);
+                        this.saveToHistory();
+                        this.updateAutoSave();
+                    } catch (fallbackError) {
+                        console.error('回退方法也失败:', fallbackError);
+                    }
+                }
+            }
+            
+            // 包装选中文本在指定标签中
+            wrapSelection(tagName, style = '') {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0 || selection.isCollapsed) return;
+                
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+                
+                if (!selectedText) return;
+                
+                // 检查选区是否已经被目标标签包裹
+                const commonAncestor = range.commonAncestorContainer;
+                let targetElement = null;
+                
+                // 查找最近的父元素
+                let node = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+                while (node && node !== this.editorElement) {
+                    if (node.tagName === tagName.toUpperCase()) {
+                        targetElement = node;
+                        break;
+                    }
+                    node = node.parentElement;
+                }
+                
+                if (targetElement) {
+                    // 如果已经存在目标标签，则移除它（取消格式）
+                    try {
+                        const parent = targetElement.parentNode;
+                        const children = Array.from(targetElement.childNodes);
+                        
+                        // 将子元素移到父元素中
+                        children.forEach(child => {
+                            parent.insertBefore(child, targetElement);
+                        });
+                        
+                        // 删除空的标签元素
+                        parent.removeChild(targetElement);
+                        
+                        // 重新选择内容
+                        const newRange = document.createRange();
+                        newRange.setStartBefore(children[0]);
+                        newRange.setEndAfter(children[children.length - 1]);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                        
+                    } catch (error) {
+                        console.error(`取消格式失败 (${tagName}):`, error);
+                    }
+                } else {
+                    // 如果不存在目标标签，则添加它
+                    const element = document.createElement(tagName);
+                    if (style) {
+                        element.style.cssText = style;
+                    }
+                    element.textContent = selectedText;
+                    
+                    try {
+                        range.deleteContents();
+                        range.insertNode(element);
+                        
+                        // 重新选择新创建的元素
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(element);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    } catch (error) {
+                        console.error(`包装文本失败 (${tagName}):`, error);
+                    }
+                }
+            }
+            
+            // 处理当前行的列表转换
+            handleCurrentLineForList(listType, selection, range) {
+                try {
+                    // 获取光标位置
+                    const cursorNode = range.startContainer;
+                    const cursorOffset = range.startOffset;
+                    
+                    // 找到当前行所在的块级元素
+                    let currentBlock = cursorNode.nodeType === 3 ? cursorNode.parentElement : cursorNode;
+                    
+                    // 如果当前在列表中，根据类型决定是取消还是切换
+                    let existingList = null;
+                    let node = currentBlock;
+                    while (node && node !== this.editorElement) {
+                        if (node.tagName === 'UL' || node.tagName === 'OL') {
+                            existingList = node;
+                            break;
+                        }
+                        node = node.parentElement;
+                    }
+                    
+                    if (existingList) {
+                        if (existingList.tagName === listType.toUpperCase()) {
+                            // 如果已存在相同类型的列表，取消列表
+                            this.unlistCurrentItem(existingList, currentBlock, selection);
+                        } else {
+                            // 如果存在不同类型的列表，切换类型
+                            this.switchListType(existingList, listType, selection);
+                        }
+                    } else {
+                        // 如果不在列表中，将当前块级元素转换为列表项
+                        this.convertBlockToListItem(currentBlock, listType, selection);
+                    }
+                } catch (error) {
+                    console.error('处理当前行列表失败:', error);
+                    // 回退到创建空列表项
+                    this.createEmptyListItem(listType, range, selection);
+                }
+            }
+            
+            // 取消当前项的列表格式
+            unlistCurrentItem(existingList, currentBlock, selection) {
+                try {
+                    const parent = existingList.parentNode;
+                    
+                    // 将当前列表项转换为段落
+                    const p = document.createElement('p');
+                    p.style.margin = '5px 0';
+                    
+                    if (currentBlock.tagName === 'LI') {
+                        // 当前本身就是列表项
+                        p.innerHTML = currentBlock.innerHTML;
+                        parent.insertBefore(p, existingList);
+                        
+                        // 如果列表只有这一项，删除整个列表
+                        if (existingList.children.length === 1) {
+                            parent.removeChild(existingList);
+                        } else {
+                            existingList.removeChild(currentBlock);
+                        }
+                    }
+                    
+                    // 将光标定位到新段落
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(p);
+                    newRange.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                } catch (error) {
+                    console.error('取消列表失败:', error);
+                }
+            }
+            
+            // 切换列表类型
+            switchListType(existingList, newListType, selection) {
+                try {
+                    const newList = document.createElement(newListType);
+                    newList.innerHTML = existingList.innerHTML;
+                    
+                    // 设置列表样式
+                    newList.style.margin = '10px 0';
+                    newList.style.paddingLeft = '20px';
+                    if (newListType === 'ol') {
+                        newList.style.listStyleType = 'decimal';
+                    } else {
+                        newList.style.listStyleType = 'disc';
+                    }
+                    
+                    existingList.parentNode.replaceChild(newList, existingList);
+                    
+                    // 重新选择内容
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(newList);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                } catch (error) {
+                    console.error('切换列表类型失败:', error);
+                }
+            }
+            
+            // 将块级元素转换为列表项
+            convertBlockToListItem(blockElement, listType, selection) {
+                try {
+                    const li = document.createElement('li');
+                    
+                    // 获取块级元素的内容
+                    let content = '';
+                    if (blockElement.tagName === 'P' || blockElement.tagName === 'DIV') {
+                        content = blockElement.innerHTML;
+                    } else {
+                        content = blockElement.textContent;
+                    }
+                    
+                    li.innerHTML = content || '<br>'; // 确保至少有一个换行符
+                    li.style.marginBottom = '4px';
+                    
+                    const list = document.createElement(listType);
+                    list.appendChild(li);
+                    
+                    // 设置列表样式
+                    list.style.margin = '10px 0';
+                    list.style.paddingLeft = '20px';
+                    if (listType === 'ol') {
+                        list.style.listStyleType = 'decimal';
+                    } else {
+                        list.style.listStyleType = 'disc';
+                    }
+                    
+                    // 替换原块级元素
+                    if (blockElement.parentNode) {
+                        blockElement.parentNode.replaceChild(list, blockElement);
+                    }
+                    
+                    // 将光标定位到列表项中
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(li);
+                    newRange.collapse(false); // 光标到末尾
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                } catch (error) {
+                    console.error('转换为列表项失败:', error);
+                }
+            }
+            
+            // 创建空列表项（回退方案）
+            createEmptyListItem(listType, range, selection) {
+                const li = document.createElement('li');
+                li.innerHTML = '<br>';
+                li.style.minHeight = '1.2em';
+                
+                const list = document.createElement(listType);
+                list.appendChild(li);
+                
+                // 设置列表样式
+                list.style.margin = '10px 0';
+                list.style.paddingLeft = '20px';
+                if (listType === 'ol') {
+                    list.style.listStyleType = 'decimal';
+                } else {
+                    list.style.listStyleType = 'disc';
+                }
+                
+                try {
+                    range.insertNode(list);
+                    
+                    const newRange = document.createRange();
+                    newRange.setStart(li, 0);
+                    newRange.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                } catch (error) {
+                    console.error('创建空列表失败:', error);
+                }
+            }
+            
+            // 将选中文本转换为列表
+            wrapInList(listType) {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0) return;
+                
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+                
+                // 首先检查是否已经在相同类型的列表中
+                const commonAncestor = range.commonAncestorContainer;
+                let existingList = null;
+                
+                // 查找最近的列表父元素
+                let node = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+                while (node && node !== this.editorElement) {
+                    if (node.tagName === 'UL' || node.tagName === 'OL') {
+                        existingList = node;
+                        break;
+                    }
+                    node = node.parentElement;
+                }
+                
+                if (existingList && existingList.tagName === listType.toUpperCase()) {
+                    // 如果已存在相同类型的列表，则取消列表
+                    try {
+                        const parent = existingList.parentNode;
+                        const listItems = Array.from(existingList.children);
+                        
+                        // 将每个列表项转换为普通段落
+                        listItems.forEach((li, index) => {
+                            const p = document.createElement('p');
+                            p.innerHTML = li.innerHTML;
+                            p.style.margin = '5px 0';
+                            
+                            if (index === 0) {
+                                parent.insertBefore(p, existingList);
+                            } else {
+                                parent.appendChild(p);
+                            }
+                        });
+                        
+                        // 删除原列表
+                        parent.removeChild(existingList);
+                        
+                        // 重新选择内容
+                        const newRange = document.createRange();
+                        const firstP = parent.querySelector('p');
+                        if (firstP) {
+                            newRange.selectNodeContents(firstP);
+                        }
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                        
+                    } catch (error) {
+                        console.error(`取消列表失败 (${listType}):`, error);
+                    }
+                    return;
+                }
+                
+                if (existingList) {
+                    // 如果已存在不同类型的列表，改变列表类型
+                    const newList = document.createElement(listType);
+                    newList.innerHTML = existingList.innerHTML;
+                    
+                    // 设置列表样式
+                    newList.style.margin = '10px 0';
+                    newList.style.paddingLeft = '20px';
+                    if (listType === 'ol') {
+                        newList.style.listStyleType = 'decimal';
+                    } else {
+                        newList.style.listStyleType = 'disc';
+                    } 
+                    
+                    existingList.parentNode.replaceChild(newList, existingList);
+                    
+                    // 重新选择内容
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(newList);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                    return;
+                }
+                
+                if (!selectedText || selectedText.trim() === '') {
+                    // 如果没有选中文本，处理当前行
+                    this.handleCurrentLineForList(listType, selection, range);
+                    return;
+                }
+                
+                // 按行分割文本并创建列表
+                const lines = selectedText.split('\n').filter(line => line.trim());
+                const list = document.createElement(listType);
+                
+                // 设置列表样式
+                list.style.margin = '10px 0';
+                list.style.paddingLeft = '20px';
+                if (listType === 'ol') {
+                    list.style.listStyleType = 'decimal';
+                } else {
+                    list.style.listStyleType = 'disc';
+                }
+                
+                lines.forEach((line, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = line.trim();
+                    // 添加底部间距让列表项更清晰
+                    li.style.marginBottom = '4px';
+                    list.appendChild(li);
+                });
+                
+                let modernMethodSuccess = false;
+                try {
+                    range.deleteContents();
+                    range.insertNode(list);
+                    modernMethodSuccess = true;
+                    
+                    // 将光标移到列表最后的位置
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(list);
+                    newRange.collapse(false); // false表示折叠到末尾
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                    
+                } catch (error) {
+                    console.error('现代方法创建列表失败:', error);
+                    modernMethodSuccess = false;
+                }
+                
+                // 只有在现代方法失败时才回退到execCommand
+                if (!modernMethodSuccess) {
+                    console.log('回退到execCommand方法');
+                    try {
+                        document.execCommand(listType === 'ul' ? 'insertUnorderedList' : 'insertOrderedList', false, null);
+                    } catch (fallbackError) {
+                        console.error('回退列表创建也失败:', fallbackError);
+                    }
+                }
+            }
+            
+            // 设置文本对齐
+            setAlignment(align) {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0) return;
+                
+                const range = selection.getRangeAt(0);
+                let blockElement = this.getBlockElement(range);
+                
+                if (blockElement) {
+                    blockElement.style.textAlign = align;
+                } else {
+                    // 如果没有块元素，创建一个div
+                    const div = document.createElement('div');
+                    div.style.textAlign = align;
+                    
+                    try {
+                        range.surroundContents(div);
+                    } catch (error) {
+                        // 如果surroundContents失败，使用其他方法
+                        const selectedText = range.toString();
+                        range.deleteContents();
+                        div.textContent = selectedText;
+                        range.insertNode(div);
+                    }
+                }
+            }
+            
+            // 增加缩进
+            indentSelection() {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0) return;
+                
+                const range = selection.getRangeAt(0);
+                let blockElement = this.getBlockElement(range);
+                
+                if (blockElement) {
+                    const currentMargin = parseInt(blockElement.style.marginLeft) || 0;
+                    blockElement.style.marginLeft = (currentMargin + 40) + 'px';
+                } else {
+                    // 创建带缩进的div
+                    const div = document.createElement('div');
+                    div.style.marginLeft = '40px';
+                    
+                    try {
+                        range.surroundContents(div);
+                    } catch (error) {
+                        const selectedText = range.toString();
+                        range.deleteContents();
+                        div.textContent = selectedText;
+                        range.insertNode(div);
+                    }
+                }
+            }
+            
+            // 减少缩进
+            outdentSelection() {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0) return;
+                
+                const range = selection.getRangeAt(0);
+                let blockElement = this.getBlockElement(range);
+                
+                if (blockElement) {
+                    const currentMargin = parseInt(blockElement.style.marginLeft) || 0;
+                    if (currentMargin > 0) {
+                        blockElement.style.marginLeft = Math.max(0, currentMargin - 40) + 'px';
+                    }
+                }
+            }
+            
+            setHeading(tag) {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const blockElement = this.getBlockElement(range);
+                    const text = range.toString() || '标题';
+                    
+                    if (blockElement) {
+                        // 替换现有块元素
+                        const newElement = document.createElement(tag);
+                        newElement.innerHTML = blockElement.innerHTML;
+                        blockElement.parentNode.replaceChild(newElement, blockElement);
+                        
+                        // 重新选择内容
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(newElement);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    } else {
+                        // 创建新的块元素
+                        const newElement = document.createElement(tag);
+                        newElement.textContent = text;
+                        
+                        range.deleteContents();
+                        range.insertNode(newElement);
+                        
+                        // 如果是空标题，将光标定位到标题内部
+                        if (text === '标题') {
+                            const newRange = document.createRange();
+                            newRange.selectNodeContents(newElement);
+                            selection.removeAllRanges();
+                            selection.addRange(newRange);
+                        }
+                    }
+                }
+                
+                this.saveToHistory();
+                this.updateAutoSave();
+            }
+            
+
+            
+            clearFormat() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    
+                    if (!selection.isCollapsed) {
+                        // 有选中文本的情况 - 移除选中内容的格式
+                        const selectedText = range.toString();
+                        
+                        // 获取选中文本的完整HTML内容
+                        const fragment = range.cloneContents();
+                        const plainText = this.extractTextFromFragment(fragment);
+                        
+                        // 删除原有内容，插入纯文本
+                        range.deleteContents();
+                        const textNode = document.createTextNode(plainText);
+                        range.insertNode(textNode);
+                        
+                        // 重新选择清除格式后的文本
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(textNode);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    } else {
+                        // 没有选中文本的情况 - 清除当前所在位置的格式
+                        const currentNode = range.startContainer;
+                        const parentElement = currentNode.nodeType === 3 ? currentNode.parentElement : currentNode;
+                        
+                        // 查找最近的格式化父元素
+                        const formattedParent = this.findFormattedParent(parentElement);
+                        if (formattedParent && formattedParent !== this.editorElement) {
+                            // 将内容从格式化元素中提取出来，只获取纯文本
+                            const content = formattedParent.textContent || formattedParent.innerText || '';
+                            const textNode = document.createTextNode(content);
+                            
+                            // 在格式化元素之前插入纯文本
+                            formattedParent.parentNode.insertBefore(textNode, formattedParent);
+                            
+                            // 删除格式化元素
+                            formattedParent.parentNode.removeChild(formattedParent);
+                            
+                            // 将光标移动到新位置
+                            const newRange = document.createRange();
+                            newRange.selectNodeContents(textNode);
+                            newRange.collapse(false);
+                            selection.removeAllRanges();
+                            selection.addRange(newRange);
+                        }
+                    }
+                } else {
+                    // 没有选中范围的情况 - 清除整个编辑器的格式
+                    const content = this.editorElement.textContent || this.editorElement.innerText || '';
+                    this.setContent(content);
+                }
+                
+                this.saveToHistory();
+                this.updateAutoSave();
+            }
+            
+            // 从DOM片段中提取纯文本
+            extractTextFromFragment(fragment) {
+                const div = document.createElement('div');
+                div.appendChild(fragment);
+                return div.textContent || div.innerText || '';
+            }
+            
+            // 查找最近的格式化父元素
+            findFormattedParent(element) {
+                if (!element || element === this.editorElement) return null;
+                
+                const formattedTags = ['B', 'I', 'U', 'S', 'STRONG', 'EM', 'MARK', 'SPAN', 'FONT', 'DIV', 'P'];
+                const hasFormatStyle = (el) => {
+                    if (!el || el === this.editorElement) return false;
+                    const style = window.getComputedStyle(el);
+                    return style.fontWeight !== '400' || 
+                           style.fontStyle !== 'normal' || 
+                           style.textDecoration !== 'none' ||
+                           style.color !== 'rgb(51, 51, 51)' && style.color !== 'rgb(33, 37, 41)' ||
+                           style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'rgb(255, 255, 255)';
+                };
+                
+                let current = element;
+                while (current && current !== this.editorElement) {
+                    if (formattedTags.includes(current.tagName) || hasFormatStyle(current)) {
+                        return current;
+                    }
+                    current = current.parentElement;
+                }
+                
+                return null;
+            }
+            
+            insertLink() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                const selectedText = selection.toString() || '链接文本';
+                
+                const url = prompt('请输入链接地址:', 'https://');
+                if (!url) return;
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.textContent = selectedText;
+                link.target = '_blank';
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(link);
+                    
+                    range.selectNode(link);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            insertImage() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const url = prompt('请输入图片地址:', 'https://');
+                if (!url) return;
+                
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = '图片';
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.insertNode(img);
+                    
+                    // 在图片后插入空格
+                    const space = document.createTextNode(' ');
+                    range.setStartAfter(img);
+                    range.setEndAfter(img);
+                    range.insertNode(space);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            insertCheckbox() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                
+                // 创建复选框元素
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.style.marginRight = '8px';
+                checkbox.style.cursor = 'pointer';
+                
+                // 添加点击事件处理
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.insertNode(checkbox);
+                    
+                    // 在复选框后面插入一个空白文本节点，用户可以输入待办事项
+                    const textNode = document.createTextNode(' ');
+                    range.setStartAfter(checkbox);
+                    range.setEndAfter(checkbox);
+                    range.insertNode(textNode);
+                    
+                    // 将光标移到文本节点后面
+                    range.setStartAfter(textNode);
+                    range.setEndAfter(textNode);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            insertDateTime() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const now = new Date();
+                
+                // 使用标准化的日期时间格式：YYYY-MM-DD HH:MM:SS
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                
+                const dateTimeStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const textNode = document.createTextNode(dateTimeStr);
+                    range.insertNode(textNode);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            insertHighlight() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                
+                if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    const selectedText = range.toString();
+                    
+                    // 创建高亮span
+                    const span = document.createElement('span');
+                    span.style.backgroundColor = '#ffeb3b';
+                    span.style.padding = '2px 4px';
+                    span.style.borderRadius = '3px';
+                    
+                    try {
+                        range.surroundContents(span);
+                    } catch (e) {
+                        const textNode = document.createTextNode(selectedText);
+                        range.deleteContents();
+                        span.appendChild(textNode);
+                        range.insertNode(span);
+                    }
+                } else {
+                    // 如果没有选中文本，插入一个高亮标记，用户可以在里面输入
+                    const span = document.createElement('span');
+                    span.style.backgroundColor = '#ffeb3b';
+                    span.style.padding = '2px 4px';
+                    span.style.borderRadius = '3px';
+                    span.innerHTML = '&#8203;'; // 零宽空字符
+                    
+                    const range = selection.getRangeAt(0);
+                    range.insertNode(span);
+                    
+                    // 将光标移到span内部
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(span);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            showSourceMode() {
+                const editor = this.editorElement;
+                const source = this.sourceElement;
+                const richEditor = document.getElementById('richEditor');
+              
+                
+                if (!this.isSourceMode) {
+                    source.value = editor.innerHTML;
+                    editor.style.display = 'none';
+                    source.style.display = 'block';
+                    this.autoResizeSource();
+                    this.isSourceMode = true;
+                    
+                    // 隐藏工具栏
+                    const toolbar = document.getElementById('editorToolbar');
+                    if (toolbar) {
+                        toolbar.style.display = 'none';
+                    }
+                    
+                    // 隐藏整个富文本编辑器容器
+                    if (richEditor) {
+                        richEditor.style.display = 'none';
+                    }
+                }
+                
+                // 更新按钮状态
+                this.updateModeButtons();
+            }
+            
+            showContentMode() {
+                const editor = this.editorElement;
+                const source = this.sourceElement;
+                const richEditor = document.getElementById('richEditor');
+                
+                if (this.isSourceMode) {
+                    editor.innerHTML = source.value;
+                    source.style.display = 'none';
+                    editor.style.display = 'block';
+                    this.autoResizeContent();
+                    this.isSourceMode = false;
+                    
+                    // 显示工具栏
+                    const toolbar = document.getElementById('editorToolbar');
+                    if (toolbar) {
+                        toolbar.style.display = 'block';
+                    }
+                    
+                    // 显示整个富文本编辑器容器
+                    if (richEditor) {
+                        richEditor.style.display = 'flex';
+                    }
+                }
+                
+                // 更新按钮状态
+                this.updateModeButtons();
+            }
+            
+            updateModeButtons() {
+                const contentBtn = document.getElementById('contentModeBtn');
+                const sourceBtn = document.getElementById('sourceModeBtn');
+                
+                if (contentBtn && sourceBtn) {
+                    if (this.isSourceMode) {
+                        // 源代码模式：源代码按钮激活，内容按钮非激活
+                        sourceBtn.classList.add('active');
+                        contentBtn.classList.remove('active');
+                    } else {
+                        // 内容模式：内容按钮激活，源代码按钮非激活
+                        contentBtn.classList.add('active');
+                        sourceBtn.classList.remove('active');
+                    }
+                }
+            }
+            
+            toggleSourceMode() {
+                // 保留原有方法以兼容其他调用
+                if (this.isSourceMode) {
+                    this.showContentMode();
+                } else {
+                    this.showSourceMode();
+                }
+            }
+            
+
+            
+            toggleHeadingDropdown(event) {
+                this.toggleDropdown('headingDropdown', event);
+            }
+            
+
+            
+            getBlockElement(range) {
+                let node = range.commonAncestorContainer;
+                if (node.nodeType === 3) {
+                    node = node.parentElement;
+                }
+                
+                while (node && node !== this.editorElement) {
+                    if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'LI'].includes(node.tagName)) {
+                        return node;
+                    }
+                    node = node.parentElement;
+                }
+                
+                return null;
+            }
+            
+            // 检查选区是否包含指定标签
+            hasTagInRange(range, tagName) {
+                try {
+                    const selection = window.getSelection();
+                    if (selection.rangeCount === 0) return false;
+                    
+                    const currentRange = range || selection.getRangeAt(0);
+                    let node = currentRange.commonAncestorContainer;
+                    
+                    // 如果是文本节点，检查其父元素
+                    if (node.nodeType === 3) {
+                        node = node.parentElement;
+                    }
+                    
+                    // 向上查找到编辑器根元素
+                    while (node && node !== this.editorElement) {
+                        if (node.tagName === tagName) {
+                            return true;
+                        }
+                        node = node.parentElement;
+                    }
+                    
+                    // 检查选区内的所有节点
+                    const nodes = currentRange.cloneContents();
+                    const elements = nodes.querySelectorAll(tagName);
+                    return elements.length > 0;
+                    
+                } catch (error) {
+                    console.error(`检查标签状态失败 (${tagName}):`, error);
+                    return false;
+                }
+            }
+            
+            // 检查光标是否在指定类型的列表内
+            isInsideList(range, listType) {
+                try {
+                    let node = range.commonAncestorContainer;
+                    
+                    // 如果是文本节点，检查其父元素
+                    if (node.nodeType === 3) {
+                        node = node.parentElement;
+                    }
+                    
+                    // 向上查找到编辑器根元素
+                    while (node && node !== this.editorElement) {
+                        if (node.tagName === listType) {
+                            return true;
+                        }
+                        node = node.parentElement;
+                    }
+                    
+                    return false;
+                } catch (error) {
+                    console.error(`检查列表状态失败 (${listType}):`, error);
+                    return false;
+                }
+            }
+            
+            handlePaste(e) {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain') || '';
+                const selection = window.getSelection();
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(text));
+                }
+                
+                this.saveToHistory();
+            }
+       
+            focus() {
+                if (!this.isSourceMode) {
+                    this.editorElement.focus();
+                    
+                    // 如果没有选区，将光标设置到编辑器末尾
+                    const selection = window.getSelection();
+                    if (selection.rangeCount === 0) {
+                        const range = document.createRange();
+                        range.selectNodeContents(this.editorElement);
+                        range.collapse(false); // false表示折叠到末尾
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                } else {
+                    this.sourceElement.focus();
+                }
+            }
+            
+            getContent() {
+                if (this.isSourceMode) {
+                    return this.sourceElement.value;
+                } else {
+                    return this.editorElement.innerHTML;
+                }
+            }
+            
+            setContent(content) {
+                if (this.isSourceMode) {
+                    this.sourceElement.value = content;
+                    this.autoResizeSource();
+                } else {
+                    this.editorElement.innerHTML = content;
+                    this.autoResizeContent();
+                }
+            }
+            
+            updateToolbarState() {
+                if (this.isSourceMode) return;
+                
+                // 更新工具栏按钮的激活状态（参考notes.html实现）
+                const toolbarBtns = this.toolbarElement.querySelectorAll('.editor-btn');
+                
+                // 更新按钮状态
+                toolbarBtns.forEach(btn => {
+                    const command = btn.getAttribute('onclick')?.match(/editor\.format\('([^']+)'\)/);
+                    if (command && command[1]) {
+                        const cmd = command[1];
+                        let isActive = false;
+                        
+                        // 使用现代方法检查格式状态
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            const parentElement = range.commonAncestorContainer.nodeType === 3 ? 
+                                range.commonAncestorContainer.parentElement : 
+                                range.commonAncestorContainer;
+                            
+                            if (['bold', 'italic', 'underline', 'strikeThrough'].includes(cmd)) {
+                                const tagName = cmd === 'bold' ? 'B' : 
+                                              cmd === 'italic' ? 'I' : 
+                                              cmd === 'underline' ? 'U' : 'S';
+                                isActive = this.hasTagInRange(range, tagName);
+                            } else if (['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'].includes(cmd)) {
+                                const blockElement = this.getBlockElement(range);
+                                if (blockElement) {
+                                    const align = blockElement.style.textAlign || 'left';
+                                    const expectedAlign = cmd.replace('justify', '').toLowerCase();
+                                    isActive = align === expectedAlign;
+                                }
+                            } else if (['insertUnorderedList', 'insertOrderedList'].includes(cmd)) {
+                                const listType = cmd === 'insertUnorderedList' ? 'UL' : 'OL';
+                                isActive = this.hasTagInRange(range, listType) || this.isInsideList(range, listType);
+                            }
+                        }
+                        
+                        // 如果现代方法失败，回退到queryCommandState
+                        if (typeof isActive === 'undefined' || isActive === false) {
+                            try {
+                                isActive = document.queryCommandState(cmd);
+                            } catch (e) {
+                                // 忽略queryCommandState错误
+                            }
+                        }
+                        
+                        btn.classList.toggle('active', isActive);
+                    }
+                });
+                
+                // 更新下拉框状态
+                const selects = this.toolbarElement.querySelectorAll('.toolbar-select');
+                selects.forEach(select => {
+                    const command = select.dataset.command;
+                    if (command === 'fontName') {
+                        // 字体选择框状态更新
+                        const font = document.queryCommandValue('fontName');
+                        if (font) {
+                            const fontOption = Array.from(select.options).find(option => 
+                                option.value === font || option.text === font
+                            );
+                            if (fontOption) {
+                                select.value = fontOption.value;
+                            }
+                        }
+                    } else if (command === 'fontSize') {
+                        // 字体大小状态更新
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            const parentElement = range.commonAncestorContainer.nodeType === 3 ? 
+                                range.commonAncestorContainer.parentElement : 
+                                range.commonAncestorContainer;
+                            
+                            if (parentElement && parentElement.style.fontSize) {
+                                const size = parentElement.style.fontSize;
+                                const sizeOption = Array.from(select.options).find(option => 
+                                    option.value === size
+                                );
+                                if (sizeOption) {
+                                    select.value = sizeOption.value;
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // 更新颜色选择器状态
+                const colorInput = this.toolbarElement.querySelector('.toolbar-color');
+                if (colorInput) {
+                    try {
+                        const textColor = document.queryCommandValue('foreColor');
+                        if (textColor && textColor !== '') {
+                            // 将RGB颜色转换为HEX格式
+                            const hexColor = this.rgbToHex(textColor);
+                            colorInput.value = hexColor;
+                        }
+                    } catch (e) {
+                        // 忽略查询颜色时的错误
+                    }
+                }
+                
+                // 更新背景颜色选择器状态
+                const bgColorInput = this.toolbarElement.querySelector('.toolbar-bg-color');
+                if (bgColorInput) {
+                    try {
+                        const bgColor = document.queryCommandValue('backColor');
+                        if (bgColor && bgColor !== '') {
+                            // 将RGB颜色转换为HEX格式
+                            const hexColor = this.rgbToHex(bgColor);
+                            bgColorInput.value = hexColor;
+                        }
+                    } catch (e) {
+                        // 忽略查询颜色时的错误
+                    }
+                }
+            }
+            
+            updateAutoSave() {
+                const currentContent = this.getContent();
+                if (currentContent === this.lastContent) return;
+                
+                this.lastContent = currentContent;
+                
+                // 触发自动保存
+                const autoSaveToggle = document.getElementById('autoSaveToggle');
+                if (autoSaveToggle && autoSaveToggle.checked) {
+                    this.showAutoSaveIndicator();
+                    if (typeof autoSaveNote === 'function') {
+                        autoSaveNote();
+                    }
+                }
+            }
+            
+            showAutoSaveIndicator() {
+                if (this.autoSaveIndicator) {
+                    this.autoSaveIndicator.classList.add('show');
+                    setTimeout(() => {
+                        this.autoSaveIndicator.classList.remove('show');
+                    }, 2000);
+                }
+            }
+            
+
+            
+            // 插入引用
+            insertQuote() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                const selectedText = selection.toString() || '引用内容';
+                
+                const blockquote = document.createElement('blockquote');
+                blockquote.textContent = selectedText;
+                blockquote.style.borderLeft = '4px solid #667eea';
+                blockquote.style.paddingLeft = '20px';
+                blockquote.style.margin = '10px 0';
+                blockquote.style.fontStyle = 'italic';
+                blockquote.style.color = '#64748b';
+                blockquote.style.backgroundColor = '#f8fafc';
+                blockquote.style.borderRadius = '0 8px 8px 0';
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(blockquote);
+                    
+                    // 在引用后添加换行
+                    const br = document.createElement('br');
+                    range.setStartAfter(blockquote);
+                    range.setEndAfter(blockquote);
+                    range.insertNode(br);
+                    
+                    // 选择引用内容
+                    range.selectNodeContents(blockquote);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            // 插入代码块
+            insertCode() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                const selection = window.getSelection();
+                const selectedText = selection.toString() || '代码内容';
+                
+                const pre = document.createElement('pre');
+                pre.style.background = '#f8fafc';
+                pre.style.padding = '15px';
+                pre.style.borderRadius = '8px';
+                pre.style.overflowX = 'auto';
+                pre.style.fontFamily = 'Courier New, monospace';
+                pre.style.fontSize = '14px';
+                pre.style.border = '1px solid #e2e8f0';
+                pre.style.margin = '10px 0';
+                
+                const code = document.createElement('code');
+                code.textContent = selectedText;
+                pre.appendChild(code);
+                
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(pre);
+                    
+                    // 在代码块后添加换行
+                    const br = document.createElement('br');
+                    range.setStartAfter(pre);
+                    range.setEndAfter(pre);
+                    range.insertNode(br);
+                    
+                    // 选择代码内容
+                    range.selectNodeContents(code);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                
+                this.saveToHistory();
+            }
+            
+            // 插入水平线
+            insertHR() {
+                if (this.isSourceMode) return;
+                
+                this.focus();
+                
+                try {
+                    document.execCommand('insertHorizontalRule', false, null);
+                    
+                    // 在水平线前后添加换行以确保格式正确
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const hr = range.commonAncestorContainer.querySelector('hr');
+                        if (hr) {
+                            const brBefore = document.createElement('br');
+                            const brAfter = document.createElement('br');
+                            hr.parentNode.insertBefore(brBefore, hr);
+                            hr.parentNode.insertBefore(brAfter, hr.nextSibling);
+                            
+                            // 将光标移到水平线后面
+                            range.setStartAfter(brAfter);
+                            range.setEndAfter(brAfter);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }
+                    }
+                    
+                    this.saveToHistory();
+                } catch (error) {
+                    console.error('插入水平线失败:', error);
+                }
+            }
+            
+            // RGB颜色转换为HEX格式
+            rgbToHex(rgb) {
+                if (rgb.startsWith('#')) {
+                    return rgb; // 已经是HEX格式
+                }
+                
+                // 处理rgb(r, g, b)格式
+                const rgbMatch = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                if (rgbMatch) {
+                    const r = parseInt(rgbMatch[1]);
+                    const g = parseInt(rgbMatch[2]);
+                    const b = parseInt(rgbMatch[3]);
+                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+                
+                // 处理其他格式，返回默认值
+                return '#000000';
+            }
+
+        }
+        
+        // 初始化编辑器
+        let editor;
+        
+
+        
+        // 确保编辑器方法可用的函数
+        function ensureEditorMethods() {
+            if (!editor) return false;
+            
+            // 检查必要的方法是否存在
+            const requiredMethods = ['setTextColor', 'setBgColor', 'setFontSize'];
+            const missingMethods = requiredMethods.filter(method => typeof editor[method] !== 'function');
+            
+            if (missingMethods.length > 0) {
+                console.error('编辑器缺少方法:', missingMethods);
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 清理所有onclick属性
+        function cleanupOnclickAttributes() {
+            // 移除工具栏按钮的onclick属性
+            const toolbarButtons = document.querySelectorAll('.editor-btn[onclick]');
+            toolbarButtons.forEach(btn => {
+                btn.removeAttribute('onclick');
+            });
+            
+            // 移除颜色选项的onclick属性
+            const colorOptions = document.querySelectorAll('.color-option[onclick]');
+            colorOptions.forEach(option => {
+                option.removeAttribute('onclick');
+            });
+            
+            // 移除下拉菜单项的onclick属性
+            const dropdownItems = document.querySelectorAll('.editor-dropdown-item[onclick]');
+            dropdownItems.forEach(item => {
+                item.removeAttribute('onclick');
+            });
+            
+            console.log('✓ 清理onclick属性完成');
+        }
+
+        // 直接绑定工具栏事件（简化版本）
+        function bindDirectToolbarEvents() {
+            if (!editor) {
+                console.log('编辑器未初始化，无法绑定事件');
+                return;
+            }
+            
+            console.log('内联颜色和字体选择器无需额外事件绑定');
+            
+            // 检查内联选择器是否正确显示
+            const textColorOptions = document.querySelectorAll('.inline-color-option');
+            const bgColorOptions = document.querySelectorAll('.inline-color-option');
+            const fontSizeButtons = document.querySelectorAll('.inline-size-btn');
+            
+            console.log(`✓ 找到 ${textColorOptions.length} 个文字颜色选项`);
+            console.log(`✓ 找到 ${bgColorOptions.length} 个背景颜色选项`);
+            console.log(`✓ 找到 ${fontSizeButtons.length} 个字体大小按钮`);
+        }
+        
+        // 选择便签颜色（筛选用）
+        function selectNoteColor(color, event) {
+            // 更新全局选中的颜色
+            selectedColor = color;
+            
+            // 保存筛选状态到本地存储
+            localStorage.setItem('notesFilterColor', color);
+            
+            // 更新选中状态
+            document.querySelectorAll('.notes-header .color-preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.notes-header .show-all-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (color === 'all') {
+                // 激活"全部"按钮
+                const showAllBtn = document.querySelector('.notes-header .show-all-btn');
+                if (showAllBtn) {
+                    showAllBtn.classList.add('active');
+                }
+            } else {
+                // 找到对应的颜色按钮并添加active类
+                const colorBtn = document.querySelector(`.notes-header .color-preset-btn.${color}`);
+                if (colorBtn) {
+                    colorBtn.classList.add('active');
+                }
+            }
+            
+            // 筛选便签
+            filterNotesByColor(color);
+        }
+        
+        // 按颜色筛选便签
+        function filterNotesByColor(color) {
+            // 先获取所有便签
+            let allNotes = notes;
+            
+            // 如果当前有搜索查询，先进行搜索过滤
+            if (searchQuery) {
+                allNotes = allNotes.filter(note => {
+                    const title = (note.title || '').toLowerCase();
+                    const content = (note.content || '').toLowerCase();
+                    const plainContent = content.replace(/<[^>]*>/g, '');
+                    return title.includes(searchQuery) || plainContent.includes(searchQuery);
+                });
+            }
+            
+            // 再进行颜色过滤
+            const filteredNotes = color === 'all' ? allNotes : allNotes.filter(note => {
+                // 对于'none'颜色，只匹配没有颜色或颜色为'none'的便签
+                if (color === 'none') {
+                    return !note.color || note.color === 'none';
+                }
+                // 对于其他颜色，匹配颜色属性或默认黄色
+                return (note.color || 'yellow') === color;
+            });
+            
+            // 直接渲染筛选后的结果
+            const notesList = document.getElementById('notesList');
+            
+            if (filteredNotes.length === 0) {
+                if (color !== 'all') {
+                    notesList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-filter"></i>
+                            <div class="empty-state-text">没有找到${getColorName(color)}便签</div>
+                            <div style="color: #999; font-size: 14px;">试试其他颜色或显示全部</div>
+                        </div>
+                    `;
+                } else {
+                    notesList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <div class="empty-state-text">没有找到匹配的便签</div>
+                            <div style="color: #999; font-size: 14px;">请尝试其他搜索词</div>
+                        </div>
+                    `;
+                }
+            } else {
+                // 按时间排序并渲染
+                const sortedNotes = filteredNotes.sort((a, b) => {
+                    // 置顶的便签优先
+                    if (a.is_pinned && !b.is_pinned) return -1;
+                    if (!a.is_pinned && b.is_pinned) return 1;
+                    
+                    // 然后按时间排序
+                    const dateA = a.updated_at ? new Date(a.updated_at) : new Date(0);
+                    const dateB = b.updated_at ? new Date(b.updated_at) : new Date(0);
+                    return dateB - dateA;
+                });
+                
+                notesList.innerHTML = sortedNotes.map(note => {
+                        const color = note.color || 'none';
+                        const isPinned = note.is_pinned || false;
+                        const displayContent = note.content ? processNoteContent(note.content) : '';
+                        const wordCount = getWordCount(note.content || '');
+                    return `
+                        <div class="note-item ${color} ${isPinned ? 'pinned' : ''}" onclick="openEditNoteModal(${note.id || 0})">
+                            <div class="note-actions">
+                                <button class="note-action-btn pin" onclick="event.stopPropagation(); togglePin(${note.id || 0})" title="${isPinned ? '取消置顶' : '置顶'}">
+                                    <i class="fas fa-thumbtack"></i>
+                                </button>
+                                <button class="note-action-btn copy" onclick="event.stopPropagation(); copyNote(${note.id || 0})" title="复制">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button class="note-action-btn delete" onclick="event.stopPropagation(); quickDeleteNote(${note.id || 0})" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="note-title"><i class="fas fa-sticky-note" style="margin-right: 5px;"></i>${note.title || '无标题'}</div>
+                            <div class="note-content">${displayContent}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-shrink: 0;">
+                                <div class="note-word-count">${wordCount}字</div>
+                                <div class="note-date">${formatDate(note.updated_at || note.created_at)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+        
+        // 获取颜色中文名
+        function getColorName(color) {
+            const colorNames = {
+                'none': '无背景色',
+                'yellow': '黄色',
+                'blue': '蓝色',
+                'green': '绿色',
+                'pink': '粉色',
+                'purple': '紫色',
+                'orange': '橙色',
+                'red': '红色',
+                'teal': '青色'
+            };
+            return colorNames[color] || color;
+        }
+        
+        // 设置便签颜色
+        function setNoteColor(color) {
+            currentNoteColor = color;
+            
+            // 更新选中状态
+            document.querySelectorAll('#noteEditView .color-preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 找到对应的颜色按钮并添加active类
+            const colorBtn = document.querySelector(`#noteEditView .color-preset-btn.${color}`);
+            if (colorBtn) {
+                colorBtn.classList.add('active');
+            }
+            
+            // 更新内容编辑框的背景颜色
+            const editorContent = document.getElementById('editorContent');
+            const editorSource = document.getElementById('editorSource');
+            
+            if (editorContent) {
+                // 移除所有颜色类
+                editorContent.classList.remove('yellow', 'blue', 'green', 'pink', 'purple', 'orange', 'red', 'teal', 'none');
+                // 添加当前颜色类
+                editorContent.classList.add(color);
+            }
+            
+            if (editorSource) {
+                // 移除所有颜色类
+                editorSource.classList.remove('yellow', 'blue', 'green', 'pink', 'purple', 'orange', 'red', 'teal', 'none');
+                // 添加当前颜色类
+                editorSource.classList.add(color);
+            }
+        }
+        
+        // 置顶/取消置顶便签
+        async function togglePin(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            try {
+                const newPinState = !note.is_pinned;
+                const response = await fetch(`/api/notes/${noteId}/pin`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${Utils.getToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_pinned: newPinState })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        note.is_pinned = newPinState;
+                        Utils.showSuccess(newPinState ? '便签已置顶' : '已取消置顶');
+                        // 重新渲染便签列表
+                        filterNotesByColor(selectedColor || 'all');
+                    }
+                }
+            } catch (error) {
+                console.error('置顶操作失败:', error);
+                Utils.showError('操作失败');
+            }
+        }
+        
+        // 复制便签
+        async function copyNote(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            try {
+                const noteData = {
+                    title: note.title + ' (副本)',
+                    content: note.content,
+                    color: note.color || 'yellow',
+                    is_pinned: false
+                };
+                
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${Utils.getToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(noteData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        await loadNotes();
+                        Utils.showSuccess('便签已复制');
+                    }
+                }
+            } catch (error) {
+                console.error('复制便签失败:', error);
+                Utils.showError('复制失败');
+            }
+        }
+        
+        // 快速删除便签
+        function quickDeleteNote(noteId) {
+            Utils.confirm('删除便签', '确定要删除这个便签吗？', async () => {
+                try {
+                    const response = await fetch(`/api/notes/${noteId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${Utils.getToken()}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            await loadNotes();
+                            Utils.showSuccess('便签已删除');
+                        }
+                    }
+                } catch (error) {
+                    console.error('删除便签失败:', error);
+                    Utils.showError('删除失败');
+                }
+            });
+        }
+        
+        // 检测是否为大屏幕
+        function isLargeScreen() {
+            return window.innerWidth >= 768;
+        }
+        
+        // 打开添加便签界面
+        function openAddNoteModal() {
+            currentNoteId = null;
+            currentNoteColor = 'none'; // 使用默认颜色none
+            document.getElementById('editTitle').textContent = '添加便签';
+            document.getElementById('noteForm').reset();
+            
+            // 设置默认颜色（会自动更新按钮状态和编辑框背景）
+            setNoteColor('none');
+        
+                // 重置置顶状态
+            document.getElementById('isPinned').checked = false;
+            updatePinVisualState(false);
+            
+            // 重置自动保存状态
+            document.getElementById('autoSaveToggle').checked = true;
+            updateAutoSaveVisualState(true);
+            
+            // 清空编辑器内容
+            if (editor) {
+                editor.setContent('');
+                if (editor.isSourceMode) {
+                    editor.toggleSourceMode();
+                }
+            }
+            
+            document.getElementById('deleteNoteBtn').style.display = 'none';
+            
+            if (isLargeScreen()) {
+                // 大屏幕时：列表和编辑界面同时显示
+                document.getElementById('notesListView').style.display = 'flex';
+                document.getElementById('noteEditView').style.display = 'block';
+            } else {
+                // 小屏幕时：只显示编辑界面
+                document.getElementById('notesListView').style.display = 'none';
+                document.getElementById('noteEditView').style.display = 'block';
+            }
+            
+            // 初始化置顶复选框事件监听器
+            setupPinCheckbox();
+            
+            // 初始化自动保存复选框事件监听器
+            setupAutoSaveCheckbox();
+            
+            // 初始化自动保存相关变量
+            isEditing = true;
+            lastSavedContent = '|'; // 初始化为空标题和空内容的组合
+            
+            // 初始化自动保存复选框
+            const autoSaveToggle = document.getElementById('autoSaveToggle');
+            if (autoSaveToggle) {
+                autoSaveToggle.checked = false; // 默认不选中自动保存
+                
+                // 根据复选框状态启动自动保存
+                if (autoSaveTimer) clearInterval(autoSaveTimer);
+                if (autoSaveToggle.checked) {
+                    autoSaveTimer = setInterval(autoSaveNote, AUTO_SAVE_INTERVAL);
+                } else {
+                    autoSaveTimer = null;
+                }
+            } else {
+                // 如果没有自动保存开关，默认不启动自动保存
+                if (autoSaveTimer) clearInterval(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+            
+            // 工具栏事件已经在编辑器内部绑定
+        }
+        
+        // 打开编辑便签界面
+        function openEditNoteModal(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                currentNoteId = noteId;
+                currentNoteColor = note.color || 'yellow';
+                document.getElementById('editTitle').textContent = '编辑便签';
+                document.getElementById('noteId').value = noteId;
+                document.getElementById('noteTitle').value = note.title;
+                
+                // 设置便签颜色
+                document.querySelectorAll('#noteEditView .color-preset-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                // 确保颜色是有效的预设颜色
+                const validColors = ['none', 'yellow', 'blue', 'green', 'pink', 'purple', 'orange', 'red', 'teal'];
+                const safeColor = validColors.includes(currentNoteColor) ? currentNoteColor : 'yellow';
+                
+                // 设置便签颜色（会自动更新按钮状态和编辑框背景）
+                setNoteColor(safeColor);
+                
+                // 设置置顶状态
+                document.getElementById('isPinned').checked = note.is_pinned || false;
+                updatePinVisualState(note.is_pinned || false);
+                
+                // 设置自动保存状态（默认开启）
+                document.getElementById('autoSaveToggle').checked = true;
+                updateAutoSaveVisualState(true);
+                
+                // 设置编辑器内容
+                if (editor) {
+                    editor.setContent(note.content || '');
+                    if (editor.isSourceMode) {
+                        editor.toggleSourceMode();
+                    }
+                }
+                
+                document.getElementById('deleteNoteBtn').style.display = 'inline-block';
+                
+                if (isLargeScreen()) {
+                    // 大屏幕时：列表和编辑界面同时显示
+                    document.getElementById('notesListView').style.display = 'flex';
+                    document.getElementById('noteEditView').style.display = 'block';
+                } else {
+                    // 小屏幕时：只显示编辑界面
+                    document.getElementById('notesListView').style.display = 'none';
+                    document.getElementById('noteEditView').style.display = 'block';
+                }
+                
+                // 启动自动保存
+                isEditing = true;
+                lastSavedContent = `${note.title}|${note.content || ''}`;
+                
+                // 初始化自动保存复选框
+                const autoSaveToggle = document.getElementById('autoSaveToggle');
+                if (autoSaveToggle) {
+                    autoSaveToggle.checked = true; // 默认选中自动保存
+                    
+                    // 根据复选框状态启动自动保存
+                    if (autoSaveTimer) clearInterval(autoSaveTimer);
+                    if (autoSaveToggle.checked) {
+                        autoSaveTimer = setInterval(autoSaveNote, AUTO_SAVE_INTERVAL);
+                    } else {
+                        autoSaveTimer = null;
+                    }
+                } else {
+                    // 如果没有自动保存开关，默认启动自动保存
+                    if (autoSaveTimer) clearInterval(autoSaveTimer);
+                    autoSaveTimer = setInterval(autoSaveNote, AUTO_SAVE_INTERVAL);
+                }
+                
+                // 直接绑定工具栏事件
+                setTimeout(() => {
+                    bindDirectToolbarEvents();
+                }, 300);
+            }
+        }
+        
+
+        
+        // 自动保存便签
+        async function autoSaveNote() {
+            if (!isEditing) return;
+            
+            // 检查自动保存复选框是否选中
+            const autoSaveToggle = document.getElementById('autoSaveToggle');
+            if (autoSaveToggle && !autoSaveToggle.checked) return;
+            
+            const title = document.getElementById('noteTitle').value.trim();
+            let content = '';
+            
+            if (editor) {
+                content = editor.getContent().trim();
+            }
+            
+            // 检查内容是否有变化
+            const currentContent = `${title}|${content}`;
+            if (currentContent === lastSavedContent) return;
+            
+            // 如果标题和内容都为空，不进行保存
+            if (!title && !content) return;
+            
+            try {
+                const isPinned = document.getElementById('isPinned').checked;
+                const noteData = { 
+                    title, 
+                    content,
+                    color: currentNoteColor,
+                    is_pinned: isPinned
+                };
+                let response;
+                
+                if (currentNoteId) {
+                    // 更新现有便签
+                    response = await fetch(`/api/notes/${currentNoteId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${Utils.getToken()}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(noteData)
+                    });
+                } else {
+                    // 创建新便签
+                    response = await fetch('/api/notes', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${Utils.getToken()}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(noteData)
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.data && result.data.id) {
+                            // 获取新创建的便签ID
+                            currentNoteId = result.data.id;
+                            // 更新删除按钮显示
+                            document.getElementById('deleteNoteBtn').style.display = 'inline-block';
+                        }
+                    }
+                }
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        lastSavedContent = currentContent;
+                        // 只更新当前编辑的卡片，不刷新整个列表
+                        if (currentNoteId) {
+                            // 更新本地notes数组中的数据
+                            const noteIndex = notes.findIndex(note => note.id === currentNoteId);
+                            if (noteIndex !== -1) {
+                                notes[noteIndex].title = title || '无标题';
+                                notes[noteIndex].content = content || '无内容';
+                                notes[noteIndex].updated_at = new Date().toISOString();
+                            }
+                            
+                            // 更新列表中的卡片元素
+                            const noteItems = document.querySelectorAll('.note-item');
+                            noteItems.forEach(item => {
+                                // 找到与currentNoteId匹配的卡片
+                                if (item.getAttribute('onclick') === `openEditNoteModal(${currentNoteId})`) {
+                                    item.querySelector('.note-title').textContent = title || '无标题';
+                                    item.querySelector('.note-content').innerHTML = content || '无内容';
+                                    item.querySelector('.note-date').innerHTML = `<i class="fas fa-clock"></i> ${formatDate(new Date().toISOString())}`;
+                                }
+                            });
+                        }
+                        console.log('自动保存成功');
+                    }
+                }
+            } catch (error) {
+                console.error('自动保存失败:', error);
+            }
+        }
+        
+        // 关闭便签编辑界面
+        function closeNoteModal() {
+            // 清除自动保存定时器
+            if (autoSaveTimer) {
+                clearInterval(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+            isEditing = false;
+            
+            if (isLargeScreen()) {
+                // 大屏幕时：只隐藏编辑界面，列表保持显示
+                document.getElementById('noteEditView').style.display = 'none';
+                document.getElementById('notesListView').style.display = 'flex';
+            } else {
+                // 小屏幕时：显示列表视图，隐藏编辑视图
+                document.getElementById('noteEditView').style.display = 'none';
+                document.getElementById('notesListView').style.display = 'flex';
+            }
+    
+            // 强制触发重排，确保滚动容器能正确计算高度
+            setTimeout(() => {
+                const notesList = document.querySelector('.notes-list');
+                if (notesList) {
+                    // 重置滚动容器的高度计算
+                    notesList.style.height = 'auto';
+                    // 强制重排
+                    notesList.offsetHeight;
+                    // 恢复flex布局
+                    notesList.style.height = '';
+                }
+            }, 0);
+            
+            // 初始化置顶复选框事件监听器
+            setupPinCheckbox();
+            
+            // 初始化自动保存复选框事件监听器
+            setupAutoSaveCheckbox();
+            
+            // 清除表单错误样式
+            document.getElementById('noteTitle').classList.remove('input-error');
+
+            
+        }
+        
+        // 保存便签
+        async function saveNote() {
+            const titleInput = document.getElementById('noteTitle');
+            const title = titleInput.value.trim();
+            let content = '';
+            
+            // 获取便签内容
+            if (editor) {
+                content = editor.getContent().trim();
+            }
+            
+            // 清除之前的错误样式
+            titleInput.classList.remove('input-error');
+            
+            // 表单验证
+            if (!title) {
+                titleInput.classList.add('input-error');
+                Utils.showError('请填写便签标题');
+                titleInput.focus();
+                return;
+            }
+            
+            if (!content) {
+                Utils.showError('请填写便签内容');
+                if (editor) {
+                    editor.focus();
+                }
+                return;
+            }
+            
+            // 获取保存按钮并禁用，防止多次点击
+            const saveBtn = document.getElementById('saveNoteBtn');
+            const icon = saveBtn.querySelector('i');
+            const originalIcon = icon.className;
+            saveBtn.disabled = true;
+            // 显示加载状态
+            icon.className = 'fas fa-spinner fa-spin';
+            
+            try {
+                let response;
+                const isPinned = document.getElementById('isPinned').checked;
+                const noteData = { 
+                    title, 
+                    content,
+                    color: currentNoteColor,
+                    is_pinned: isPinned
+                };
+                
+                if (currentNoteId) {
+                    // 编辑现有便签
+                    response = await fetch(`/api/notes/${currentNoteId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${Utils.getToken()}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(noteData)
+                    });
+                } else {
+                    // 添加新便签
+                    response = await fetch('/api/notes', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${Utils.getToken()}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(noteData)
+                    });
+                }
+                
+                if (!response.ok) {
+                    throw new Error(currentNoteId ? '更新便签失败' : '添加便签失败');
+                }
+                
+                const result = await response.json();
+                if (result.success) {
+                    // 重新加载便签数据
+                    await loadNotes();
+                    
+                    
+                    // 关闭模态框
+                    closeNoteModal();
+                    
+                    Utils.showSuccess(result.message || (currentNoteId ? '便签更新成功' : '便签添加成功'));
+                    
+                } else {
+                    throw new Error(result.message || (currentNoteId ? '更新便签失败' : '添加便签失败'));
+                }
+            } catch (error) {
+                console.error('保存便签失败:', error);
+                Utils.showError(error.message || '保存便签失败');
+            } finally {
+                // 无论成功还是失败，都重新启用保存按钮并恢复原始图标
+                saveBtn.disabled = false;
+                icon.className = originalIcon;
+            }
+        }
+        
+        // 删除便签
+        async function deleteNote() {
+            if (currentNoteId) {
+                Utils.confirm('删除便签', '确定要删除这个便签吗？', async () => {
+                    try {
+                        const response = await fetch(`/api/notes/${currentNoteId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${Utils.getToken()}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('删除便签失败');
+                        }
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            // 重新加载便签数据
+                            await loadNotes();
+                            
+                            
+                            // 关闭模态框
+                            closeNoteModal();
+                            
+                            Utils.showSuccess(result.message || '便签删除成功');
+                        } else {
+                            throw new Error(result.message || '删除便签失败');
+                        }
+                    } catch (error) {
+                        console.error('删除便签失败:', error);
+                        Utils.showError(error.message || '删除便签失败');
+                    }
+                });
+            }
+        }
+        
+        // 将文本中的URL转换为可点击的链接
+        function convertLinksToHtml(text) {
+            if (!text) return '';
+            
+            // URL正则表达式 - 支持IPv4、域名和IPv6
+            // IPv6格式: http://[240e:3b2:6620:2690:7832:9dce:ca10:33df]:3004
+            const urlRegex = /((?:https?:\/\/)?(?:(?:\[[0-9a-fA-F:]+\])|(?:[a-zA-Z0-9-]+\.)+(?:com|cn|net|org|edu|gov|io|co|me|cc|tv|info|xyz|top|wang|ren|vip|site|online|shop|club|web|cloud|fun|press|space|live|work|zone|market|store|biz))(?::\d+)?(?:\/[^\s<]*)?)/gi;
+            
+            // 将URL替换为可点击的链接
+            const html = text.replace(urlRegex, function(url) {
+                // 确保URL有http://前缀
+                const fullUrl = url.startsWith('http') ? url : 'http://' + url;
+                // 如果URL太长，截取显示
+                const displayUrl = url.length > 40 ? url.substring(0, 40) + '...' : url;
+                return `<a href="${fullUrl}" target="_blank" class="note-link" onclick="event.stopPropagation();">${displayUrl}</a>`;
+            });
+            
+            return html;
+        }
+        
+        // 处理便签内容：保持HTML格式并将纯文本URL转换为可点击链接
+        function processNoteContent(content) {
+            if (!content) return '';
+            
+            // 先将已有的a标签标记为已处理（使用占位符）
+            const processedAnchors = [];
+            let tempContent = content.replace(/<a\b[^>]*>.*?<\/a>/gi, function(match) {
+                const placeholder = `__ANCHOR_${processedAnchors.length}__`;
+                // 确保链接在新窗口打开并添加样式
+                const enhancedLink = match.replace(/<a\b/, '<a target="_blank" class="note-link" onclick="event.stopPropagation();"');
+                processedAnchors.push(enhancedLink);
+                return placeholder;
+            });
+            
+            // 将纯文本URL转换为链接
+            const urlRegex = /((?:https?:\/\/)?(?:(?:\[[0-9a-fA-F:]+\])|(?:[a-zA-Z0-9-]+\.)+(?:com|cn|net|org|edu|gov|io|co|me|cc|tv|info|xyz|top|wang|ren|vip|site|online|shop|club|web|cloud|fun|press|space|live|work|zone|market|store|biz))(?::\d+)?(?:\/[^\s<]*)?)/gi;
+            tempContent = tempContent.replace(urlRegex, function(url) {
+                const fullUrl = url.startsWith('http') ? url : 'http://' + url;
+                return `<a href="${fullUrl}" target="_blank" class="note-link" onclick="event.stopPropagation();">${url}</a>`;
+            });
+            
+            // 还原a标签占位符
+            processedAnchors.forEach((link, index) => {
+                tempContent = tempContent.replace(`__ANCHOR_${index}__`, link);
+            });
+            
+            return tempContent;
+        }
+        
+        // 计算字数（简化版本）
+        function getWordCount(content) {
+            if (!content) return 0;
+            
+            // 移除HTML标签，只保留纯文本
+            const textContent = content.replace(/<[^>]*>/g, '');
+            
+            // 移除空格和换行符，只计算实际字符
+            const cleanText = textContent.replace(/\s+/g, '');
+            
+            // 返回字符数（包括中文、英文、数字、标点符号）
+            return cleanText.length;
+        }
+        
+        // 格式化日期（添加相对时间显示）
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            // 今天的时间只显示时分
+            if (diffDays === 0) {
+                return date.toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+            // 昨天的时间显示"昨天 时分"
+            else if (diffDays === 1) {
+                return `昨天 ${date.toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })}`;
+            }
+            // 最近7天的时间显示星期和时分
+            else if (diffDays < 7) {
+                const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                return `${weekdays[date.getDay()]} ${date.toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })}`;
+            }
+            // 今年的时间显示月日和时分
+            else if (date.getFullYear() === now.getFullYear()) {
+                return date.toLocaleString('zh-CN', { 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+            // 其他年份显示完整日期和时间
+            else {
+                return date.toLocaleString('zh-CN', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+        }
+        
+        // 搜索便签
+        function searchNotes() {
+            searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+            
+            // 显示/隐藏清除按钮
+            if (searchQuery) {
+                clearSearchBtn.style.display = 'inline-block';
+            } else {
+                clearSearchBtn.style.display = 'none';
+            }
+            
+            // 应用当前的颜色筛选
+            filterNotesByColor(selectedColor);
+        }
+        
+
+        
+        // 清除搜索
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            
+            // 应用当前的颜色筛选
+            filterNotesByColor(selectedColor);
+        }
+        
+        // 点击模态框外部关闭模态框
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('noteModal');
+            if (event.target === modal) {
+                closeNoteModal();
+            }
+        });
+        
+        // 滚动优化功能
+        const notesList = document.getElementById('notesList');
+        let scrollPosition = 0;
+        
+        // 保存滚动位置
+        function saveScrollPosition() {
+            scrollPosition = notesList.scrollTop;
+        }
+        
+        // 恢复滚动位置
+        function restoreScrollPosition() {
+            if (scrollPosition > 0) {
+                notesList.scrollTop = scrollPosition;
+            }
+        }
+        
+        // 滚动到顶部
+        function scrollToTop() {
+            notesList.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // 滚动到底部
+        function scrollToBottom() {
+            notesList.scrollTo({
+                top: notesList.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+        
+        // 检测滚动到底部（可用于无限滚动）
+        function isScrolledToBottom() {
+            return notesList.scrollTop + notesList.clientHeight >= notesList.scrollHeight - 50;
+        }
+        
+        // 滚动事件监听
+        notesList.addEventListener('scroll', function() {
+            // 可以在这里添加无限滚动功能
+            if (isScrolledToBottom()) {
+                console.log('已滚动到底部');
+                // loadMoreNotes();
+            }
+        });
+                
+        // 切换快捷键帮助显示
+        function toggleShortcutsHelp() {
+            const helpOverlay = document.getElementById('helpOverlay');
+            const shortcutsHelp = document.getElementById('shortcutsHelp');
+            
+            helpOverlay.classList.toggle('show');
+            shortcutsHelp.classList.toggle('show');
+        }
+        
+
+        
+        // 初始化置顶复选框
+        function setupPinCheckbox() {
+            const pinCheckbox = document.getElementById('isPinned');
+            const pinLabel = document.querySelector('.pin-toggle-label');
+            
+            if (pinCheckbox && pinLabel) {
+                // 初始化状态
+                updatePinVisualState(pinCheckbox.checked);
+                
+                // 监听复选框变化
+                pinCheckbox.addEventListener('change', function() {
+                    updatePinVisualState(this.checked);
+                });
+            }
+        }
+        
+        // 初始化自动保存复选框
+        function setupAutoSaveCheckbox() {
+            const autoSaveCheckbox = document.getElementById('autoSaveToggle');
+            const autoSaveLabel = document.querySelector('.auto-save-toggle-label');
+            
+            if (autoSaveCheckbox && autoSaveLabel) {
+                // 初始化状态
+                updateAutoSaveVisualState(autoSaveCheckbox.checked);
+                
+                // 监听复选框变化
+                autoSaveCheckbox.addEventListener('change', function() {
+                    updateAutoSaveVisualState(this.checked);
+                });
+            }
+        }
+        
+        // 更新置顶视觉状态
+        function updatePinVisualState(isPinned) {
+            const pinLabel = document.querySelector('.pin-toggle-label');
+            const pinIcon = pinLabel?.querySelector('i');
+            const pinText = pinLabel?.querySelector('span');
+            
+            if (pinLabel) {
+                if (isPinned) {
+                    pinLabel.classList.add('active');
+                    if (pinIcon) {
+                        pinIcon.style.color = '#ff9800';
+                        pinIcon.style.transform = 'rotate(45deg)';
+                    }
+                    if (pinText) {
+                        pinText.style.color = '#ff9800';
+                        pinText.style.fontWeight = '500';
+                    }
+                } else {
+                    pinLabel.classList.remove('active');
+                    if (pinIcon) {
+                        pinIcon.style.color = '#666';
+                        pinIcon.style.transform = 'rotate(0deg)';
+                    }
+                    if (pinText) {
+                        pinText.style.color = '#666';
+                        pinText.style.fontWeight = 'normal';
+                    }
+                }
+            }
+        }
+        
+        // 更新自动保存视觉状态
+        function updateAutoSaveVisualState(isAutoSave) {
+            const autoSaveLabel = document.querySelector('.auto-save-toggle-label');
+            const autoSaveIcon = autoSaveLabel?.querySelector('i');
+            const autoSaveText = autoSaveLabel?.querySelector('span');
+            
+            if (autoSaveLabel) {
+                if (isAutoSave) {
+                    autoSaveLabel.classList.add('active');
+                    if (autoSaveIcon) {
+                        autoSaveIcon.style.color = '#28a745';
+                    }
+                    if (autoSaveText) {
+                        autoSaveText.style.color = '#28a745';
+                        autoSaveText.style.fontWeight = '500';
+                    }
+                } else {
+                    autoSaveLabel.classList.remove('active');
+                    if (autoSaveIcon) {
+                        autoSaveIcon.style.color = '#666';
+                    }
+                    if (autoSaveText) {
+                        autoSaveText.style.color = '#666';
+                        autoSaveText.style.fontWeight = 'normal';
+                    }
+                }
+            }
+        }
+        
+        // 添加触摸滚动支持（移动端优化）
+        let touchStartY = 0;
+        let touchEndY = 0;
+        
+        notesList.addEventListener('touchstart', function(e) {
+            touchStartY = e.changedTouches[0].screenY;
+        });
+        
+        notesList.addEventListener('touchend', function(e) {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeDistance = touchStartY - touchEndY;
+            const minSwipeDistance = 50;
+            
+            if (Math.abs(swipeDistance) > minSwipeDistance) {
+                if (swipeDistance > 0) {
+                    // 向上滑动
+                    console.log('向上滑动');
+                } else {
+                    // 向下滑动
+                    console.log('向下滑动');
+                }
+            }
+        }
+    </script>
+
+    <!-- 自动保存提示 -->
+    <div class="auto-save-indicator" id="autoSaveIndicator">已自动保存</div>
+
+</body>
+</html>

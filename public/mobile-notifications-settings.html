@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>通知设置 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        /* 通知项目容器 */
+        .notification-group {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 0;
+        }
+        
+        /* 通知项目样式优化 */
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 大屏幕适配：通知项目多列显示 */
+        @media (min-width: 768px) {
+            .notification-group {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 0 10px;
+            }
+            
+            .notification-item {
+                border-right: 1px solid #ecf0f1;
+                border-radius: 8px;
+                background: #fff;
+            }
+            
+            .notification-item:nth-child(2n) {
+                border-right: none;
+            }
+        }
+
+ @media (min-width: 1080px) {
+            .notification-group {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .notification-item {
+                border-right: 1px solid #ecf0f1;                
+            }
+            
+            .notification-item:nth-child(3n) {
+                border-right: none;                
+            }
+        }
+
+ @media (min-width: 1600px) {
+            .notification-group {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .notification-item {
+                border-right: 1px solid #ecf0f1;                
+            }
+            
+            .notification-item:nth-child(4n) {
+                border-right: none;                
+            }
+        }
+
+
+        
+        .notification-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+            line-height: 1.4;
+        }
+        
+        /* 开关按钮样式优化 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #3498db;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        .order-card {
+            padding: 0px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+ <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>          
+            <h1 class="app-title">通知设置</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+       <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="content-scroll" style="margin: 15px;">
+
+
+            <!-- 通知类型设置 -->
+            <div class="order-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-bell" style="color: #3498db;"></i>
+                        通知类型设置
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="notification-group">
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-shield-alt" style="color: #e74c3c;"></i>
+                                    权限变化
+                                </div>
+                                <div class="notification-desc">当您的系统权限发生变化时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="permission_change" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-user-tag" style="color: #f39c12;"></i>
+                                    账号类型变化
+                                </div>
+                                <div class="notification-desc">当您的账号类型发生变化时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="account_type_change" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-plus-circle" style="color: #27ae60;"></i>
+                                    新工单提醒
+                                </div>
+                                <div class="notification-desc">当有新工单创建或分配给您时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="new_order" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-undo" style="color: #e67e22;"></i>
+                                    退回工单
+                                </div>
+                                <div class="notification-desc">当工单被退回需要重新处理时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="return_order" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-edit" style="color: #3498db;"></i>
+                                    修改工单
+                                </div>
+                                <div class="notification-desc">当工单信息被修改时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="modify_order" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-trash" style="color: #e74c3c;"></i>
+                                    删除工单
+                                </div>
+                                <div class="notification-desc">当工单被删除时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="delete_order" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-sync-alt" style="color: #9b59b6;"></i>
+                                    状态更新
+                                </div>
+                                <div class="notification-desc">当工单状态发生变化时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="status_change" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-box" style="color: #3498db;"></i>
+                                    物料申请
+                                </div>
+                                <div class="notification-desc">当有新的物料申请时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="material_request" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="notification-item">
+                            <div class="notification-info">
+                                <div class="notification-title">
+                                    <i class="fas fa-box-open" style="color: #27ae60;"></i>
+                                    物料状态更新
+                                </div>
+                                <div class="notification-desc">当物料申请状态发生变化时通知</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="material_status_update" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 声音设置 -->
+            <div class="order-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-volume-up" style="color: #f39c12;"></i>
+                        声音提醒设置
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-bell"></i>
+                            启用声音提醒
+                        </label>
+                        <div class="toggle-group">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="soundEnabled" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-text">播放通知提示音</span>
+                        </div>
+                        <small class="form-help">收到新通知时播放声音提醒</small>
+                    </div>
+                    
+                    <div class="form-group" id="soundTestGroup">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="testNotificationSound()">
+                            <i class="fas fa-play"></i>
+                            测试声音
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 保存按钮 -->
+            <div class="form-actions" style="margin: 30px 0;">
+                <button type="button" class="btn btn-secondary" onclick="resetToDefault()">
+                    <i class="fas fa-undo"></i>
+                    恢复默认
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveNotificationSettings()">
+                    <i class="fas fa-save"></i>
+                    保存设置
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/utils.js"></script>
+    <script>
+        let currentUser = null;
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAuth();
+            setupNavigation();     
+            loadNotificationSettings();  
+            setupFormHandlers();
+        });
+
+      // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+            
+            currentUser = user;
+           
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // 点击遮罩层关闭侧边栏
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'sidebarOverlay') {
+                closeSidebar();
+            }
+        });
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+        // 设置表单处理
+        function setupFormHandlers() {
+
+            // 声音设置切换
+            document.getElementById('soundEnabled').addEventListener('change', function() {
+                const soundTestGroup = document.getElementById('soundTestGroup');
+                soundTestGroup.style.display = this.checked ? 'block' : 'none';
+            });
+
+            // 初始化声音设置状态
+            const soundEnabled = document.getElementById('soundEnabled');
+            const soundTestGroup = document.getElementById('soundTestGroup');
+            soundTestGroup.style.display = soundEnabled.checked ? 'block' : 'none';
+        }
+
+        // 加载通知设置
+        async function loadNotificationSettings() {
+            try {
+                // 从服务器加载设置
+                const response = await Utils.request(`/users/notification-settings/${currentUser.id}`);
+                const settings = response; // Utils.request直接返回JSON数据
+                
+                // 加载通知类型
+                const notificationTypes = settings.notification_types ? settings.notification_types.split('|') : [];
+                const notificationTypeInputs = ['permission_change', 'account_type_change', 'new_order', 'return_order', 'modify_order', 'delete_order', 'status_change'];
+                
+                notificationTypeInputs.forEach(type => {
+                    const checkbox = document.getElementById(type);
+                    if (checkbox) {
+                        checkbox.checked = notificationTypes.includes(type);
+                    }
+                });
+                
+                // 加载声音设置
+                document.getElementById('soundEnabled').checked = settings.sound_enabled !== false;
+                
+            } catch (error) {
+                console.error('加载通知设置失败:', error);
+                // 如果服务器加载失败，使用默认设置
+                loadDefaultSettings();
+            }
+        }
+
+
+
+        // 设置表单处理
+        function setupFormHandlers() {
+
+            // 声音设置切换
+            document.getElementById('soundEnabled').addEventListener('change', function() {
+                const soundTestGroup = document.getElementById('soundTestGroup');
+                soundTestGroup.style.display = this.checked ? 'block' : 'none';
+            });
+
+            // 初始化声音设置状态
+            const soundEnabled = document.getElementById('soundEnabled');
+            const soundTestGroup = document.getElementById('soundTestGroup');
+            soundTestGroup.style.display = soundEnabled.checked ? 'block' : 'none';
+        }
+
+
+
+
+        // 保存通知设置
+        async function saveNotificationSettings() {
+            try {
+                // 收集选中的通知类型
+                const notificationTypeInputs = ['permission_change', 'account_type_change', 'new_order', 'return_order', 'modify_order', 'delete_order', 'status_change', 'material_request', 'material_status_update'];
+                const selectedTypes = notificationTypeInputs.filter(type => {
+                    const checkbox = document.getElementById(type);
+                    return checkbox && checkbox.checked;
+                });
+                
+                const settings = {
+                    notification_types: selectedTypes.join('|'),
+                    sound_enabled: document.getElementById('soundEnabled').checked
+                };
+                
+                // 保存到服务器
+                await Utils.put(`/users/notification-settings/${currentUser.id}`, settings);
+                
+                Utils.showSuccess('通知设置已保存');
+                
+            } catch (error) {
+                console.error('保存通知设置失败:', error);
+                Utils.showError('保存失败，请重试');
+            }
+        }
+
+
+
+        // 测试通知声音
+        async function testNotificationSound() {
+            try {
+                // 使用修复后的 Utils.playNotificationSound 函数
+                // 这样会检查用户的声音设置
+                await Utils.playNotificationSound('new_order');
+                Utils.showSuccess('测试声音播放中...');
+            } catch (error) {
+                console.error('测试声音播放失败:', error);
+                Utils.showError('测试声音播放失败: ' + error.message);
+            }
+        }
+
+        // 恢复默认设置
+        function resetToDefault() {
+            Utils.confirm('恢复默认设置', '确定要恢复所有通知设置为默认值吗？', async () => {
+                try {
+                    
+                    // 重置通知类型
+                    const notificationTypeInputs = ['permission_change', 'account_type_change', 'new_order', 'return_order', 'modify_order', 'delete_order', 'status_change', 'material_request', 'material_status_update'];
+                    notificationTypeInputs.forEach(type => {
+                        const checkbox = document.getElementById(type);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                    
+                    // 重置声音设置
+                    document.getElementById('soundEnabled').checked = true;
+                    
+                    // 重置服务器设置
+                    const defaultSettings = {
+                        notification_types: notificationTypeInputs.join('|'),
+                        sound_enabled: true
+                    };
+                    
+                    await Utils.put(`/users/notification-settings/${currentUser.id}`, defaultSettings);
+                    
+                    Utils.showSuccess('已恢复默认设置');
+                    
+                } catch (error) {
+                    console.error('恢复默认设置失败:', error);
+                    Utils.showError('恢复失败，请重试');
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>

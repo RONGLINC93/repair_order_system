@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>权限管理 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        .user-list-section {
+            padding: 16px;
+            height: calc(100vh - 60px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .user-list-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-list-count {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .user-item:active {
+            background: #f5f5f5;
+            transform: scale(0.98);
+        }
+
+        .user-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar-small {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .user-avatar-small img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+
+        .user-item-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-permission-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .user-permission-status.complete {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .user-permission-status.partial {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+
+        .user-permission-status.empty {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .user-chevron {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .search-box i {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            font-size: 14px;
+            color: #333;
+            background: transparent;
+        }
+
+        .search-box input:focus {
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: #bbb;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            color: #666;
+            border: 1px solid #eee;
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #ddd;
+        }
+
+        .user-list-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        .user-list {
+            padding-bottom: 20px;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .permission-modal {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 100%;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-footer {
+            flex-shrink: 0;
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid #f0f0f0;
+            background: #fafafa;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .modal-btn.cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .permission-config-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .permission-config-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .permission-config-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .permission-config-role {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .config-section {
+            margin-bottom: 20px;
+        }
+
+        .config-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .config-section-title i {
+            color: #667eea;
+        }
+
+        .role-select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .role-select-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #fafafa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .role-select-item:hover {
+            background: #f0f0f0;
+        }
+
+        .role-select-item.selected {
+            background: #e8f0fe;
+            border: 1px solid #667eea;
+        }
+
+        .role-select-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .role-select-item.selected .role-select-radio {
+            border-color: #667eea;
+        }
+
+        .role-select-item.selected .role-select-radio::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+
+        .role-select-info {
+            flex: 1;
+        }
+
+        .role-select-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .role-select-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .permission-checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .permission-check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #fafafa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .permission-check-item:hover {
+            background: #f0f0f0;
+        }
+
+        .permission-check-item.checked {
+            background: #e8f5e9;
+        }
+
+        .permission-check-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 1px;
+            accent-color: #4caf50;
+        }
+
+        .permission-check-content {
+            flex: 1;
+        }
+
+        .permission-check-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .permission-check-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 3000;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .quick-action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action-btn:active {
+            background: #f5f5f5;
+        }
+
+        .quick-action-btn i {
+            color: #667eea;
+        }
+
+        @media (min-width: 768px) {
+            .user-list-section {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">权限管理</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>           
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content" style="margin-top: 50px;">
+        <div class="user-list-section">
+            <div class="user-list-header">
+                <span class="user-list-title">用户权限配置</span>
+                <span class="user-list-count" id="userCount">0 人</span>
+            </div>
+
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜索用户姓名或账号" oninput="filterUsers()">
+            </div>
+
+            <div class="filter-tabs">
+                <div class="filter-tab active" data-filter="all" onclick="setFilter('all')">全部用户</div>
+                <div class="filter-tab" data-filter="complete" onclick="setFilter('complete')">权限完整</div>
+                <div class="filter-tab" data-filter="partial" onclick="setFilter('partial')">部分权限</div>
+                <div class="filter-tab" data-filter="empty" onclick="setFilter('empty')">未配置</div>
+            </div>
+
+            <div class="user-list-wrapper" id="userListWrapper">
+                <div class="user-list" id="userList">
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>暂无用户数据</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="permissionModal">
+        <div class="permission-modal">
+            <div class="modal-header">
+                <h3 class="modal-title">配置用户权限</h3>
+                <button class="modal-close" onclick="closePermissionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="permissionModalBody">
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closePermissionModal()">取消</button>
+                <button class="modal-btn confirm" onclick="savePermissions()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        let users = [];
+        let currentUser = null;
+        let selectedUserId = null;
+        let currentFilter = 'all';
+
+        const roles = [
+            { id: 'admin', name: '管理员', desc: '系统最高权限', icon: 'fa-user-shield', color: 'admin' },
+            { id: 'user', name: '普通用户', desc: '基础查看权限', icon: 'fa-user', color: 'view' },
+            { id: 'customer_service', name: '客服', desc: '客户服务权限', icon: 'fa-headset', color: 'warehouse' },
+            { id: 'engineer', name: '工程师', desc: '工单处理权限', icon: 'fa-wrench', color: 'engineer' },
+            { id: 'warehouse_manager', name: '仓储管理', desc: '物料管理权限', icon: 'fa-warehouse', color: 'warehouse' }
+        ];
+
+        const permissions = [
+            { id: 'view_orders', name: '查看', desc: '可以查看工单', module: '工单管理' },
+            { id: 'create_orders', name: '新建', desc: '可以新建工单', module: '工单管理' },
+            { id: 'accept_orders', name: '承接', desc: '可以承接工单', module: '工单管理' },
+            { id: 'edit_orders', name: '修改', desc: '可以修改工单', module: '工单管理' },
+            { id: 'delete_orders', name: '删除', desc: '可以删除工单', module: '工单管理' },
+            { id: 'manage_users', name: '用户管理', desc: '可以管理系统用户', module: '用户管理' },
+            { id: 'manage_addresses', name: '地址管理', desc: '可以管理服务地址', module: '地址管理' },
+            { id: 'manage_materials', name: '仓储管理', desc: '可以管理物料仓储', module: '仓储管理' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            MobileCommon.checkAuth();
+            MobileCommon.setupNavigation();
+            await MobileCommon.loadSidebarAvatar();
+            await loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/users', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const dbUsers = await response.json();
+                    users = dbUsers.map(user => {
+                        let permNames = [];
+                        const hasExplicitPermissions = user.permissions && user.permissions.trim() !== '';
+                        
+                        if (hasExplicitPermissions) {
+                            if (Array.isArray(user.permissions)) {
+                                permNames = user.permissions;
+                            } else if (typeof user.permissions === 'string') {
+                                permNames = user.permissions.split('|').filter(p => p);
+                            }
+                        }
+                        
+                        const displayPermissions = permNames.length > 0 
+                            ? permNames
+                            : getDefaultPermissionsByRole(user.accountType);
+                        
+                        return {
+                            id: user.id,
+                            name: user.fullName || user.username,
+                            account: user.username,
+                            role: user.accountType,
+                            permissions: displayPermissions,
+                            hasExplicitPermissions: hasExplicitPermissions,
+                            explicitPermissions: permNames
+                        };
+                    });
+                } else {
+                    users = [];
+                }
+            } catch (error) {
+                console.error('加载用户数据失败:', error);
+                users = [];
+            }
+            renderUserList();
+        }
+
+        function getPermissionStatus(user) {
+            if (!user.hasExplicitPermissions) {
+                return { text: '默认', class: 'empty', percent: 0 };
+            }
+            
+            const explicitPerms = user.explicitPermissions || [];
+            const hasPermissions = explicitPerms.length;
+            const total = permissions.length;
+            
+            if (hasPermissions === 0) {
+                return { text: '未配置', class: 'empty', percent: 0 };
+            } else if (hasPermissions >= total) {
+                return { text: '完整', class: 'complete', percent: 100 };
+            } else {
+                return { text: '部分', class: 'partial', percent: Math.round((hasPermissions / total) * 100) };
+            }
+        }
+
+        function renderUserList() {
+            const userList = document.getElementById('userList');
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filteredUsers = users.filter(user => {
+                const matchesSearch = user.name.toLowerCase().includes(searchText) || 
+                                     user.account.toLowerCase().includes(searchText);
+                const status = getPermissionStatus(user);
+                const matchesFilter = currentFilter === 'all' || status.class === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+
+            document.getElementById('userCount').textContent = `${filteredUsers.length} 人`;
+
+            if (filteredUsers.length === 0) {
+                userList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>暂无用户数据</p>
+                    </div>
+                `;
+                return;
+            }
+
+            userList.innerHTML = filteredUsers.map(user => {
+                const status = getPermissionStatus(user);
+                const initial = user.name.charAt(0).toUpperCase();
+                return `
+                    <div class="user-item" onclick="openPermissionModal(${user.id})">
+                        <div class="user-item-left">
+                            <div class="user-avatar-small">${initial}</div>
+                            <div class="user-info">
+                                <div class="user-name">${user.name}</div>
+                                <div class="user-role">${user.role ? getRoleName(user.role) : '未分配角色'}</div>
+                            </div>
+                        </div>
+                        <div class="user-item-right">
+                            <span class="user-permission-status ${status.class}">${status.text}</span>
+                            <i class="fas fa-chevron-right user-chevron"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getRoleName(roleId) {
+            const role = roles.find(r => r.id === roleId);
+            return role ? role.name : roleId;
+        }
+
+        function filterUsers() {
+            renderUserList();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+            renderUserList();
+        }
+
+        function openPermissionModal(userId) {
+            selectedUserId = userId;
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            const modal = document.getElementById('permissionModal');
+            const modalBody = document.getElementById('permissionModalBody');
+            const initial = user.name.charAt(0).toUpperCase();
+            
+            modalBody.innerHTML = `
+                <div class="permission-config-header">
+                    <div class="permission-config-avatar">${initial}</div>
+                    <div>
+                        <div class="permission-config-name">${user.name}</div>
+                        <div class="permission-config-role">账号: ${user.account}</div>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h4 class="config-section-title">
+                        <i class="fas fa-users-cog"></i>
+                        选择角色
+                    </h4>
+                    <div class="role-select-group" id="roleSelectGroup">
+                        ${roles.map(role => `
+                            <div class="role-select-item ${user.role === role.id ? 'selected' : ''}" 
+                                 onclick="selectRole('${role.id}')" data-role="${role.id}">
+                                <div class="role-select-radio"></div>
+                                <div class="role-select-info">
+                                    <div class="role-select-name">${role.name}</div>
+                                    <div class="role-select-desc">${role.desc}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h4 class="config-section-title">
+                        <i class="fas fa-list-check"></i>
+                        详细权限
+                    </h4>
+                    <div class="permission-checklist" id="permissionChecklist">
+                        ${getPermissionsByModule()}
+                    </div>
+                </div>
+            `;
+
+            updatePermissionChecklist(user.permissions && user.permissions.length > 0 ? user.permissions : getDefaultPermissionsByRole(user.role));
+            modal.classList.add('show');
+        }
+
+        function getPermissionsByModule() {
+            const modules = [...new Set(permissions.map(p => p.module))];
+            return modules.map(module => {
+                const modulePermissions = permissions.filter(p => p.module === module);
+                return `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #666; margin-bottom: 8px; font-weight: 500;">${module}</div>
+                        ${modulePermissions.map(p => `
+                            <label class="permission-check-item" data-permission="${p.name}">
+                                <input type="checkbox" id="perm_${p.id}" value="${p.name}">
+                                <div class="permission-check-content">
+                                    <div class="permission-check-name">${p.name}</div>
+                                    <div class="permission-check-desc">${p.desc}</div>
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectRole(roleId) {
+            document.querySelectorAll('.role-select-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.role === roleId);
+            });
+            
+            const role = roles.find(r => r.id === roleId);
+            if (role) {
+                const defaultPermissions = getDefaultPermissionsByRole(roleId);
+                updatePermissionChecklist(defaultPermissions);
+            }
+        }
+
+        // 根据角色获取默认权限配置
+        function getDefaultPermissionsByRole(roleId) {
+            switch(roleId) {
+                case 'admin':
+                    return ['新建', '查看', '承接', '修改', '删除', '用户管理', '地址管理', '仓储管理'];
+                case 'user':
+                    return ['查看'];
+                case 'customer_service':
+                    return ['新建', '查看'];
+                case 'engineer':
+                    return ['新建', '查看', '承接', '修改', '删除'];
+                case 'warehouse_manager':
+                    return ['查看', '仓储管理'];
+                default:
+                    return [];
+            }
+        }
+
+        // 更新权限勾选状态
+        function updatePermissionChecklist(userPermissions) {
+            document.querySelectorAll('.permission-check-item').forEach(item => {
+                const permName = item.dataset.permission;
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const isChecked = userPermissions.includes(permName);
+                checkbox.checked = isChecked;
+                item.classList.toggle('checked', isChecked);
+            });
+
+            document.querySelectorAll('.permission-check-item input').forEach(checkbox => {
+                checkbox.onchange = function() {
+                    this.closest('.permission-check-item').classList.toggle('checked', this.checked);
+                };
+            });
+        }
+
+        function closeModal(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closePermissionModal();
+            }
+        }
+
+        function closePermissionModal() {
+            document.getElementById('permissionModal').classList.remove('show');
+            selectedUserId = null;
+        }
+
+        function savePermissions() {
+            if (!selectedUserId) return;
+
+            const selectedRoleItem = document.querySelector('.role-select-item.selected');
+            let roleId = selectedRoleItem ? selectedRoleItem.dataset.role : null;
+
+            const selectedPermissions = [];
+            document.querySelectorAll('.permission-check-item input:checked').forEach(checkbox => {
+                selectedPermissions.push(checkbox.value);
+            });
+
+            const userIndex = users.findIndex(u => u.id === selectedUserId);
+            if (userIndex !== -1) {
+                if (!roleId) {
+                    roleId = users[userIndex].role;
+                }
+                users[userIndex].role = roleId;
+                users[userIndex].permissions = selectedPermissions;
+                users[userIndex].hasExplicitPermissions = true;
+                users[userIndex].explicitPermissions = selectedPermissions;
+            }
+
+            saveUserPermissions(selectedUserId, roleId, selectedPermissions);
+            closePermissionModal();
+            renderUserList();
+            showToast('权限配置保存成功');
+        }
+
+        async function saveUserPermissions(userId, roleId, permissionIds) {
+            try {
+                const token = localStorage.getItem('token');
+                
+                const user = users.find(u => u.id === userId);
+                const permissionsSaveStr = permissionIds.join('|');
+                
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        accountType: roleId || user.role || '',
+                        permissions: permissionsSaveStr
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('保存权限失败:', errorData);
+                }
+            } catch (error) {
+                console.error('保存权限请求异常:', error);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('sidebarOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+        });
+    </script>
+</body>
+</html>

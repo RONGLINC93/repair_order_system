@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>工作台历 - 维修工单系统</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        /* 工作台历专用样式 */
+        .calendar-container {
+            padding: 70px 16px 0px;
+            background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+            min-height: 100vh;
+        }
+
+        /* 月份导航 */
+        .month-nav {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* 月份导航 - 内容 */
+        .month-nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 月份导航 - 按钮 */
+        .month-nav-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+        }
+
+        /* 月份导航 - 按钮 - 鼠标悬停 */
+        .month-nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+        }
+
+        /* 月份导航 - 按钮 - 点击 */
+        .month-nav-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 月份导航 - 月份 */
+        .current-month {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+            text-align: center;
+        }
+
+        /* 日历网格 */
+        .calendar-grid {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* 日历表头 */ 
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* 日历表头 - 日期 */
+        .calendar-day-header {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 日历表头 - 日期 - 最后一个 */
+        .calendar-day-header:last-child {
+            border-right: none;
+        }
+
+        /* 日历表体 */
+        .calendar-body {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        /* 本月的日期 */
+        .calendar-day {
+            min-height: 60px;
+            border-right: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        /* 本月的日期 - 第7个日期 */
+        .calendar-day:nth-child(7n) {
+            border-right: none;
+        }
+        /* 本月的日期 - 鼠标悬停 */
+        .calendar-day:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 本月的日期 - 其他月份 */
+        .calendar-day.other-month {
+            color: #ddd;
+            background-color: #fafafa;
+        }
+
+        /* 本月的日期 - 其他月份 - 数字 */
+        .calendar-day.other-month .day-number {
+            color: #ddd;
+        }
+
+        /* 本月的日期 - 今天 */
+        .calendar-day.today {
+            background-color: #e3f2fd;
+        }
+
+        /* 本月的日期 - 今天 - 数字 */
+        .calendar-day.today .day-number {
+            background: #2196f3;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            /* 居中显示数字 */
+            /*margin: 0 auto;*/
+        }
+
+        /* 周末样式 - 本月的星期六和星期日 */
+        .calendar-day.weekend {
+            background-color: #fff5f5;
+        }
+
+        /* 周末样式 - 本月的星期六和星期日 - 鼠标悬停 */
+        .calendar-day.weekend:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 周末样式 - 本月的星期六和星期日 - 今天 */
+        .calendar-day.weekend.today {
+            background-color: #ffe6e6;
+        }
+
+        /* 周末样式 - 本月的星期六和星期日 - 今天 - 数字 */
+        .calendar-day.weekend.today .day-number {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* 本月的日期 - 数字 */
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+            /* 居中显示数字 */
+            /*text-align: center; */
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        /* 工单指示器 */
+        .work-orders-indicator {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+
+        /* 工单指示器 - 点 */
+        .work-order-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* 工单指示器 - 点 - 维修 */
+        .work-order-dot.repair {
+            background-color: #4caf50;
+        }
+
+        /* 工单指示器 - 点 - 配送 */    
+        .work-order-dot.delivery {
+            background-color: #ff9800;
+        }
+
+        /* 工单指示器 - 点 - 其他 */
+        .work-order-dot.other {
+            background-color: #9c27b0;
+        }
+
+        /* 工单指示器 - 数量 */
+        .work-order-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #dc3545;
+            color: white;
+            border-radius: 10px;
+            padding: 1px 4px;
+            font-size: 10px;
+            min-width: 16px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* 工单详情弹窗 */
+        .calendar-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        /* 工单详情弹窗 - 显示 */
+        .calendar-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        /* 工单详情弹窗 - 隐藏 */
+        .calendar-modal.hide {
+            display: none;
+        }
+
+        /* 工单详情弹窗 - 动画 */
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 工单详情弹窗 - 内容 */
+        .calendar-modal-content {
+            background: white;
+            border-radius: 16px;
+            margin: 20px;
+            max-height: 80vh;
+            width: calc(100% - 40px);
+            overflow: hidden;
+            animation: modalSlideUp 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        /* 响应式调整 - 大屏幕设备 */
+        @media (min-width: 768px) {
+            /* 日历容器 - 大屏幕适配 */
+            .calendar-container {
+                padding: 80px 24px 24px;
+                margin: 0 auto;
+            }
+
+            /* 月份导航 - 大屏幕适配 */
+            .month-nav {
+                padding: 20px 24px;
+                margin-bottom: 20px;
+            }
+
+            /* 月份导航按钮 - 大屏幕适配 */
+            .month-nav-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+
+            /* 当前月份显示 - 大屏幕适配 */
+            .current-month {
+                font-size: 20px;
+            }
+
+            /* 日历网格 - 大屏幕适配 */
+            .calendar-grid {
+                margin-bottom: 20px;
+            }
+
+            /* 日历表头 - 大屏幕适配 */
+            .calendar-day-header {
+                padding: 16px 12px;
+                font-size: 14px;
+            }
+
+            /* 日历日期 - 大屏幕适配 */
+            .calendar-day {
+                min-height: 80px;
+                padding: 12px 6px;
+            }
+
+            /* 日期数字 - 大屏幕适配 */
+            .day-number {
+                font-size: 16px;
+                margin-bottom: 6px;
+            }
+
+            /* 工单指示器点 - 大屏幕适配 */
+            .work-order-dot {
+                width: 8px;
+                height: 8px;
+            }
+
+            /* 工单数量徽章 - 大屏幕适配 */
+            .work-order-count {
+                font-size: 11px;
+                min-width: 18px;
+                padding: 2px 5px;
+            }
+
+            /* 统计信息 - 大屏幕适配 */
+            .calendar-stats {
+                padding: 20px 24px;
+                margin-bottom: 20px;
+            }
+
+            /* 统计数字 - 大屏幕适配 */
+            .stat-number {
+                font-size: 20px;
+            }
+
+            /* 统计标签 - 大屏幕适配 */
+            .stat-label {
+                font-size: 13px;
+            }
+
+            /* 工单详情弹窗内容 - 大屏幕适配 */
+            .calendar-modal-content {
+                max-width: 600px;
+                min-width: 500px;
+                width: auto;
+            }
+
+            /* 弹窗标题 - 大屏幕适配 */
+            .calendar-modal-title {
+                font-size: 18px;
+            }
+
+            /* 工单列表 - 大屏幕适配 */
+            .work-orders-list {
+                padding: 20px 24px;
+            }
+
+            /* 工单项 - 大屏幕适配 */
+            .work-order-item {
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+
+            /* 工单类型 - 大屏幕适配 */
+            .work-order-type {
+                font-size: 15px;
+            }
+
+            /* 工单编号 - 大屏幕适配 */
+            .work-order-id {
+                font-size: 13px;
+            }
+
+            /* 工单信息行 - 大屏幕适配 */
+            .work-order-info-row {
+                font-size: 15px;
+                margin-bottom: 8px;
+            }
+
+            /* 状态筛选标题 - 大屏幕适配 */
+            .status-filter-title {
+                font-size: 13px;
+            }
+
+            /* 状态复选框项 - 大屏幕适配 */
+            .status-checkbox {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+
+            /* 筛选按钮 - 大屏幕适配 */
+            .all-orders-btn, .my-orders-btn {
+                padding: 12px 20px;
+                font-size: 13px;
+                min-width: 100px;
+                max-width: 140px;
+            }
+
+            /* 小按钮 - 大屏幕适配 */
+            .btn-small {
+                padding: 10px 18px;
+                font-size: 14px;
+            }
+        }
+
+        /* 超大屏幕适配 */
+        @media (min-width: 1024px) {
+            /* 日历容器 - 超大屏幕适配 */
+            .calendar-container {
+                padding: 100px 32px 32px;
+            }
+
+            /* 月份导航 - 超大屏幕适配 */
+            .month-nav {
+                padding: 24px 32px;
+            }
+
+            /* 当前月份显示 - 超大屏幕适配 */
+            .current-month {
+                font-size: 22px;
+            }
+
+            /* 日历日期 - 超大屏幕适配 */
+            .calendar-day {
+                min-height: 100px;
+                padding: 16px 8px;
+            }
+
+            /* 日期数字 - 超大屏幕适配 */
+            .day-number {
+                font-size: 18px;
+            }
+
+            /* 工单指示器点 - 超大屏幕适配 */
+            .work-order-dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            /* 统计网格 - 超大屏幕适配 */
+            .stats-grid {
+                gap: 16px;
+            }
+
+            /* 统计项 - 超大屏幕适配 */
+            .stat-item {
+                padding: 16px 12px;
+            }
+
+            /* 统计数字 - 超大屏幕适配 */
+            .stat-number {
+                font-size: 24px;
+            }
+
+            /* 统计标签 - 超大屏幕适配 */
+            .stat-label {
+                font-size: 14px;
+            }
+        }
+
+        /* 工单详情弹窗 - 内容 - 动画 */
+        @keyframes modalSlideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 工单详情弹窗 - 内容 - 标题栏 */
+        .calendar-modal-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 工单详情弹窗 - 标题 */
+        .calendar-modal-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* 工单详情弹窗 - 关闭按钮 */
+        .calendar-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        /* 工单详情弹窗 - 关闭按钮 - 鼠标悬停 */
+        .calendar-modal-close:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        /* 工单详情弹窗 - 内容区域 */
+        .calendar-modal-body {
+            padding: 0;
+            max-height: calc(80vh - 120px);
+            overflow-y: auto;
+        }
+
+        /* 工单列表 */
+        .work-orders-list {
+            padding: 16px;
+        }
+
+        /* 工单详情弹窗 - 内容 - 工单项 */
+        .work-order-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* 工单详情弹窗 - 内容 - 工单项 - 悬停 */
+        .work-order-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #dee2e6;
+        }
+
+        /* 工单详情弹窗 - 内容 - 工单项 - 标题栏 */
+        .work-order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        /* 工单详情弹窗 - 内容 - 工单项 - 标题栏 - 工单类型 */
+        .work-order-type {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* 工单类型图标 */
+        .work-order-type-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+
+        /* 工单类型图标 - 维修 */
+        .work-order-type-icon.repair {
+            background-color: #4caf50;
+        }
+
+        /* 工单类型图标 - 配送 */
+        .work-order-type-icon.delivery {
+            background-color: #ff9800;
+        }
+
+        /* 工单类型图标 - 其他 */
+        .work-order-type-icon.other {
+            background-color: #9c27b0;
+        }
+
+        /* 工单编号 */
+        .work-order-id {
+            font-size: 12px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* 工单信息容器 */
+        .work-order-info {
+            margin-bottom: 12px;
+        }
+
+        /* 工单信息行 */
+        .work-order-info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        /* 工单信息行 - 最后一行 */
+        .work-order-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 工单信息标签 */
+        .work-order-info-label {
+            color: #666;
+            min-width: 60px;
+        }
+
+        /* 工单信息值 */
+        .work-order-info-value {
+            color: #333;
+            flex: 1;
+        }
+
+        /* 工单状态徽章样式 */
+        .work-order-status-badge {
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* 不同状态的背景颜色 */
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-assigned {
+            background-color: #cfe2ff;
+            color: #084298;
+            border: 1px solid #b6d4fe;
+        }
+
+        .status-in-progress {
+            background-color: #d1ecf1;
+            color: #055160;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-completed {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+
+        .status-returned {
+            background-color: #e2e3e5;
+            color: #41464b;
+            border: 1px solid #d3d6d8;
+        }
+
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-default {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #e9ecef;
+        }
+
+        /* 工单备注 */
+        .work-order-notes {
+            background: #fff3cd;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 3px solid #ffc107;
+            font-size: 14px;
+            color: #856404;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        /* 工单操作按钮容器 */
+        .work-order-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 小按钮基础样式 */
+        .btn-small {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* 主要按钮 */
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 主要按钮 - 鼠标悬停 */
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        /* 筛选按钮布局 */
+        .month-nav .month-nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* 筛选按钮样式 */
+        .all-orders-btn, .my-orders-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            min-width: 90px;
+            justify-content: center;
+            flex: 1;
+            max-width: 120px;
+        }
+
+        /* 筛选按钮 - 鼠标悬停 */
+        .all-orders-btn:hover, .my-orders-btn:hover {
+            background: #5a6268;
+        }
+
+        /* 我的工单按钮 - 选中状态 */
+        .my-orders-btn.active {
+            background: #28a745;
+        }
+
+        /* 所有工单按钮 - 选中状态 */
+        .all-orders-btn.active {
+            background: #007bff;
+        }
+
+        /* 轮廓按钮 */
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        /* 轮廓按钮 - 鼠标悬停 */
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 统计信息容器 */
+        .calendar-stats {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* 统计网格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        /* 统计项 */
+        .stat-item {
+            text-align: center;
+            padding: 12px 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        /* 统计数字 */
+        .stat-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        /* 统计标签 */
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* 空状态容器 */
+        .empty-work-orders {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        /* 空状态图标 */
+        .empty-work-orders-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* 空状态主文本 */
+        .empty-work-orders-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        /* 空状态副文本 */
+        .empty-work-orders-subtitle {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* 加载状态容器 */
+        .calendar-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+        }
+
+        /* 加载动画圆圈 */
+        .calendar-loading .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.1);
+            border-left-color: #667eea;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        /* 旋转动画 */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 加载状态文本 */
+        .calendar-loading-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 状态筛选复选框容器 */
+        .status-filter-container {
+            width: 100%;
+        }
+
+        /* 状态筛选头部 */
+        .status-filter-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 状态筛选标题 */
+        .status-filter-title {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* 状态筛选标题图标 */
+        .status-filter-title i {
+            color: #667eea;
+            font-size: 11px;
+        }
+
+        /* 状态复选框容器 */
+        .status-checkboxes {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 4px;
+            overflow-x: auto;
+            flex: 1;
+            /* 隐藏滚动条 */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        /* 状态复选框容器 - 隐藏滚动条 */
+        .status-checkboxes::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 状态复选框项 */
+        .status-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 4px 6px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 10px;
+            flex-shrink: 0;
+            min-width: fit-content;
+            white-space: nowrap;
+        }
+
+        /* 状态复选框项 - 鼠标悬停 */
+        .status-checkbox:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        /* 状态复选框项 - 选中状态 */
+        .status-checkbox.active {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        /* 状态复选框项 - 选中状态 - 标签 */
+        .status-checkbox.active .checkbox-label {
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 状态复选框项 - 选中状态 - 图标 */
+        .status-checkbox.active i {
+            color: white;
+        }
+
+        /* 隐藏原生复选框 */
+        .status-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        /* 自定义复选框样式 */
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 3px;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        /* 自定义复选框勾选标记 */
+        .checkbox-custom::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) scale(0);
+            transition: transform 0.2s ease;
+        }
+
+        /* 复选框选中状态 */
+        .status-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        /* 复选框选中状态 - 勾选标记 */
+        .status-checkbox input[type="checkbox"]:checked + .checkbox-custom::after {
+            transform: rotate(45deg) scale(1);
+        }
+
+        .status-checkbox input[type="checkbox"]:checked ~ .checkbox-label {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        /* 复选框标签 */
+        .checkbox-label {
+            color: #666;
+            font-size: 12px;
+            flex: 1;
+        }
+
+        /* 响应式调整 - 超小屏幕设备 */
+        @media (max-width: 320px) {
+            /* 日历容器 - 超小屏幕适配 */
+            .calendar-container {
+                padding: 70px 8px 100px;
+            }
+
+            /* 月份导航 - 超小屏幕适配 */
+            .month-nav {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            /* 月份导航按钮 - 超小屏幕适配 */
+            .month-nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            /* 当前月份显示 - 超小屏幕适配 */
+            .current-month {
+                font-size: 16px;
+            }
+
+            /* 日历日期 - 超小屏幕适配 */
+            .calendar-day {
+                min-height: 45px;
+                padding: 4px 1px;
+            }
+
+            /* 日期数字 - 超小屏幕适配 */
+            .day-number {
+                font-size: 11px;
+            }
+
+            /* 工单指示点 - 超小屏幕适配 */
+            .work-order-dot {
+                width: 3px;
+                height: 3px;
+            }
+
+            /* 统计网格 - 超小屏幕适配 */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            /* 统计项 - 超小屏幕适配 */
+            .stat-item {
+                padding: 8px 4px;
+            }
+
+            /* 统计数字 - 超小屏幕适配 */
+            .stat-number {
+                font-size: 16px;
+            }
+
+            /* 统计标签 - 超小屏幕适配 */
+            .stat-label {
+                font-size: 11px;
+            }
+
+            /* 状态筛选标题 - 超小屏幕适配 */
+            .status-filter-title {
+                font-size: 11px;
+            }
+
+            /* 状态复选框项 - 超小屏幕适配 */
+            .status-checkbox {
+                padding: 3px 4px;
+                font-size: 9px;
+            }
+
+            /* 筛选按钮 - 超小屏幕适配 */
+            .all-orders-btn, .my-orders-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+                min-width: 80px;
+                max-width: 100px;
+            }
+        }
+
+        /* 响应式调整 - 小屏幕设备 */
+        @media (max-width: 375px) {
+            /* 日历容器 - 小屏幕适配 */
+            .calendar-container {
+                padding: 70px 12px 100px;
+            }
+
+            /* 日历日期 - 小屏幕适配 */
+            .calendar-day {
+                min-height: 50px;
+                padding: 6px 2px;
+            }
+
+            /* 日期数字 - 小屏幕适配 */
+            .day-number {
+                font-size: 12px;
+            }
+
+            /* 工单指示点 - 小屏幕适配 */
+            .work-order-dot {
+                width: 4px;
+                height: 4px;
+            }
+
+            /* 统计网格 - 小屏幕适配 */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            /* 状态复选框容器 - 小屏幕适配 */
+            .status-checkboxes {
+                gap: 4px;
+            }
+
+            /* 状态筛选标题 - 小屏幕适配 */
+            .status-filter-title {
+                font-size: 12px;
+            }
+
+            /* 状态复选框项 - 小屏幕适配 */
+            .status-checkbox {
+                padding: 4px 6px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">工作台历</h1>
+        </div>
+        <div class="header-right">    
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+     <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>            
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>           
+            <a href="/mobile-admin.html" class="nav-item active" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <!-- 主内容区 -->
+    <main class="calendar-container">
+        <!-- 统一筛选区域 -->
+        <div class="month-nav" id="filterSection" style="display: none;">
+            <div class="month-nav-content">
+                <!-- 工单筛选 -->
+                <div class="status-filter-container">
+                    <div class="status-filter-header">
+                        <div class="status-filter-title">
+                            <i class="fas fa-filter"></i>
+                            <span>工单筛选</span>
+                        </div>
+                        <div class="status-checkboxes">
+                            <div class="status-checkbox" id="allOrdersBtn" onclick="setFilterMode('all')">
+                                <i class="fas fa-list"></i>
+                                <span class="checkbox-label">所有工单</span>
+                            </div>
+                            <div class="status-checkbox" id="myOrdersBtn" onclick="setFilterMode('mine')">
+                                <i class="fas fa-user-tie"></i>
+                                <span class="checkbox-label">我的工单</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 状态筛选 -->
+                <div class="status-filter-container">
+                    <div class="status-filter-header">
+                        <div class="status-filter-title">
+                            <i class="fas fa-tags"></i>
+                            <span>状态筛选</span>
+                        </div>
+                        <div class="status-checkboxes">
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="status-waiting" value="等待服务" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">等待服务</span>
+                            </label>
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="status-assigned" value="派单成功" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">派单成功</span>
+                            </label>
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="status-progress" value="服务中" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">服务中</span>
+                            </label>
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="status-completed" value="完成" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">完成</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 工单类型筛选 -->
+                <div class="status-filter-container">
+                    <div class="status-filter-header">
+                        <div class="status-filter-title">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>工单类型</span>
+                        </div>
+                        <div class="status-checkboxes">
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="type-repair" value="repair" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">维修</span>
+                            </label>
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="type-delivery" value="delivery" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">送货</span>
+                            </label>
+                            <label class="status-checkbox">
+                                <input type="checkbox" id="type-other" value="other" checked>
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">其他</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 月份导航 -->
+        <div class="month-nav">
+            <div class="month-nav-content">
+                <button class="month-nav-btn" id="prevMonthBtn" onclick="changeMonth(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="current-month" id="currentMonthDisplay"></div>
+                <button class="month-nav-btn" id="todayBtn" onclick="goToToday()">
+                    <i class="fas fa-calendar-day"></i>
+                </button>
+                <button class="month-nav-btn" id="nextMonthBtn" onclick="changeMonth(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="calendar-stats" id="calendarStats" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalOrdersCount">0</div>
+                    <div class="stat-label">总工单</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="todayOrdersCount">0</div>
+                    <div class="stat-label">今日</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="weekOrdersCount">0</div>
+                    <div class="stat-label">本周</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日历网格 -->
+        <div class="calendar-grid">
+            <div class="calendar-header">
+                <div class="calendar-day-header">日</div>
+                <div class="calendar-day-header">一</div>
+                <div class="calendar-day-header">二</div>
+                <div class="calendar-day-header">三</div>
+                <div class="calendar-day-header">四</div>
+                <div class="calendar-day-header">五</div>
+                <div class="calendar-day-header">六</div>
+            </div>
+            <div class="calendar-body" id="calendarBody">
+                <!-- 日历内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 工单详情弹窗 -->
+    <div class="calendar-modal" id="calendarModal">
+        <div class="calendar-modal-content">
+            <div class="calendar-modal-header">
+                <div class="calendar-modal-title" id="modalTitle">工单详情</div>
+                <button class="calendar-modal-close" onclick="closeCalendarModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="calendar-modal-body">
+                <div class="work-orders-list" id="workOrdersList">
+                    <!-- 工单列表内容将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        // 工作台历相关JavaScript代码
+        
+        let currentDate = new Date();
+        let workOrdersData = {};
+        let isLoading = false;
+        let showMyOrdersOnly = false; // 是否只显示我的工单
+        let currentUser = null; // 当前用户信息
+        let selectedStatuses = ['等待服务', '派单成功', '服务中', '完成']; // 选中的状态筛选
+        let selectedTypes = ['repair', 'delivery', 'other']; // 选中的工单类型筛选
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // 初始化侧边栏和菜单
+                MobileCommon.checkAuth();
+                await MobileCommon.loadSidebarAvatar();
+                MobileCommon.setupNavigation();
+                
+                // 获取当前用户信息
+                currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                
+                // 延迟执行以确保DOM完全加载
+                setTimeout(() => {
+                    // 检查用户角色，只有工程师才显示筛选按钮和统计信息
+                    console.log('当前用户:', currentUser);
+                    const userRole = currentUser.account_type || currentUser.accountType;
+                    const isEngineer = userRole && (userRole.includes('工程师') || userRole.includes('engineer'));
+                    
+                    console.log('当前用户角色:', userRole);
+                    console.log('是否为工程师:', isEngineer);
+                    
+                    const allOrdersBtn = document.getElementById('allOrdersBtn');
+                    const myOrdersBtn = document.getElementById('myOrdersBtn');
+                    const filterContainer = document.getElementById('filterSection');
+                    const calendarStats = document.getElementById('calendarStats');
+                    
+                    console.log('筛选按钮容器:', filterContainer);
+                    
+                    // 显示统一筛选区域
+                    filterContainer.style.display = 'block';
+                    calendarStats.style.display = 'block';
+                    
+                    // 检查用户角色，决定默认筛选模式
+                    if (isEngineer) {
+                        // 是工程师，默认筛选"我的工单"
+                        console.log('工程师：显示所有筛选选项，默认筛选我的工单');
+                        setFilterMode('mine');
+                    } else {
+                        // 非工程师，默认显示"所有工单"
+                        console.log('非工程师：显示所有筛选选项，默认显示所有工单');
+                        setFilterMode('all');
+                    }
+                }, 100); // 延迟100ms确保DOM完全加载
+                
+                // 初始化月份显示，确保与 currentDate 同步
+                const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+                if (currentMonthDisplay) {
+                    currentMonthDisplay.textContent = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`;
+                }
+                
+                // 等待 DOM 稳定后再加载数据
+                await new Promise(resolve => setTimeout(resolve, 50));
+                await loadWorkOrders();
+                
+                // 初始化状态筛选复选框事件监听器
+                initializeStatusFilter();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                MobileCommon.showToast('页面初始化失败', 'error');
+            }
+        });
+
+        // 初始化状态筛选复选框
+        function initializeStatusFilter() {
+            const allCheckboxes = document.querySelectorAll('.status-checkbox input[type="checkbox"]');
+            
+            // 初始化时更新选中项
+            updateSelectedStatuses();
+            updateSelectedTypes();
+            
+            allCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectedStatuses();
+                    updateSelectedTypes();
+                    renderCalendar();
+                    updateCalendarStats();
+                });
+            });
+        }
+
+        // 更新选中的状态列表
+        function updateSelectedStatuses() {
+            selectedStatuses = [];
+            // 状态筛选容器中的复选框（第二个容器）
+            const statusCheckboxes = document.querySelectorAll('#filterSection .status-filter-container:nth-of-type(2) input[type="checkbox"]');
+            
+            statusCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedStatuses.push(checkbox.value);
+                }
+            });
+            
+            console.log('当前选中的状态:', selectedStatuses);
+        }
+
+        // 更新选中的工单类型列表
+        function updateSelectedTypes() {
+            selectedTypes = [];
+            // 工单类型筛选容器中的复选框（第三个容器）
+            const typeCheckboxes = document.querySelectorAll('#filterSection .status-filter-container:nth-of-type(3) input[type="checkbox"]');
+            
+            typeCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedTypes.push(checkbox.value);
+                }
+            });
+            
+            console.log('当前选中的工单类型:', selectedTypes);
+        }
+
+        // 加载工单数据
+        async function loadWorkOrders() {
+            if (isLoading) {
+                console.log('正在加载中，跳过重复请求');
+                return;
+            }
+            
+            isLoading = true;
+            showCalendarLoading();
+            
+            try {
+                // 获取当前显示的年月份
+                const targetYear = currentDate.getFullYear();
+                const targetMonth = currentDate.getMonth() + 1;
+                
+                console.log(`加载工单数据: ${targetYear}年${targetMonth}月`);
+                
+                // 调用真实的API接口
+                const result = await MobileCommon.apiRequest(`/api/work-orders/calendar-data?year=${targetYear}&month=${targetMonth}`);
+               
+                
+                if (result.success) {
+                    // 验证数据是否匹配当前选择的月份
+                    const currentYear = currentDate.getFullYear();
+                    const currentMonth = currentDate.getMonth() + 1;
+                    
+                    if (currentYear === targetYear && currentMonth === targetMonth) {
+                        workOrdersData = result.data || {}; // 正确设置工单数据
+                        console.log('加载工单数据成功:', workOrdersData);
+                        renderCalendar();
+                        updateCalendarStats();
+                    } else {
+                        console.log('月份已变化，忽略过时的数据');
+                    }
+                } else {
+                    throw new Error(result.error || '获取数据失败');
+                }
+                
+            } catch (error) {
+                console.error('加载工单数据失败:', error);
+                showToast('加载工单数据失败: ' + (error.message || '网络错误'), 'error');
+                
+                // 如果加载失败，显示空数据
+                workOrdersData = {};
+                renderCalendar();
+                updateCalendarStats();
+            } finally {
+                isLoading = false;
+                hideCalendarLoading();
+            }
+        }
+
+        function setFilterMode(mode) {
+            const myOrdersBtn = document.getElementById('myOrdersBtn');
+            const allOrdersBtn = document.getElementById('allOrdersBtn');
+            
+            // 检查用户角色，只有工程师才处理"我的工单"筛选
+            const userRole = currentUser.account_type || currentUser.accountType;
+            const isEngineer = userRole && (userRole.includes('工程师') || userRole.includes('engineer'));
+            
+            if (mode === 'all') {
+                showMyOrdersOnly = false;
+                if (myOrdersBtn) myOrdersBtn.classList.remove('active');
+                if (allOrdersBtn) allOrdersBtn.classList.add('active');
+            } else if (mode === 'mine' && isEngineer) {
+                showMyOrdersOnly = true;
+                if (myOrdersBtn) myOrdersBtn.classList.add('active');
+                if (allOrdersBtn) allOrdersBtn.classList.remove('active');
+            } else if (mode === 'mine' && !isEngineer) {
+                showToast('您的账户没有权限筛选个人工单', 'warning');
+                return;
+            }
+            
+            // 重新渲染台历和更新统计信息
+            renderCalendar();
+            updateCalendarStats();
+        }
+
+        // 显示加载状态
+        function showCalendarLoading() {
+            const calendarBody = document.getElementById('calendarBody');
+            calendarBody.innerHTML = `
+                <div class="calendar-loading" style="grid-column: 1 / -1;">
+                    <div class="spinner"></div>
+                    <div class="calendar-loading-text">加载中...</div>
+                </div>
+            `;
+        }
+
+        // 隐藏加载状态
+        function hideCalendarLoading() {
+            // 加载完成后会自动重新渲染，这里不需要额外操作
+        }
+
+        // 渲染日历
+        function renderCalendar() {
+            const calendarBody = document.getElementById('calendarBody');
+            const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+            
+            // 确保使用最新的 currentDate 值
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // 更新月份显示
+            if (currentMonthDisplay) {
+                currentMonthDisplay.textContent = `${year}年${month + 1}月`;
+            }
+            
+            // 清空日历内容
+            calendarBody.innerHTML = '';
+            
+            // 获取月份第一天是星期几（0=周日）
+            const firstDay = new Date(year, month, 1).getDay();
+            
+            // 获取月份天数
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // 获取上个月天数
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            // 获取今天日期
+            const today = new Date();
+            const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+            const todayDate = today.getDate();
+            
+            // 渲染上个月的日期
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const prevMonth = month === 0 ? 12 : month;
+                const prevYear = month === 0 ? year - 1 : year;
+                const dateStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                calendarBody.appendChild(createCalendarDay(day, dateStr, true, false));
+            }
+            
+            // 渲染当前月的日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = isCurrentMonth && day === todayDate;
+                calendarBody.appendChild(createCalendarDay(day, dateStr, false, isToday));
+            }
+            
+            // 渲染下个月的日期，补满6行
+            const totalCells = calendarBody.children.length;
+            const remainingCells = 42 - totalCells; // 6行 × 7列 = 42格
+            
+            for (let day = 1; day <= remainingCells; day++) {
+                const nextMonth = month + 2;
+                const nextYear = nextMonth > 12 ? year + 1 : year;
+                const actualMonth = nextMonth > 12 ? 1 : nextMonth;
+                const dateStr = `${nextYear}-${String(actualMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                calendarBody.appendChild(createCalendarDay(day, dateStr, true, false));
+            }
+        }
+
+        // 创建日历日期单元格
+        function createCalendarDay(day, dateStr, isOtherMonth, isToday) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            
+            if (isOtherMonth) {
+                dayElement.classList.add('other-month');
+            } else {
+                // 只有本月的日期才判断是否为周末
+                const date = new Date(dateStr);
+                const dayOfWeek = date.getDay(); // 0=周日, 6=周六
+                
+                // 如果是星期六或星期日，添加周末样式
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    dayElement.classList.add('weekend');
+                }
+            }
+            
+            if (isToday) {
+                dayElement.classList.add('today');
+            }
+            
+            // 添加日期数字
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+            dayElement.appendChild(dayNumber);
+            // 添加工单指示器
+            const workOrders = workOrdersData[dateStr] || [];
+            // 应用筛选条件：我的工单 + 状态筛选
+            let filteredOrders = workOrders;
+            
+            // 先应用状态筛选
+            if (selectedStatuses.length > 0) {
+                filteredOrders = filteredOrders.filter(order => {
+                    return order.status && selectedStatuses.includes(order.status);
+                });
+            }
+
+            // 应用工单类型筛选
+            if (selectedTypes.length > 0) {
+                filteredOrders = filteredOrders.filter(order => {
+                    return order.work_type && selectedTypes.includes(order.work_type);
+                });
+            }
+
+            // 应用工单类型筛选
+            if (selectedTypes.length > 0) {
+                filteredOrders = filteredOrders.filter(order => {
+                    return order.work_type && selectedTypes.includes(order.work_type);
+                });
+            }
+            
+            // 如果开启了"我的工单"筛选，则过滤工单
+            if (showMyOrdersOnly && currentUser && currentUser.id) {
+                filteredOrders = filteredOrders.filter(order => {
+                    // 检查工程师是否为当前用户（通过工程师名称匹配）
+                    return order.engineer_name && currentUser.fullName && 
+                           order.engineer_name === currentUser.fullName;
+                });
+            }
+            
+            if (filteredOrders.length > 0) {
+                // 添加工单数量徽章
+                if (filteredOrders.length > 3) {
+                    const countBadge = document.createElement('div');
+                    countBadge.className = 'work-order-count';
+                    countBadge.textContent = filteredOrders.length;
+                    dayElement.appendChild(countBadge);
+                }
+                
+                // 添加工单指示点
+                const indicator = document.createElement('div');
+                indicator.className = 'work-orders-indicator';
+                
+                // 只显示前3个工单的类型
+                const displayOrders = filteredOrders.slice(0, 3);
+                displayOrders.forEach(order => {
+                    const dot = document.createElement('div');
+                    dot.className = `work-order-dot ${order.work_type}`;
+                    indicator.appendChild(dot);
+                });
+                
+                dayElement.appendChild(indicator);
+                
+                // 添加点击事件，传入过滤后的工单数据
+                dayElement.addEventListener('click', () => showWorkOrdersDetail(dateStr, filteredOrders));
+            }
+            
+            return dayElement;
+        }
+
+        // 显示工单详情
+        function showWorkOrdersDetail(dateStr, workOrders) {
+            const modal = document.getElementById('calendarModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const workOrdersList = document.getElementById('workOrdersList');
+            
+            // 设置标题
+            const date = new Date(dateStr);
+            const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const weekDay = weekDays[date.getDay()];
+            modalTitle.textContent = `${dateStr} ${weekDay} (${workOrders.length}个工单)`;
+            
+            // 清空工单列表
+            workOrdersList.innerHTML = '';
+            
+            // 生成工单列表
+            workOrders.forEach(order => {
+                const orderElement = createWorkOrderElement(order);
+                workOrdersList.appendChild(orderElement);
+            });
+            
+            // 显示弹窗
+            modal.classList.add('show');
+        }
+
+        // 获取状态样式类名
+        function getStatusClass(status) {
+            // 标准化状态名称
+            const normalizedStatus = status ? status.trim() : '';
+            
+            // 根据状态返回CSS类名，与工单详情页保持一致
+            if (normalizedStatus.includes('等待')) {
+                return 'status-waiting';
+            } else if (normalizedStatus.includes('派单')) {
+                return 'status-assigned';
+            } else if (normalizedStatus.includes('服务中') || normalizedStatus.includes('维修中')) {
+                return 'status-progress';
+            } else if (normalizedStatus.includes('完成')) {
+                return 'status-completed';
+            } else if (normalizedStatus.includes('取消')) {
+                return 'status-cancelled';
+            } else if (normalizedStatus.includes('退回')) {
+                return 'status-returned';
+            } else if (normalizedStatus.includes('验收')) {
+                return 'status-approved';
+            } else {
+                return '';
+            }
+        }
+
+        // 创建工单元素
+        function createWorkOrderElement(order) {
+            const orderElement = document.createElement('div');
+            orderElement.className = 'work-order-item';
+            
+            const typeIcons = {
+                repair: 'fas fa-wrench',
+                delivery: 'fas fa-truck',
+                other: 'fas fa-cog'
+            };
+            
+            const typeLabels = {
+                repair: '维修',
+                delivery: '送货',
+                other: '其他'
+            };
+            
+            const typeColors = {
+                repair: 'repair',
+                delivery: 'delivery',
+                other: 'other'
+            };
+            orderElement.innerHTML = `
+                <div class="work-order-header">
+                    <div class="work-order-type">
+                        <div class="work-order-type-icon ${typeColors[order.work_type]}">
+                            <i class="${typeIcons[order.work_type]}"></i>
+                        </div>
+                        <span>${typeLabels[order.work_type]}</span>
+                    </div>
+                    <div class="work-order-id">工单#${order.id}</div>
+                </div>
+                
+                <div class="work-order-info">
+                    ${order.customer_name ? `<div class="work-order-info-row">
+                        <span class="work-order-info-label">客户:</span>
+                        <span class="work-order-info-value">${order.customer_name}</span>
+                    </div>` : ''}
+                    ${order.work_description ? `<div class="work-order-info-row">
+                        <span class="work-order-info-label">工单说明:</span>
+                        <span class="work-order-info-value">${order.work_description}</span>
+                    </div>` : ''}
+                    ${order.engineer_name ? `<div class="work-order-info-row">
+                        <span class="work-order-info-label">工程师:</span>
+                        <span class="work-order-info-value">${order.engineer_name}</span>
+                    </div>` : ''}
+                    <div class="work-order-info-row">
+                        <span class="work-order-info-label">状态:</span>
+                        <span class="work-order-status-badge ${getStatusClass(order.status)}">${order.status}</span>
+                    </div>
+                </div>
+                 ${order.notes ? `<div class="work-order-info-row">
+                        <span class="work-order-notes">
+                            <i class="fas fa-sticky-note"></i>
+                            <span class="notes-text" style="white-space: pre-line;">${order.notes}</span>
+                        </span>
+                    </div>` : ''}                                
+                <div class="work-order-actions">
+                    <button class="btn-small btn-primary" onclick="viewOrderDetail('${order.id}')">
+                        <i class="fas fa-eye"></i>
+                        查看详情
+                    </button>
+                  
+                </div>
+            `;
+            
+            return orderElement;
+        }
+
+        // 关闭工单详情弹窗
+        function closeCalendarModal() {
+            const modal = document.getElementById('calendarModal');
+            modal.classList.remove('show');
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('calendarModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCalendarModal();
+            }
+        });
+
+        // 切换月份
+        async function changeMonth(direction) {
+            const oldYear = currentDate.getFullYear();
+            const oldMonth = currentDate.getMonth() + 1;
+            const oldDay = currentDate.getDate();
+            
+            console.log('切换前 currentDate:', currentDate);
+            
+            // 防止日期溢出问题：先设置日期为1号，再切换月份，最后恢复原日期（如果有效）
+            const targetMonth = currentDate.getMonth() + direction;
+            currentDate.setDate(1); // 先设为1号
+            currentDate.setMonth(targetMonth); // 切换月份
+            
+            // 尝试恢复原始日期，如果目标月份没有这个日期，会自动调整到月末
+            const maxDayInTargetMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+            if (oldDay <= maxDayInTargetMonth) {
+                currentDate.setDate(oldDay);
+            }
+            
+            const newYear = currentDate.getFullYear();
+            const newMonth = currentDate.getMonth() + 1;
+            const newDay = currentDate.getDate();
+            
+            console.log(`切换月份: ${oldYear}年${oldMonth}月${oldDay}日 -> ${newYear}年${newMonth}月${newDay}日`);
+            console.log('切换后 currentDate:', currentDate);
+            
+            // 立即更新显示，确保UI响应
+            const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+            if (currentMonthDisplay) {
+                currentMonthDisplay.textContent = `${newYear}年${newMonth}月`;
+            }
+            
+            // 等待短暂时间确保DOM更新
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // 重新加载新月份的数据
+            await loadWorkOrders();
+        }
+
+        // 回到今日
+        async function goToToday() {
+            const oldYear = currentDate.getFullYear();
+            const oldMonth = currentDate.getMonth() + 1;
+            const oldDay = currentDate.getDate();
+            
+            // 设置为今天的日期
+            const today = new Date();
+            currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            
+            const newYear = currentDate.getFullYear();
+            const newMonth = currentDate.getMonth() + 1;
+            const newDay = currentDate.getDate();
+            
+            console.log(`回到今日: ${oldYear}年${oldMonth}月${oldDay}日 -> ${newYear}年${newMonth}月${newDay}日`);
+            
+            // 立即更新显示，确保UI响应
+            const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+            if (currentMonthDisplay) {
+                currentMonthDisplay.textContent = `${newYear}年${newMonth}月`;
+            }
+            
+            // 等待短暂时间确保DOM更新
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // 加载今日所在月份的数据
+            await loadWorkOrders();
+        }
+
+        // 更新统计信息
+        function updateCalendarStats() {
+            const calendarStats = document.getElementById('calendarStats');
+            const totalOrdersCount = document.getElementById('totalOrdersCount');
+            const todayOrdersCount = document.getElementById('todayOrdersCount');
+            const weekOrdersCount = document.getElementById('weekOrdersCount');
+            
+            // 获取所有工单
+            const allOrders = Object.values(workOrdersData).flat();
+            
+            // 应用筛选条件：状态筛选 + 我的工单
+            let filteredOrders = allOrders;
+            
+            // 先应用状态筛选
+            if (selectedStatuses.length > 0) {
+                filteredOrders = filteredOrders.filter(order => {
+                    return order.status && selectedStatuses.includes(order.status);
+                });
+            }
+
+            // 应用工单类型筛选
+            if (selectedTypes.length > 0) {
+                filteredOrders = filteredOrders.filter(order => {
+                    return order.work_type && selectedTypes.includes(order.work_type);
+                });
+            }
+            
+            // 如果开启了"我的工单"筛选，则过滤工单（只有工程师可以筛选个人工单）
+            if (showMyOrdersOnly && currentUser && currentUser.id) {
+                // 检查用户角色，只有工程师才允许筛选个人工单
+                const userRole = currentUser.account_type || currentUser.accountType;
+                const isEngineer = userRole && (userRole.includes('工程师') || userRole.includes('engineer'));
+                
+                if (isEngineer) {
+                    filteredOrders = filteredOrders.filter(order => {
+                        // 检查工程师是否为当前用户（通过工程师名称匹配）
+                        return order.engineer_name && currentUser.fullName && 
+                               order.engineer_name === currentUser.fullName;
+                    });
+                }
+            }
+            
+            const totalCount = filteredOrders.length;
+            
+            // 今日工单（从已筛选的工单中统计）
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const todayCount = filteredOrders.filter(order => {
+                if (!order.create_time) return false;
+                const orderDate = new Date(order.create_time);  
+                const orderDateStr = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}-${String(orderDate.getDate()).padStart(2, '0')}`;
+                return orderDateStr === todayStr;
+            }).length;
+            
+            // 本周工单（从已筛选的工单中统计）
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const weekCount = filteredOrders.filter(order => {
+                if (!order.create_time) return false;
+                const orderDate = new Date(order.create_time);      
+                return orderDate >= weekStart && orderDate < weekEnd;
+            }).length;
+            
+            // 更新显示
+            totalOrdersCount.textContent = totalCount;
+            todayOrdersCount.textContent = todayCount;
+            weekOrdersCount.textContent = weekCount;
+            
+            // 显示统计信息（始终显示，只在非工程师用户时隐藏）
+            if (currentUser && currentUser.id) {
+                const userRole = currentUser.account_type || currentUser.accountType;
+                const isEngineer = userRole && (userRole.includes('工程师') || userRole.includes('engineer'));
+                if (isEngineer) {
+                    calendarStats.style.display = 'block';
+                }
+            }
+        }
+
+        // 查看工单详情
+        function viewOrderDetail(orderId) {
+            if (!orderId || isNaN(orderId)) {
+                showToast('工单ID无效', 'error');
+                return;
+            }
+            window.location.href = `/mobile-work-order-detail.html?id=${orderId}`;
+        }
+
+        // 联系客户
+        function contactCustomer(phone) {
+            showToast(`拨打 ${phone}`, 'info');
+            // 在实际应用中，这里应该调用电话功能
+            // window.location.href = `tel:${phone}`;
+        }
+
+        // 更新通知徽章
+        function updateNotificationBadge() {
+            // 模拟未读通知数量
+            const badge = document.getElementById('mobileNotificationBadge');
+            const unreadCount = Math.floor(Math.random() * 5);
+            
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // 页面可见性变化时更新通知徽章
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateNotificationBadge();
+            }
+        });
+
+        // 页面加载完成后更新通知徽章
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNotificationBadge();
+        });
+    </script>
+</body>
+</html>

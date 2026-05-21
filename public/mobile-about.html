@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>关于系统 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+           <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">关于系统</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+  <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="content-scroll" style="margin: 15px;">
+            <!-- 应用信息卡片 - 放在最上面 -->
+            <div class="order-card" style="margin-bottom: 20px;">
+                <div class="card-body" style="text-align: center; padding: 30px 20px;">
+                    <div class="about-app-icon" style="margin: 0 auto 20px; font-size: 48px; width: 80px; height: 80px; line-height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; color: white;">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h4 class="about-app-name" style="margin: 0 0 10px 0; font-size: 24px; font-weight: bold; color: #2c3e50;">工单管理系统</h4>
+                    <p class="about-version" id="appVersion" style="margin: 0 0 15px 0; font-size: 16px; color: #7f8c8d; font-weight: 500;">版本 0.0.0</p>
+                    <p class="about-description" style="margin: 0 0 25px 0; font-size: 16px; color: #34495e; line-height: 1.5;">专业的工单管理解决方案，提高工作效率</p>
+                    
+                    <div class="about-stats" style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px;">
+                        <div class="stat-item" style="flex: 1; min-width: 120px; text-align: center;">
+                            <div class="stat-icon" style="margin: 0 auto 10px; width: 50px; height: 50px; line-height: 50px; background: #3498db; border-radius: 12px; color: white; font-size: 20px;">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 600; color: #2c3e50;">技术栈</h5>
+                                <p style="margin: 0; font-size: 12px; color: #7f8c8d;">Node.js + Express</p>
+                            </div>
+                        </div>
+                        <div class="stat-item" style="flex: 1; min-width: 120px; text-align: center;">
+                            <div class="stat-icon" style="margin: 0 auto 10px; width: 50px; height: 50px; line-height: 50px; background: #27ae60; border-radius: 12px; color: white; font-size: 20px;">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 600; color: #2c3e50;">移动端优化</h5>
+                                <p style="margin: 0; font-size: 12px; color: #7f8c8d;">响应式设计</p>
+                            </div>
+                        </div>
+                        <div class="stat-item" style="flex: 1; min-width: 120px; text-align: center;">
+                            <div class="stat-icon" style="margin: 0 auto 10px; width: 50px; height: 50px; line-height: 50px; background: #e74c3c; border-radius: 12px; color: white; font-size: 20px;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 600; color: #2c3e50;">安全可靠</h5>
+                                <p style="margin: 0; font-size: 12px; color: #7f8c8d;">权限管理</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能特性 -->
+            <div class="order-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-star" style="color: #f39c12;"></i>
+                        功能特性
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>工单管理</h5>
+                                <p>创建、分配、跟踪工单全流程管理，支持维修/送货/其他类型</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>权限管理</h5>
+                                <p>多角色权限体系，支持管理员/工程师/客服/用户分级管理</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-comment"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>内部聊天</h5>
+                                <p>实时内部沟通，支持单聊和群聊，提升团队协作效率</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>物料管理</h5>
+                                <p>物料申请、库存管理，支持维修工单的物料需求</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>通知系统</h5>
+                                <p>实时通知推送，及时获取工单状态变更和系统消息</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-address-book"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>客户通讯录</h5>
+                                <p>客户信息管理，联系方式维护，提升服务质量</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>工作台历</h5>
+                                <p>日程管理，工作安排，提升时间管理效率</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h5>数据统计</h5>
+                                <p>工单统计分析，工作量统计，为决策提供数据支持</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 相关链接 -->
+            <div class="order-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-link" style="color: #27ae60;"></i>
+                        相关链接
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="about-links">
+                        <div class="about-link-item" onclick="showPrivacyPolicy()">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>隐私政策</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="about-link-item" onclick="showTermsOfService()">
+                            <i class="fas fa-file-contract"></i>
+                            <span>使用条款</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="about-link-item" onclick="showSupport()">
+                            <i class="fas fa-headset"></i>
+                            <span>技术支持</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="about-link-item" onclick="showContact()">
+                            <i class="fas fa-envelope"></i>
+                            <span>联系我们</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统信息 -->
+            <div class="order-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-cog" style="color: #95a5a6;"></i>
+                        系统信息
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="system-info">
+                        <div class="info-row">
+                            <span class="info-label">构建版本</span>
+                            <span class="info-value" id="buildVersion">v0.0.0 (Build 加载中)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">最新版本</span>
+                            <span class="info-value" id="latestVersion">加载中...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">发布日期</span>
+                            <span class="info-value">2025年11月</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">最后更新</span>
+                            <span class="info-value" id="lastUpdate">2025-11-25</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">开发者</span>
+                            <span class="info-value"><a href="https://github.com/RONGLINC93" target="_blank">RONGLINC93</a></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--历史版本-->
+            <div class="order-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-history" style="color: #27ae60;"></i>
+                        历史版本
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="versionList" class="version-list">
+                        <div class="loading-text">正在加载版本信息...</div>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+    </main>
+
+    <script src="/js/utils.js"></script>
+    <script>
+        let currentUser = null;
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAuth();
+            setupNavigation();
+            updateSystemInfo();
+            loadVersionList(); // 加载历史版本列表
+            
+            // 设置导航权限和加载未读消息
+            const overlay = document.getElementById('sidebarOverlay');
+            overlay.addEventListener('click', closeSidebar);
+            
+         
+        });
+
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const userName = user.fullName || user.username;
+            const userPosition = Utils.getAccountTypeText(user.accountType);
+            document.getElementById('mobileUserName').textContent = userName;
+            document.getElementById('mobileUserRole').textContent = userPosition;
+            currentUser = user;
+                   // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+        
+            // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+
+        // 更新系统信息
+        function updateSystemInfo() {
+            const lastUpdate = new Date().toLocaleDateString('zh-CN');
+            document.getElementById('lastUpdate').textContent = lastUpdate;
+        }
+
+        // 加载历史版本列表
+        async function loadVersionList() {
+            try {
+                const versionList = document.getElementById('versionList');
+                
+                // 从API获取版本列表
+                const response = await fetch('/api/versions');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const versions = await response.json();
+
+                // 清空加载提示
+                versionList.innerHTML = '';
+
+                // 如果没有版本文件
+                if (versions.length === 0) {
+                    versionList.innerHTML = '<div class="no-versions">暂无历史版本</div>';
+                    return;
+                }
+
+                // 为每个版本添加显示信息
+                versions.forEach(version => {
+                    version.displayInfo = parseVersionDisplay(version.name);
+                });
+
+                // 按第一行日期时间倒序排序（最新的在前）
+                versions.sort((a, b) => {
+                    const dateTimeA = parseInt(a.displayInfo.line1) || 0;
+                    const dateTimeB = parseInt(b.displayInfo.line1) || 0;
+                    return dateTimeB - dateTimeA;
+                });
+
+                // 为每个版本添加版本号（倒序：最新版本得到最高版本号）
+                versions.forEach((version, index) => {
+                    version.versionNumber = calculateVersionFromCount(versions.length - index);
+                });
+
+                // 渲染版本列表
+                versions.forEach(version => {
+                    const versionItem = document.createElement('div');
+                    versionItem.className = 'version-item';
+                    
+                    // 检查当前用户是否为管理员
+                    const isAdmin = Utils.hasAccountType('admin');
+                    
+                    let actionsHtml = '';
+                    if (isAdmin) {
+                        actionsHtml = `
+                            <div class="version-actions">
+                                <span class="version-size">${version.size}</span>
+                                <button class="download-btn" onclick="downloadVersion('${version.name}')">
+                                    <i class="fas fa-download"></i> 下载
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        actionsHtml = `
+                            <div class="version-actions">
+                                <span class="version-size">${version.size}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    versionItem.innerHTML = `
+                        <div class="version-info">
+                            <div class="version-display">
+                                <div class="version-header">
+                                    <span class="version-number">v${version.versionNumber}</span>
+                                    <span class="version-line1">${version.displayInfo.line1}</span>
+                                </div>
+                                ${version.displayInfo.line2 ? `<span class="version-line2">${version.displayInfo.line2}</span>` : ''}
+                            </div>
+                            <span class="version-date">${version.date}</span>
+                        </div>
+                        ${actionsHtml}
+                    `;
+                    versionList.appendChild(versionItem);
+                });
+
+                // 更新系统信息中的最新版本
+                if (versions.length > 0) {
+                    const latestVersion = versions[0];
+                    const latestDisplay = latestVersion.displayInfo;
+                    
+                    // 只显示日期时间
+                    document.getElementById('latestVersion').textContent = latestDisplay.line1;
+                    
+                    // 更新最后更新为最新版本的日期
+                    document.getElementById('lastUpdate').textContent = latestVersion.date;
+                    
+                    // 根据最新版本生成构建版本
+                    const dateTimeStr = latestDisplay.line1;
+                    if (dateTimeStr.length >= 6) {
+                        const year = dateTimeStr.substring(0, 4);
+                        const month = dateTimeStr.substring(4, 6);
+                        
+                        // 根据文件数量计算版本号
+                        const versionNumber = calculateVersionFromCount(versions.length);
+                        const buildVersion = `v${versionNumber} (Build ${year}.${month})`;
+                        document.getElementById('buildVersion').textContent = buildVersion;
+                        
+                        // 更新页面顶部的版本显示
+                        document.getElementById('appVersion').textContent = `版本 ${versionNumber}`;
+                    }
+                } else {
+                    document.getElementById('latestVersion').textContent = '暂无版本';
+                }
+
+            } catch (error) {
+                console.error('加载版本列表失败:', error);
+                document.getElementById('versionList').innerHTML = 
+                    '<div class="error-text">加载版本信息失败，请稍后重试</div>';
+                document.getElementById('latestVersion').textContent = '加载失败';
+            }
+        }
+
+        // 根据文件数量计算版本号
+        function calculateVersionFromCount(count) {
+            const major = Math.floor(count / 100);
+            const minor = Math.floor((count % 100) / 10);
+            const patch = count % 10;
+            
+            return `${major}.${minor}.${patch}`;
+        }
+
+        // 解析文件名显示信息
+        function parseVersionDisplay(filename) {
+            // 移除扩展名
+            const nameWithoutExt = filename.replace(/\.rar$/i, '');
+            
+            // 匹配模式：维修工单系统 + 日期时间(YYYYMMDDHHMM) + 描述
+            const match = nameWithoutExt.match(/^维修工单系统(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(.+)$/);
+            
+            if (match) {
+                const year = match[1];
+                const month = match[2];
+                const day = match[3];
+                const hour = match[4];
+                const minute = match[5];
+                const description = match[6];
+                
+                const dateTime = `${year}${month}${day}${hour}${minute}`;
+                
+                return {
+                    line1: dateTime,
+                    line2: description
+                };
+            }
+            
+            // 尝试解析只有日期时间的文件名: 维修工单系统202601012145
+            const matchDateOnly = nameWithoutExt.match(/^维修工单系统(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+            if (matchDateOnly) {
+                const year = matchDateOnly[1];
+                const month = matchDateOnly[2];
+                const day = matchDateOnly[3];
+                const hour = matchDateOnly[4];
+                const minute = matchDateOnly[5];
+                
+                const dateTime = `${year}${month}${day}${hour}${minute}`;
+                
+                return {
+                    line1: dateTime,
+                    line2: ''
+                };
+            }
+            
+            // 如果不匹配标准格式，返回原文件名
+            return {
+                line1: nameWithoutExt,
+                line2: ''
+            };
+        }
+
+        // 下载版本文件
+        function downloadVersion(filename) {
+            try {
+                // 直接使用下载URL
+                const link = document.createElement('a');
+                link.href = `/version/${filename}`;
+                link.download = filename;
+                link.style.display = 'none';
+                
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                Utils.showSuccess(`开始下载 ${filename}`);
+            } catch (error) {
+                console.error('下载失败:', error);
+                Utils.showError('下载失败，请稍后重试');
+            }
+        }
+
+        // 显示隐私政策
+        function showPrivacyPolicy() {
+            Utils.showCustomModal('隐私政策', `
+                <div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                    <p style="margin-bottom: 15px;"><strong>最后更新时间：2026/1/2</strong></p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">1. 信息收集</h4>
+                    <p>我们收集您在使用工单管理系统时提供的必要信息，包括：</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>账户信息（用户名、姓名、联系方式）</li>
+                        <li>工单数据（工单内容、状态变更记录）</li>
+                        <li>系统使用记录（登录日志、操作记录）</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">2. 信息使用</h4>
+                    <p>收集的信息仅用于以下目的：</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>提供和维护系统服务</li>
+                        <li>用户身份验证和权限管理</li>
+                        <li>工单流程跟踪和状态管理</li>
+                        <li>系统安全监控和优化</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">3. 数据保护</h4>
+                    <p>我们采取严格的安全措施保护您的数据：</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>数据传输采用HTTPS加密</li>
+                        <li>数据库密码加密存储</li>
+                        <li>定期安全审计和备份</li>
+                        <li>严格的访问权限控制</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">4. 用户权利</h4>
+                    <p>您拥有以下权利：</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>查看和修改个人信息</li>
+                        <li>申请数据导出</li>
+                        <li>申请账户删除</li>
+                        <li>投诉和建议反馈</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">5. Cookie政策</h4>
+                    <p>系统使用Cookie来改善用户体验，包括登录状态保持和个性化设置。您可以在浏览器中管理Cookie设置。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">6. 政策变更</h4>
+                    <p>我们可能会根据业务需要更新隐私政策，重大变更将通过系统通知或邮件告知您。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">7. 第三方服务与链接</h4>
+                    <p>为提升服务体验，系统可能包含第三方服务或外部链接。我们不对第三方服务的数据处理行为负责，建议您查看相关隐私政策。</p>
+                </div>
+            `);
+        }
+
+        // 显示使用条款
+        function showTermsOfService() {
+            Utils.showCustomModal('使用条款', `
+                <div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                    <p style="margin-bottom: 15px;"><strong>最后更新时间：2026/1/2</strong></p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">1. 服务接受</h4>
+                    <p>使用本工单管理系统即表示您同意受本条款约束。如果您不同意这些条款，请不要使用本服务。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">2. 服务描述</h4>
+                    <p>本系统提供以下服务：</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>工单创建、分配和管理</li>
+                        <li>用户权限和角色管理</li>
+                        <li>实时通知和消息推送</li>
+                        <li>数据统计和报表功能</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">3. 用户责任</h4>
+                    <p>使用本系统时，您承诺：</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>提供真实、准确的信息</li>
+                        <li>保护账户密码安全</li>
+                        <li>合法使用系统功能</li>
+                        <li>不得恶意攻击或破坏系统</li>
+                        <li>遵守相关法律法规</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">4. 知识产权</h4>
+                    <p>本系统的所有内容、功能和设计均受知识产权法保护。未经授权不得复制、分发或修改系统内容。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">5. 服务可用性</h4>
+                    <p>我们会尽力保证系统稳定运行，但不承诺100%的可用性。系统维护时可能会暂时无法访问。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">6. 数据备份</h4>
+                    <p>系统会定期备份数据，但用户应自行备份重要数据。我们不承担因数据丢失造成的损失。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">7. 服务变更和终止</h4>
+                    <p>我们保留随时修改、暂停或终止服务的权利，重大变更会提前通知用户。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">8. 责任限制</h4>
+                    <p>对于因使用本服务造成的间接损失，我们不承担责任。用户的责任上限为所支付的服务费用。</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0;">9. 法律适用</h4>
+                    <p>本条款受中华人民共和国法律管辖。任何争议将通过友好协商解决。</p>
+                </div>
+            `);
+        }
+
+        // 显示技术支持
+        function showSupport() {
+            Utils.showCustomModal('技术支持', `
+                <div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0; text-align: center;">多渠道技术支持服务</h4>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <h5 style="color: #e74c3c; margin: 0 0 10px 0;">🔥 紧急技术支持</h5>
+                        <p style="margin: 5px 0;"><strong>服务热线：</strong><span style="color: #3498db; font-size: 16px;">158-7637-7692</span></p>
+                        <p style="margin: 5px 0;"><strong>服务时间：</strong>7×24小时</p>
+                        <p style="margin: 5px 0;"><strong>响应时间：</strong>30分钟内响应</p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <h5 style="color: #3498db; margin: 0 0 10px 0;">📞 常规技术支持</h5>
+                        <p style="margin: 5px 0;"><strong>服务热线：</strong><span style="color: #3498db;">158-7637-7692</span></p>
+                        <p style="margin: 5px 0;"><strong>服务时间：</strong>周一至周五 9:00-18:00</p>
+                        <p style="margin: 5px 0;"><strong>响应时间：</strong>2小时内响应</p>
+                    </div>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">📧 邮件支持</h4>
+                    <p><strong>技术支持邮箱：</strong><span style="color: #3498db;">455801692@qq.com</span></p>
+                    <p><strong>业务咨询邮箱：</strong><span style="color: #3498db;">455801692@qq.com</span></p>
+                    <p style="font-size: 12px; color: #7f8c8d;">邮件支持通常在4小时内回复</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">💬 在线客服</h4>
+                    <p><strong>系统内在线客服：</strong>通过内部聊天系统联系技术支持</p>
+                    <p><strong>工作时间：</strong>周一至周五 9:00-18:00</p>
+                    <p><strong>响应时间：</strong>实时响应</p>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">🔧 技术支持范围</h4>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>系统登录和权限问题</li>
+                        <li>工单创建、分配、状态变更</li>
+                        <li>用户管理和角色配置</li>
+                        <li>移动端使用问题</li>
+                        <li>数据查询和统计报表</li>
+                        <li>系统故障排查</li>
+                        <li>功能使用培训</li>
+                    </ul>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">⚡ 常见问题快速解决</h4>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><strong>无法登录：</strong>检查用户名密码，清除浏览器缓存</li>
+                        <li><strong>工单无法创建：</strong>检查权限设置，联系管理员</li>
+                        <li><strong>通知收不到：</strong>检查浏览器通知设置</li>
+                        <li><strong>移动端卡顿：</strong>清理浏览器缓存，重启应用</li>
+                    </ul>
+                </div>
+            `);
+        }
+
+        // 显示联系方式
+        function showContact() {
+            Utils.showCustomModal('联系我们', `
+                <div style="text-align: left; line-height: 1.6; font-size: 14px;">
+                    <h4 style="color: #2c3e50; margin: 15px 0 8px 0; text-align: center;">维修工单管理系统</h4>
+                    
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 15px 0; text-align: center;">
+                        <h5 style="margin: 0 0 10px 0; color: white;">🏢 公司信息</h5>
+                        <p style="margin: 5px 0;"><strong>公司名称：</strong>湛江霖科技有限公司</p>
+                        <p style="margin: 5px 0;"><strong>成立时间：</strong>2025年</p>
+                    </div>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">📍 联系地址</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <p style="margin: 5px 0;"><strong>总部地址：</strong>广东省湛江市麻章区湖光镇铺仔圩新贸路130号</p>
+                        <p style="margin: 5px 0;"><strong>邮政编码：</strong>524088</p>
+                        <p style="margin: 5px 0;"><strong>交通指引：</strong>湛江公交3路线车，湖光市场站，步行5分钟</p>
+                    </div>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">📞 联系电话</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                        <div style="background: #e8f5e8; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #27ae60;">销售热线</p>
+                            <p style="margin: 5px 0 0 0; font-weight: bold; color: #2c3e50;">158-7637-7692</p>
+                        </div>
+                        <div style="background: #e8f4fd; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #3498db;">技术支持</p>
+                            <p style="margin: 5px 0 0 0; font-weight: bold; color: #2c3e50;">158-7637-7692</p>
+                        </div>
+                        <div style="background: #fef5e7; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #f39c12;">客服热线</p>
+                            <p style="margin: 5px 0 0 0; font-weight: bold; color: #2c3e50;">158-7637-7692</p>
+                        </div>
+                        <div style="background: #fdeaea; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #e74c3c;">商务合作</p>
+                            <p style="margin: 5px 0 0 0; font-weight: bold; color: #2c3e50;">158-7637-7692</p>
+                        </div>
+                    </div>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">📧 电子邮箱</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <p style="margin: 8px 0;"><strong>销售咨询：</strong><span style="color: #3498db;">455801692@qq.com</span></p>
+                        <p style="margin: 8px 0;"><strong>技术支持：</strong><span style="color: #3498db;">455801692@qq.com</span></p>
+                        <p style="margin: 8px 0;"><strong>客服邮箱：</strong><span style="color: #3498db;">455801692@qq.com</span></p>
+                        <p style="margin: 8px 0;"><strong>商务合作：</strong><span style="color: #3498db;">455801692@qq.com</span></p>
+                    </div>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">🌐 在线服务</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                        <div style="background: #e8f5e8; padding: 12px; border-radius: 8px; text-align: center;">
+                            <i class="fas fa-globe" style="font-size: 20px; color: #27ae60; margin-bottom: 5px;"></i>
+                            <p style="margin: 0; font-size: 12px; color: #2c3e50;">官方网站</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #7f8c8d;">www.odesktop.cn</p>
+                        </div>
+                        <div style="background: #e8f4fd; padding: 12px; border-radius: 8px; text-align: center;">
+                            <i class="fab fa-weixin" style="font-size: 20px; color: #3498db; margin-bottom: 5px;"></i>
+                            <p style="margin: 0; font-size: 12px; color: #2c3e50;">微信公众号</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #7f8c8d;">15876377692</p>
+                        </div>
+                        <div style="background: #fef5e7; padding: 12px; border-radius: 8px; text-align: center;">
+                            <i class="fab fa-qq" style="font-size: 20px; color: #f39c12; margin-bottom: 5px;"></i>
+                            <p style="margin: 0; font-size: 12px; color: #2c3e50;">QQ客服</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #7f8c8d;">455801692</p>
+                        </div>
+                        <div style="background: #fdeaea; padding: 12px; border-radius: 8px; text-align: center;">
+                            <i class="fas fa-comments" style="font-size: 20px; color: #e74c3c; margin-bottom: 5px;"></i>
+                            <p style="margin: 0; font-size: 12px; color: #2c3e50;">在线客服</p>
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #7f8c8d;">工作日 9:00-18:00</p>
+                        </div>
+                    </div>
+                    
+                    <h4 style="color: #2c3e50; margin: 20px 0 8px 0;">⏰ 服务时间</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <p style="margin: 5px 0;"><strong>客服热线：</strong>周一至周日 8:00-20:00</p>
+                        <p style="margin: 5px 0;"><strong>技术支持：</strong>周一至周五 9:00-18:00</p>
+                        <p style="margin: 5px 0;"><strong>紧急支持：</strong>7×24小时</p>
+                        <p style="margin: 5px 0;"><strong>邮件回复：</strong>24小时内回复</p>
+                    </div>
+                    
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <p style="margin: 0; color: #27ae60; font-size: 13px;">
+                            <i class="fas fa-heart" style="color: #e74c3c;"></i>
+                            感谢您选择我们的工单管理系统，我们将竭诚为您服务！
+                        </p>
+                    </div>
+                </div>
+            `);
+        }
+
+
+    </script>
+</body>
+</html>

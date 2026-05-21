@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    image: node:25-alpine
+    container_name: repair-order-system
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=192.168.0.20
+      - DB_USER=chenronglin
+      - DB_PASSWORD=chenronglin
+      - DB_NAME=repair_order_system
+      - JWT_SECRET=your_jwt_secret_key_here
+    volumes:
+      - /vol2/1000/wx:/app
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    restart: unless-stopped

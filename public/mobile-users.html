@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>用户设置 - 工单管理</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        /* 紧凑两列布局样式 */
+        .form-row {
+            display: flex !important;
+            margin-bottom: 10px !important; /* 减少行间距 */
+            align-items: flex-start !important;
+            flex-wrap: nowrap !important;
+            padding: 2px 0 !important;
+        }
+        .form-label-col {
+            flex: 0 0 30% !important;
+            max-width: 30% !important;
+            padding-right: 8px !important; /* 减少右边距 */
+            text-align: left !important;
+            white-space: nowrap !important;
+            font-size: 14px !important;
+            line-height: 1.2 !important;
+            padding-top: 4px !important;
+        }
+        .form-input-col {
+            flex: 0 0 70% !important;
+            max-width: 70% !important;
+        }
+        .form-input-col > div,
+        .form-input-col > .select-container {
+            position: relative;
+        }
+        .form-input-col > div:after,
+        .form-input-col > .select-container:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #e0e0e0; /* 灰色横线 */
+        }
+        /* 移除特定行的底部横线 */
+        .no-bottom-line .form-input-col > div:after,
+        .no-bottom-line .form-input-col > .select-container:after {
+            display: none;
+        }
+        .form-control,
+        .form-select {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 6px 8px !important; /* 减少内边距 */
+            font-size: 14px !important;
+            height: auto !important;
+            border: none !important; /* 移除边框 */
+            outline: none !important; /* 移除聚焦时的轮廓 */
+        }
+        .checkbox-row{
+            display: flex !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            gap: 8px 5px !important; /* 添加列间距 */
+        }
+        .checkbox-item{
+            display: inline-flex !important;
+            align-items: center !important;
+            margin-bottom: 3px !important; /* 减少底部间距 */
+            max-width: 105px !important; /* 减少最大宽度 */
+            font-size: 13px !important;
+        }
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 4px !important;
+        }
+        /* 确保在所有屏幕尺寸下都是强制两列 */
+        @media (max-width: 320px) {
+            .form-row {
+                flex-wrap: nowrap !important;
+            }
+            .form-label-col {
+                flex: 0 0 30% !important;
+                max-width: 30% !important;
+                font-size: 12px !important;
+            }
+            .form-input-col {
+                flex: 0 0 70% !important;
+                max-width: 70% !important;
+            }
+            .form-control,
+            .form-select {
+                font-size: 12px !important;
+                padding: 5px 6px !important; /* 进一步减少小屏幕上的内边距 */
+                border: none !important; /* 移除边框 */
+                outline: none !important; /* 移除聚焦时的轮廓 */
+            }
+            .form-row {
+                margin-bottom: 8px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">用户设置</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment-alt"></i>
+                <span>内部聊天</span>
+                <span class="badge badge-danger" id="unreadChatCount" style="display: none;">0</span>
+            </a>
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink">
+                <i class="fas fa-cog"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content" id="mainContent">
+        <!-- 用户管理面板 -->
+        <div class="tab-panel active" id="usersPanel">
+            <!-- 搜索栏 -->
+            <section class="search-section">
+                <div class="search-container">
+                    <input type="text" id="userSearch" class="search-input" placeholder="搜索用户名或姓名...">
+                    <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button class="search-btn" onclick="loadUsers()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 账号类型筛选按钮 -->
+            <section class="status-filter-section">
+                <div class="status-filters">
+                    <button class="status-btn" data-type="" onclick="filterByAccountType('')">
+                        <i class="fas fa-list"></i>
+                        <span>全部</span>
+                    </button>
+                    <button class="status-btn admin" data-type="admin" onclick="filterByAccountType('admin')">
+                        <i class="fas fa-user-shield"></i>
+                        <span>管理员</span>
+                    </button>
+                    <button class="status-btn engineer" data-type="engineer" onclick="filterByAccountType('engineer')">
+                        <i class="fas fa-tools"></i>
+                        <span>工程师</span>
+                    </button>
+                    <button class="status-btn warehouse_manager" data-type="warehouse_manager" onclick="filterByAccountType('warehouse_manager')">
+                        <i class="fas fa-warehouse"></i>
+                        <span>仓储管理</span>
+                    </button>
+                    <button class="status-btn customer_service" data-type="customer_service" onclick="filterByAccountType('customer_service')">
+                        <i class="fas fa-headset"></i>
+                        <span>客服</span>
+                    </button>
+                    <button class="status-btn user" data-type="user" onclick="filterByAccountType('user')">
+                        <i class="fas fa-user"></i>
+                        <span>普通用户</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 用户列表 -->
+            <div class="card-list" id="usersList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 浮动添加用户按钮 -->
+        <button class="fab-create-order" id="fabCreateBtn" onclick="showAddUserModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+    </main>
+
+    <!-- 添加/编辑用户模态框 -->
+    <div id="userModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="userModalTitle">添加用户</h3>
+                <button type="button" class="close-btn" onclick="Utils.hideModal('userModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userUsername" class="form-label">用户名 *</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="text" id="userUsername" name="username" class="form-control" required placeholder="请输入用户名，用于登录" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userUsername').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userPassword" class="form-label">密码 </label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="password" id="userPassword" name="password" class="form-control" placeholder="请输入6-20位密码，包含字母和数字" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userPassword').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userFullName" class="form-label">姓名 *</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="text" id="userFullName" name="fullName" class="form-control" required placeholder="请输入真实姓名" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userFullName').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userPhone" class="form-label">手机号</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="tel" id="userPhone" name="phone" class="form-control" placeholder="请输入11位手机号码" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userPhone').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userEmail" class="form-label">邮箱</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="email" id="userEmail" name="email" class="form-control" placeholder="请输入有效的邮箱地址" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userEmail').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userAddress" class="form-label">住址</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="text" id="userAddress" name="address" class="form-control" placeholder="请输入详细住址信息" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userAddress').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label for="userTransportType" class="form-label">交通方式</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div style="position: relative;">
+                                <input type="text" id="userTransportType" name="transportType" class="form-control" placeholder="如：电动车、汽车等" style="padding-right: 28px;">
+                                <button type="button" class="clear-input-btn" onclick="document.getElementById('userTransportType').value=''; this.style.display='none';" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #999; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                    <div class="form-label-col">
+                            <label for="userAccountType" class="form-label">账号类型 *</label>
+                        </div>
+                        <div class="form-input-col">
+                            <div class="select-container">
+                                <select id="userAccountType" name="accountType" class="form-select" required onchange="autoSetPermissions()">
+                                    <option value="user">普通用户</option>
+                                    <option value="customer_service">客服</option>
+                                    <option value="engineer">工程师</option>
+                                    <option value="admin">管理员</option>
+                                    <option value="warehouse_manager">仓储管理</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>                  
+
+
+                    <div class="form-row">
+                        <div class="form-label-col">
+                            <label class="form-label">权限 <small style="color: #667eea; font-weight: normal; font-size: 11px;">(切换账号类型会自动设置默认权限)</small></label>
+                             <div style="margin-top: 2px; font-size: 11px; color: #6c757d;">
+                                <span id="permissionHint" style="display: none; padding: 3px 6px; background: #e3f2fd; border-radius: 3px; color: #1976d2; font-size: 11px;"></span>
+                            </div>
+                        </div>
+                         </div>
+                        <div class="form-row no-bottom-line">
+                        <div class="form-input-col">
+                            <div class="checkbox-group">
+                                <div class="checkbox-row">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="新建">
+                                        <span>新建</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="查看">
+                                        <span>查看</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="承接">
+                                        <span>承接</span>
+                                    </label>                          
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="修改">
+                                        <span>修改</span>
+                                    </label>                       
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="删除">
+                                        <span>删除</span>
+                                    </label>                                    
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="用户管理">
+                                        <span>用户管理</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="地址管理">
+                                        <span>地址管理</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="permissions" value="仓储管理">
+                                        <span>仓储管理</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="Utils.hideModal('userModal')">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">保存</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="/js/utils.js"></script>
+    <style>
+        /* 覆盖原有的悬浮按钮样式以保持一致性 */
+        .fab-create-order {
+            width: 56px !important;
+            height: 56px !important;
+            font-size: 18px !important;
+            bottom: 20px !important;
+            transition: all 0.3s ease !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3) !important;
+        }
+        
+        .fab-create-order:hover {
+            transform: translateY(-4px) scale(1.05) !important;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4) !important;
+        }
+        
+        .fab-create-order:active {
+            transform: translateY(-2px) scale(0.95) !important;
+        }
+    </style>
+    <script>
+        // 为所有输入框添加输入事件监听，控制清除按钮的显示/隐藏
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputElements = document.querySelectorAll('#userForm input[type="text"], #userForm input[type="password"], #userForm input[type="tel"], #userForm input[type="email"]');
+            
+            inputElements.forEach(input => {
+                // 获取对应的清除按钮
+                const clearBtn = input.parentElement.querySelector('.clear-input-btn');
+                
+                // 初始化清除按钮状态
+                if (input.value.trim() !== '') {
+                    clearBtn.style.display = 'block';
+                }
+                
+                // 添加输入事件监听
+                input.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        clearBtn.style.display = 'block';
+                    } else {
+                        clearBtn.style.display = 'none';
+                    }
+                });
+            });
+        });
+        let currentPage = 1;
+        let users = [];
+        let currentTab = 'users';
+        let currentAccountType = '';
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await checkAuth();
+                await loadUsers();
+                setupNavigation();
+                
+                // 为搜索框添加回车键搜索支持
+                document.getElementById('userSearch').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        loadUsers();
+                    }
+                });
+                
+                // 为搜索框添加输入事件，显示/隐藏清空按钮
+                document.getElementById('userSearch').addEventListener('input', function() {
+                    const clearBtn = document.getElementById('clearSearchBtn');
+                    if (this.value.trim() !== '') {
+                        clearBtn.style.display = 'block';
+                    } else {
+                        clearBtn.style.display = 'none';
+                        loadUsers(); // 清空搜索后重新加载用户列表
+                    }
+                });
+                
+                // 初始化筛选状态并加载用户列表
+                filterByAccountType('');
+            } catch (error) {
+                console.error('页面初始化失败:', error);
+                Utils.showError('页面初始化失败，请刷新重试');
+            }
+        });
+
+        // 根据账号类型自动设置权限
+        function autoSetPermissions() {
+            const accountType = document.getElementById('userAccountType').value;
+            const permissionCheckboxes = document.querySelectorAll('input[name="permissions"]');
+            const permissionHint = document.getElementById('permissionHint');
+            
+            // 先清除所有权限
+            permissionCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // 根据账号类型设置默认权限
+            const defaultPermissions = {
+                'user': { 
+                    permissions: ['查看'], 
+                    hint: '普通用户：只能查看工单' 
+                },
+                'customer_service': { 
+                    permissions: ['新建', '查看'], 
+                    hint: '客服：可创建、查看' 
+                },
+                'engineer': { 
+                    permissions: ['新建', '查看', '承接', '修改', '删除'], 
+                    hint: '工程师：可创建、查看、承接、修改和删除工单' 
+                },
+                'admin': { 
+                    permissions: ['新建', '查看', '承接', '修改', '删除', '用户管理', '地址管理', '仓储管理'], 
+                    hint: '管理员：拥有所有权限' 
+                },
+                'warehouse_manager': { 
+                    permissions: ['查看', '仓储管理'], 
+                    hint: '仓储管理：可查看工单和管理仓储' 
+                }
+            };
+            
+            const config = defaultPermissions[accountType] || { permissions: [], hint: '' };
+            const permissions = config.permissions;
+            
+            permissionCheckboxes.forEach(checkbox => {
+                if (permissions.includes(checkbox.value)) {
+                    checkbox.checked = true;
+                }
+            });
+            
+            // 显示权限提示
+            if (permissionHint && config.hint) {
+                permissionHint.textContent = config.hint;
+                permissionHint.style.display = 'inline-block';
+                
+                // 3秒后隐藏提示
+                setTimeout(() => {
+                    permissionHint.style.display = 'none';
+                }, 3000);
+            }            
+        }
+
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const hasUserPermission = Utils.hasPermission('用户管理');
+
+            if (!hasUserPermission) {
+                Utils.showError('您没有权限访问此页面');
+                setTimeout(() => {
+                    window.location.href = '/mobile-index.html';
+                }, 2000);
+                return;
+            }
+
+            // 权限检查通过，显示主内容
+            document.getElementById('mainContent').style.display = 'block';
+
+            const userName = user.fullName || user.username;
+            const userPosition = Utils.getAccountTypeText(user.accountType);
+            
+            const userNameElement = document.getElementById('mobileUserName');
+            const userRoleElement = document.getElementById('mobileUserRole');
+            
+            if (userNameElement) userNameElement.textContent = userName;
+            if (userRoleElement) userRoleElement.textContent = userPosition;
+            
+            // 加载侧边栏头像
+            await loadSidebarAvatar();            
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+        
+        // 清空搜索框
+        function clearSearch() {
+            const searchInput = document.getElementById('userSearch');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            loadUsers(); // 清空后重新加载用户列表
+        }
+
+
+        // 账号类型筛选
+        function filterByAccountType(type) {
+            currentAccountType = type;
+            
+            // 更新筛选按钮状态
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 找到当前类型对应的按钮
+            const matchingBtn = document.querySelector(`.status-btn[data-type="${type}"]`);
+            if (matchingBtn) {
+                matchingBtn.classList.add('active');
+            }
+            
+            // 重新加载用户列表
+            loadUsers();
+        }
+
+        // 加载用户列表
+        async function loadUsers() {
+            try {
+                const search = document.getElementById('userSearch').value.trim();
+                
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: 50
+                });
+                
+                if (search) params.append('search', search);
+                if (currentAccountType) params.append('accountType', currentAccountType);
+                
+                users = await Utils.get(`/users?${params}`);
+                
+                const container = document.getElementById('usersList');
+                if (!container) {
+                    console.error('找不到usersList容器');
+                    return;
+                }
+                
+                if (users.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <div class="empty-state-text">暂无用户</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="card-grid">';
+                users.forEach(user => {
+                    const accountTypeText = Utils.getAccountTypeText(user.accountType);
+                    const permissions = user.permissions ? user.permissions.split('|').filter(p => p) : [];
+                    
+                    html += `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h4>${user.fullName || user.username}</h4>
+                                    <span class="badge badge-${user.accountType}">${accountTypeText}</span>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="action-btn secondary" onclick="editUser(${user.id})"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn danger" onclick="deleteUser(${user.id}, '${user.fullName || user.username}')"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-row">
+                                    <span class="info-label">用户名:</span>
+                                    <span class="info-value">${user.username}</span>
+                                </div>
+                                ${user.phone ? `
+                                <div class="info-row">
+                                    <span class="info-label">手机:</span>
+                                    <span class="info-value">${user.phone}</span>
+                                </div>` : ''}
+                                ${user.email ? `
+                                <div class="info-row">
+                                    <span class="info-label">邮箱:</span>
+                                    <span class="info-value">${user.email}</span>
+                                </div>` : ''}
+                                ${permissions.length > 0 ? `
+                                <div class="info-row">
+                                    <span class="info-label">权限:</span>
+                                    <span class="info-value">${permissions.join(', ')}</span>
+                                </div>` : ''}
+                            </div>
+                        </div>                         
+                    `;
+                });
+                html += '</div>';                
+                container.innerHTML = html;
+            } catch (error) {
+                const container = document.getElementById('usersList');
+                if (container) {
+                    container.innerHTML = '<div class="text-center text-danger">加载失败，请刷新重试<br><small>错误: ' + error.message + '</small></div>';
+                }
+            }
+        }
+
+
+        // 显示添加用户模态框
+        function showAddUserModal() {
+            document.getElementById('userModalTitle').textContent = '添加用户';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userPassword').value = '';           
+            document.getElementById('userPassword').placeholder = '请输入6-20位密码，包含字母和数字';
+            // 设置默认账号类型并自动设置权限
+            document.getElementById('userAccountType').value = 'user';
+            autoSetPermissions();           
+            Utils.showModal('userModal');
+        }
+
+        // 显示编辑用户模态框
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('userModalTitle').textContent = '编辑用户';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userUsername').value = user.username || '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userPassword').placeholder = '(留空表示不修改)请输入6-20位密码，包含字母和数字';
+            document.getElementById('userFullName').value = user.fullName || '';
+            document.getElementById('userPhone').value = user.phone || '';
+            document.getElementById('userEmail').value = user.email || '';
+            document.getElementById('userAccountType').value = user.accountType || 'user';
+            document.getElementById('userAddress').value = user.address || '';
+            document.getElementById('userTransportType').value = user.transportType || '';
+            // 设置权限复选框（保持用户当前的权限设置）
+            const permissions = user.permissions ? user.permissions.split('|').filter(p => p) : [];
+            document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
+                checkbox.checked = permissions.includes(checkbox.value);
+            });
+            
+            Utils.showModal('userModal');
+        }
+
+        // 删除用户
+        async function deleteUser(userId, userName) {
+            Utils.confirm('删除用户', `确定要删除用户 "${userName}" 吗？此操作不可撤销。`, async () => {
+                try {
+                    await Utils.delete(`/users/${userId}`);
+                    Utils.showSuccess('用户删除成功');
+                    await loadUsers();
+                } catch (error) {
+                    console.error('删除用户失败:', error);
+                    Utils.showError('删除用户失败: ' + error.message);
+                }
+            });
+        }
+
+        // 保存用户
+        async function saveUser() {
+            const userId = document.getElementById('userId').value;
+            const isEdit = !!userId;
+            
+            const formData = new FormData(document.getElementById('userForm'));
+            const data = {
+                username: formData.get('username')?.trim(),
+                fullName: formData.get('fullName')?.trim(),
+                phone: formData.get('phone')?.trim(),
+                email: formData.get('email')?.trim(),
+                accountType: formData.get('accountType'),
+                address: formData.get('address')?.trim(),
+                transportType: formData.get('transportType')?.trim(),
+                permissions: []
+            };
+
+            // 收集权限
+            document.querySelectorAll('input[name="permissions"]:checked').forEach(checkbox => {
+                data.permissions.push(checkbox.value);
+            });
+
+            // 如果有密码或者新建用户，添加密码（不 trim，保持原始密码）
+            const password = formData.get('password');
+            if (password) {
+                console.log('=== 前端密码调试 ===');
+                console.log('原始密码值:', password);
+                console.log('密码类型:', typeof password);
+                console.log('密码长度:', password.length);
+                console.log('密码是否包含空格:', password.includes(' '));
+                console.log('密码开头是否有空格:', password.startsWith(' '));
+                console.log('密码结尾是否有空格:', password.endsWith(' '));
+                data.password = password.trim(); // 修复：对密码也进行 trim
+            }
+
+            console.log('=== 准备发送的数据 ===');
+            console.log('完整数据对象:', JSON.stringify(data, null, 2));
+
+            try {
+                if (isEdit) {
+                    await Utils.put(`/users/${userId}`, data);
+                    Utils.showSuccess('用户更新成功');
+                } else {
+                    await Utils.post('/users', data);
+                    Utils.showSuccess('用户创建成功');
+                }
+                
+                Utils.hideModal('userModal');
+                await loadUsers();
+            } catch (error) {
+                console.error('保存用户失败:', error);
+                Utils.showError(isEdit ? '用户更新失败' : '用户创建失败');
+            }
+        }
+
+
+
+        // 侧边栏切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 设置导航权限
+            setupNavigation();
+            
+            
+            // 点击遮罩层关闭侧边栏
+            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+            
+            // 初始化用户管理数据
+            await loadUsers();
+        });
+    </script>
+</body>
+</html>

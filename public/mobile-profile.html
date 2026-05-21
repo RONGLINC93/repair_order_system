@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>个人信息 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        /* 头像上传样式 */
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #3498db;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #6c757d;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .avatar-preview:hover {
+            border-color: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        .avatar-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+             <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">个人信息</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item">
+                <i class="fas fa-comment-alt"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;">0</span>
+            </a>            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+            
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <!-- 主内容区 -->
+    <main class="main-content" style="margin-top: 60px;">
+        <div class="content-scroll profile-page">
+            <div class="orders-section">
+                <!-- 头像上传区域 -->
+                <div class="order-card" id="avatarSection">
+                    <div class="avatar-upload">
+                        <div class="avatar-preview" id="avatarPreview" onclick="document.getElementById('avatarInput').click()">
+                            <i class="fas fa-user" id="avatarIcon"></i>
+                            <img id="avatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                        </div>
+                        <div class="avatar-controls">
+                            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="handleAvatarSelect(event)">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('avatarInput').click()">
+                                <i class="fas fa-camera"></i> 选择头像
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" id="deleteAvatarBtn" onclick="deleteAvatar()" style="display: none;">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 个人信息卡片 -->
+                <div class="order-card" id="profileDetail">                    
+                    <!-- 加载动画 -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>加载中...</span>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="action-buttons normal" id="actionButtons">
+                    <button class="action-btn primary" onclick="enableEdit()">
+                        <i class="fas fa-edit"></i>
+                        编辑信息
+                    </button>
+                    <button class="action-btn secondary" onclick="window.location.href='/mobile-password-change.html'">
+                        <i class="fas fa-key"></i>
+                        修改密码
+                    </button>
+                </div>
+
+                <!-- 编辑表单（初始隐藏） -->
+                <div id="editForm" style="display: none;">
+                    <form id="profileEditForm" class="mobile-form">
+                        <input type="hidden" id="editUserId">
+                        
+                        <div class="form-group">
+                            <label for="editUsername" class="form-label">用户名</label>
+                            <input type="text" id="editUsername" name="username" class="form-control" readonly>
+                            <small class="text-muted">用户名不可修改</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editAccountType" class="form-label">账号类型</label>
+                            <input type="text" id="editAccountType" name="accountType" class="form-control" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editFullName" class="form-label">姓名 *</label>
+                            <input type="text" id="editFullName" name="fullName" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPhone" class="form-label">手机号</label>
+                            <input type="tel" id="editPhone" name="phone" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editEmail" class="form-label">邮箱</label>
+                            <input type="email" id="editEmail" name="email" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editAddress" class="form-label">住址</label>
+                            <textarea id="editAddress" name="address" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editTransportType" class="form-label">交通方式</label>
+                            <input type="text" id="editTransportType" name="transportType" class="form-control" placeholder="如：自驾、公交、地铁等">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPermissions" class="form-label">当前权限</label>
+                            <div id="editPermissionsDisplay" class="permissions-display">
+                                <div class="loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>加载中...</span>
+                                </div>
+                            </div>
+                            <small class="text-muted">权限由管理员分配，如需修改请联系管理员</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="cancelEdit()">取消</button>
+                            <button type="button" class="btn btn-primary" onclick="saveProfile()">保存</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 权限信息 -->
+                <div class="order-card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <h3>权限信息</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="permissionsInfo">
+                            <!-- 加载动画 -->
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>加载中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+
+
+    <script src="/js/utils.js"></script>
+    <script>
+        let currentUser = null;
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAuth();
+            setupNavigation();
+            await loadUserProfile();
+        });
+
+     // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // 更新用户信息
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+            
+           
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+        }
+
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+
+        // 侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        // 侧边栏遮罩层点击事件
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+
+
+        // 加载用户信息
+        async function loadUserProfile() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+                
+                // 从服务器获取最新的用户信息
+                const latestUser = await Utils.get(`/users/${user.id}`);
+                if (latestUser) {
+                    // 更新本地存储
+                    Utils.setUser(latestUser);
+                    currentUser = latestUser;
+                    console.log('获取到最新用户信息:', latestUser);
+                } else {
+                    currentUser = user;
+                }
+                
+                // 加载用户头像
+                await loadUserAvatar();
+                renderProfileDetail();
+                renderPermissionsInfo();
+            } catch (error) {
+                console.error('加载用户信息失败:', error);
+                Utils.showError('加载用户信息失败');
+            }
+        }
+
+        // 加载用户头像
+        async function loadUserAvatar() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return;
+
+                const response = await Utils.get(`/users/${user.id}/avatar`);
+                const avatarPath = response.avatarPath;
+
+                const avatarImage = document.getElementById('avatarImage');
+                const avatarIcon = document.getElementById('avatarIcon');
+                const deleteBtn = document.getElementById('deleteAvatarBtn');
+
+                if (avatarPath) {
+                    avatarImage.src = avatarPath;
+                    avatarImage.style.display = 'block';
+                    avatarIcon.style.display = 'none';
+                    deleteBtn.style.display = 'inline-block';
+                } else {
+                    avatarImage.style.display = 'none';
+                    avatarIcon.style.display = 'block';
+                    deleteBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+        // 处理头像选择
+        function handleAvatarSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                Utils.showError('请选择图片文件');
+                return;
+            }
+
+            // 验证文件大小 (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                Utils.showError('图片大小不能超过5MB');
+                return;
+            }
+
+            // 预览图片
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const avatarImage = document.getElementById('avatarImage');
+                const avatarIcon = document.getElementById('avatarIcon');
+                
+                avatarImage.src = e.target.result;
+                avatarImage.style.display = 'block';
+                avatarIcon.style.display = 'none';
+                
+                // 显示删除按钮
+                document.getElementById('deleteAvatarBtn').style.display = 'inline-block';
+            };
+            reader.readAsDataURL(file);
+
+            // 上传头像
+            uploadAvatar(file);
+        }
+
+        // 上传头像
+        async function uploadAvatar(file) {
+            try {
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                const response = await fetch('/api/users/avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + Utils.getToken()
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || '上传失败');
+                }
+
+                Utils.showSuccess('头像上传成功');
+                
+                // 更新头像显示
+                await loadUserAvatar();
+            } catch (error) {
+                console.error('上传头像失败:', error);
+                Utils.showError(error.message || '上传头像失败');
+                
+                // 恢复原来的头像显示
+                await loadUserAvatar();
+            }
+        }
+
+        // 删除头像
+        async function deleteAvatar() {
+            Utils.confirm('删除头像', '确定要删除当前头像吗？', async () => {
+                try {
+                    // 检查用户是否仍在线
+                    const user = Utils.getUser();
+                    if (!user || !user.id) {
+                        Utils.showError('用户未登录，请重新登录');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 1500);
+                        return;
+                    }
+
+                    console.log('开始删除头像请求');
+                    // 使用直接fetch调用，确保路径正确
+                    const token = Utils.getToken();
+                    console.log('当前token:', token ? '存在' : '不存在');
+                    console.log('用户信息:', Utils.getUser());
+                    
+                    const response = await fetch('/api/users/avatar', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const result = await response.json();
+                    console.log('删除头像响应状态:', response.status, response.statusText);
+                    console.log('删除头像响应数据:', result);
+                    
+                    // 检查HTTP状态码和响应
+                    if (response.ok) {
+                        // 检查响应是否成功
+                        if (result && (result.success || result.message === '头像删除成功')) {
+                            Utils.showSuccess('头像删除成功');
+                            
+                            // 更新头像显示
+                            setTimeout(async () => {
+                                await loadUserAvatar();
+                                await loadSidebarAvatar(); // 同时更新侧边栏头像
+                            }, 500);
+                        } else {
+                            throw new Error(result?.message || '删除头像失败');
+                        }
+                    } else {
+                        // 处理HTTP错误状态
+                        if (response.status === 401) {
+                            Utils.showError('登录已过期，请重新登录');
+                            setTimeout(() => {
+                                window.location.href = '/login.html';
+                            }, 2000);
+                            return;
+                        } else if (response.status === 404) {
+                            Utils.showError('用户信息异常，请重新登录');
+                            setTimeout(() => {
+                                window.location.href = '/login.html';
+                            }, 2000);
+                            return;
+                        } else {
+                            throw new Error(result?.error || result?.message || '删除头像失败');
+                        }
+                    }
+                } catch (error) {
+                    console.error('删除头像错误:', error);
+                    console.error('错误类型:', typeof error);
+                    console.error('错误堆栈:', error.stack);
+                    
+                    // 显示错误信息
+                    const errorMessage = error.message || '删除头像失败';
+                    Utils.showError(errorMessage);
+                }
+            });
+        }
+
+        // 渲染用户信息详情
+        function renderProfileDetail() {
+            if (!currentUser) return;
+            
+            const html = `
+                <div class="order-header">
+                    <div class="order-info">
+                        <h2 class="order-title">${currentUser.fullName || currentUser.username}</h2>
+                        <span class="status-badge status-waiting">${Utils.getAccountTypeText(currentUser.accountType)}</span>
+                    </div>
+                    <div class="order-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-id-card"></i>
+                            <span>用户名: ${currentUser.username}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>账号ID: #${currentUser.id}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="order-content">
+                    <div class="info-section">
+                        <h3 class="section-title">基本信息</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>账号类型:</label>
+                                <span>${Utils.getAccountTypeText(currentUser.accountType)}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>交通方式:</label>
+                                <span>${currentUser.transportType || '未设置'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3 class="section-title">联系方式</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>手机号:</label>
+                                <span>${currentUser.phone || '未设置'}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>邮箱:</label>
+                                <span>${currentUser.email || '未设置'}</span>
+                            </div>
+                            <div class="info-item full-width">
+                                <label>住址:</label>
+                                <span>${currentUser.address || '未设置'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('profileDetail').innerHTML = html;
+        }
+
+        // 渲染权限信息
+        function renderPermissionsInfo() {
+            if (!currentUser) return;
+            
+            const permissionsElement = document.getElementById('permissionsInfo');
+            permissionsElement.innerHTML = '';
+
+            // 处理权限数据
+            let permissions = [];
+            if (currentUser.permissions) {
+                if (typeof currentUser.permissions === 'string') {
+                    permissions = currentUser.permissions.split('|').filter(p => p.trim());
+                } else if (Array.isArray(currentUser.permissions)) {
+                    permissions = currentUser.permissions.filter(p => p.trim());
+                }
+            }
+
+            if (permissions.length > 0) {
+                let html = '<div class="permissions-grid">';
+                permissions.forEach(permission => {
+                    html += `
+                        <div class="permission-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${permission}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                permissionsElement.innerHTML = html;
+            } else {
+                permissionsElement.innerHTML = '<div class="empty-state">暂无权限信息</div>';
+            }
+        }
+
+        // 启用编辑模式
+        function enableEdit() {
+            if (!currentUser) return;
+            
+            // 填充表单数据
+            document.getElementById('editUserId').value = currentUser.id;
+            document.getElementById('editUsername').value = currentUser.username;
+            document.getElementById('editAccountType').value = Utils.getAccountTypeText(currentUser.accountType);
+            document.getElementById('editFullName').value = currentUser.fullName || '';
+            document.getElementById('editPhone').value = currentUser.phone || '';
+            document.getElementById('editEmail').value = currentUser.email || '';
+            document.getElementById('editAddress').value = currentUser.address || '';
+            document.getElementById('editTransportType').value = currentUser.transportType || '';
+
+            // 加载权限到编辑表单
+            loadEditPermissions();
+            
+            // 显示编辑表单，隐藏详情和按钮
+            document.getElementById('profileDetail').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'none';
+            document.getElementById('editForm').style.display = 'block';
+        }
+
+        // 加载编辑表单的权限
+        function loadEditPermissions() {
+            const permissionsElement = document.getElementById('editPermissionsDisplay');
+            permissionsElement.innerHTML = '';
+
+            if (currentUser.permissions) {
+                let permissions = [];
+                if (typeof currentUser.permissions === 'string') {
+                    permissions = currentUser.permissions.split('|').filter(p => p.trim());
+                } else if (Array.isArray(currentUser.permissions)) {
+                    permissions = currentUser.permissions.filter(p => p.trim());
+                }
+
+                if (permissions.length > 0) {
+                    permissions.forEach(permission => {
+                        const permissionBadge = document.createElement('span');
+                        permissionBadge.className = 'permission-badge';
+                        permissionBadge.textContent = permission;
+                        permissionsElement.appendChild(permissionBadge);
+                    });
+                } else {
+                    permissionsElement.innerHTML = '<p class="no-permissions">暂无权限</p>';
+                }
+            } else {
+                permissionsElement.innerHTML = '<p class="no-permissions">暂无权限</p>';
+            }
+        }
+
+        // 取消编辑
+        function cancelEdit() {
+            document.getElementById('editForm').style.display = 'none';
+            document.getElementById('profileDetail').style.display = 'block';
+            document.getElementById('actionButtons').style.display = 'flex';
+        }
+
+        // 保存用户信息
+        async function saveProfile() {
+            try {
+                const form = document.getElementById('profileEditForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                const formData = {
+                    fullName: document.getElementById('editFullName').value,
+                    phone: document.getElementById('editPhone').value,
+                    email: document.getElementById('editEmail').value,
+                    address: document.getElementById('editAddress').value,
+                    transportType: document.getElementById('editTransportType').value
+                };
+                
+                console.log('保存用户信息:', formData);
+                
+                // 使用Utils.put方法，它会自动处理错误
+                const updatedUser = await Utils.put(`/users/profile/${currentUser.id}`, formData);
+                
+                console.log('保存成功，返回的用户信息:', updatedUser);
+                
+                Utils.showSuccess('个人信息保存成功');
+                
+                // 直接使用返回的用户信息更新本地存储和当前用户
+                Utils.setUser(updatedUser);
+                currentUser = updatedUser;
+                
+                // 重新渲染页面
+                await loadUserProfile();
+                cancelEdit();
+            } catch (error) {
+                console.error('保存个人信息失败:', error);
+                Utils.showError(error.message || '保存个人信息失败');
+            }
+        }
+
+
+
+    </script>
+</body>
+</html>

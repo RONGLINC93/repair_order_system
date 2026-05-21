@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>物料采购申请 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        .form-container {
+            padding: 20px;
+            background: white;
+            margin: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-label .required {
+            color: #dc3545;
+            margin-left: 4px;
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .work-order-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .radio-option {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+        
+        .radio-option.selected {
+            border-color: #007bff;
+            background: #f8f9ff;
+            color: #007bff;
+        }
+        
+        .work-order-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .work-order-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .work-order-item:last-child {
+            border-bottom: none;
+        }
+        
+        .work-order-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .work-order-item.selected {
+            background-color: #e3f2fd;
+            border-left: 3px solid #007bff;
+        }
+        
+        .work-order-customer {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .work-order-info {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding: 0 15px 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .input-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .loading-spinner i {
+            font-size: 32px;
+            color: #007bff;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 图片上传样式 */
+        .image-upload-container {
+            margin-bottom: 15px;
+        }
+
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-remove {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+           <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button> 
+            <h1 class="app-title">物料采购申请</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            
+            
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="form-container">
+            <form id="materialRequestForm">
+                <!-- 物料名称 -->
+                <div class="form-group">
+                    <label class="form-label">
+                        物料名称<span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-input" 
+                           id="materialName" 
+                           name="materialName" 
+                           placeholder="请输入物料名称"
+                           required>
+                    <div class="input-hint">请准确填写需要采购的物料名称</div>
+                </div>
+
+                <!-- 数量 -->
+                <div class="form-group">
+                    <label class="form-label">
+                        数量<span class="required">*</span>
+                    </label>
+                    <input type="number" 
+                           class="form-input" 
+                           id="quantity" 
+                           name="quantity" 
+                           placeholder="请输入数量"
+                           step="0.01"
+                           min="0.01"
+                           required>
+                    <div class="input-hint">请输入需要采购的数量</div>
+                </div>
+
+                <!-- 物料图片 -->
+                <div class="form-group">
+                    <label class="form-label">
+                        物料图片
+                    </label>
+                    <div class="image-upload-container">
+                        <input type="file" 
+                               class="image-upload-input" 
+                               id="materialImages" 
+                               name="materialImages" 
+                               accept="image/*"
+                               multiple
+                               style="display: none;">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('materialImages').click()">
+                            <i class="fas fa-upload"></i> 选择图片
+                        </button>
+                        <div class="input-hint">支持上传多张图片，用于展示物料细节</div>
+                    </div>
+                    <div class="image-preview-container" id="imagePreviewContainer"></div>
+                </div>
+
+                <!-- 关联工单 -->
+                <div class="form-group">
+                    <label class="form-label">关联工单（可选）</label>
+                    
+                    <div class="work-order-selector">
+                        <div class="radio-option selected" onclick="selectWorkOrderType('none')">
+                            <input type="radio" name="workOrderType" value="none" checked>
+                            <div>备货申请</div>
+                        </div>
+                        <div class="radio-option" onclick="selectWorkOrderType('specific')">
+                            <input type="radio" name="workOrderType" value="specific">
+                            <div>关联工单</div>
+                        </div>
+                    </div>
+
+                    <div id="workOrderSelection" style="display: none;">
+                        <input type="text" 
+                               class="form-input" 
+                               id="workOrderSearch" 
+                               placeholder="搜索工单（客户姓名、电话、工单ID）"
+                               oninput="searchWorkOrders()">
+                        
+                        <div class="work-order-list" id="workOrderList" style="display: none;">
+                            <!-- 工单列表将在这里动态生成 -->
+                        </div>
+                        
+                        <div id="selectedWorkOrder" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                            <!-- 已选择的工单信息 -->
+                        </div>
+                    </div>
+                    
+                    <div class="input-hint">如果为具体工单采购，请选择关联的工单；否则选择备货申请</div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                取消
+            </button>
+            <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitMaterialRequest()">
+                提交申请
+            </button>
+        </div>
+    </main>
+
+    <!-- 加载遮罩 -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner"></i>
+            <p>提交中...</p>
+        </div>
+    </div>
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        let selectedWorkOrderId = null;
+        let workOrderType = 'none';
+        let selectedImages = [];
+
+        // 初始化图片上传功能
+        document.addEventListener('DOMContentLoaded', function() {
+             const authSuccess = checkAuth();
+            const fileInput = document.getElementById('materialImages');
+            if (fileInput) {
+                fileInput.addEventListener('change', handleImageUpload);
+            }
+        });
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.startsWith('image/')) {
+                    selectedImages.push(file);
+                    previewImage(file, selectedImages.length - 1);
+                }
+            }
+            // 清空文件输入，允许重新选择相同文件
+            event.target.value = '';
+        }
+
+        // 预览图片
+        function previewImage(file, index) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewItem = document.createElement('div');
+                previewItem.className = 'image-preview-item';
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" alt="物料图片">
+                    <div class="image-preview-remove" onclick="removeImage(${index})">×</div>
+                `;
+                previewContainer.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 移除图片
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            updateImagePreview();
+        }
+
+        // 更新图片预览
+        function updateImagePreview() {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            previewContainer.innerHTML = '';
+            for (let i = 0; i < selectedImages.length; i++) {
+                previewImage(selectedImages[i], i);
+            }
+        }
+
+        // 选择工单类型
+        function selectWorkOrderType(type) {
+            workOrderType = type;
+            selectedWorkOrderId = null;
+            
+            // 更新UI
+            document.querySelectorAll('.radio-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.radio-option').classList.add('selected');
+            
+            // 更新radio按钮
+            document.querySelector(`input[name="workOrderType"][value="${type}"]`).checked = true;
+            
+            // 显示/隐藏工单选择区域
+            const workOrderSelection = document.getElementById('workOrderSelection');
+            if (type === 'specific') {
+                workOrderSelection.style.display = 'block';
+                // 清空之前的搜索和选择
+                document.getElementById('workOrderSearch').value = '';
+                document.getElementById('workOrderList').innerHTML = '';
+                document.getElementById('workOrderList').style.display = 'none';
+                document.getElementById('selectedWorkOrder').style.display = 'none';
+            } else {
+                workOrderSelection.style.display = 'none';
+                document.getElementById('selectedWorkOrder').style.display = 'none';
+            }
+        }
+
+        // 搜索工单 - 直接向服务器搜索
+        async function searchWorkOrders() {
+            const searchTerm = document.getElementById('workOrderSearch').value.trim();
+            const workOrderList = document.getElementById('workOrderList');
+            
+            if (!searchTerm) {
+                workOrderList.style.display = 'none';
+                return;
+            }
+            
+            // 显示加载状态
+            workOrderList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;"><i class="fas fa-spinner fa-spin"></i> 搜索中...</div>';
+            workOrderList.style.display = 'block';
+            
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    workOrderList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">请先登录</div>';
+                    return;
+                }
+                
+                // 构建搜索参数
+                const params = new URLSearchParams({
+                    search: searchTerm,
+                    limit: 1000, // 增加限制数量，确保能显示所有符合条件的工单
+                    sortBy: 'create_time',
+                    sortOrder: 'DESC'
+                });
+                
+                // 向服务器发送搜索请求
+                const data = await Utils.get(`/work-orders?${params}`);
+                console.log('搜索工单响应:', data);
+                
+                // 处理搜索结果
+                if (data && Array.isArray(data.workOrders)) {
+                    if (data.workOrders.length > 0) {
+                        workOrderList.innerHTML = `<div style="padding: 10px; color: #666; font-size: 14px; margin-bottom: 10px;">找到 ${data.workOrders.length} 个符合条件的工单</div>` + 
+                            data.workOrders.map(order => `
+                                <div class="work-order-item" onclick="selectWorkOrder(${order.id})">
+                                    <div class="work-order-id">工单ID: #${order.id || '未知ID'}</div>
+                                    <div class="work-order-customer">${order.customer_name || '未知客户'}</div>
+                                    <div class="work-order-info">电话: ${order.customer_phone || '未知电话'}</div>
+                                    <div class="work-order-info">服务时间: ${order.service_time || '未设置'}</div>
+                                    <div class="work-order-info">工单类型: ${order.work_type || '未设置'}</div>
+                                    <div class="work-order-info">工单说明: ${order.work_description || '未设置'}</div>
+                                    <div class="work-order-info">工单状态: ${order.service_status || '未设置'}</div>
+                                    <div class="work-order-info">描述: ${order.notes || '无描述'}</div>
+                                </div>
+                            `).join('');
+                    } else {
+                        workOrderList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">没有找到匹配的工单</div>';
+                    }
+                } else {
+                    console.error('服务器返回的数据格式不正确:', data);
+                    workOrderList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">搜索失败，请重试</div>';
+                }
+            } catch (error) {
+                console.error('搜索工单失败:', error);
+                workOrderList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">搜索失败，请重试</div>';
+            }
+        }
+
+        // 选择工单
+        async function selectWorkOrder(workOrderId) {
+            selectedWorkOrderId = workOrderId;
+            const selectedWorkOrderElement = document.getElementById('selectedWorkOrder');
+            
+            // 显示加载状态
+            selectedWorkOrderElement.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+            selectedWorkOrderElement.style.display = 'block';
+            
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    selectedWorkOrderElement.innerHTML = '<div style="padding: 10px; color: #dc3545;">请先登录</div>';
+                    return;
+                }
+                
+                // 从服务器获取工单详情
+                const workOrder = await Utils.get(`/work-orders/${workOrderId}`);
+                
+                // 更新UI
+                selectedWorkOrderElement.innerHTML = `
+                    <strong>已选择工单：</strong><br>
+                    工单ID：#${workOrder.id || '未知ID'}
+                `;
+                document.getElementById('workOrderList').style.display = 'none';
+                document.getElementById('workOrderSearch').value = '';
+            } catch (error) {
+                console.error('获取工单详情失败:', error);
+                selectedWorkOrderElement.innerHTML = '<div style="padding: 10px; color: #dc3545;">获取工单详情失败，请重试</div>';
+            }
+        }
+
+        // 表单验证
+function validateForm() {
+    const materialName = document.getElementById('materialName').value.trim();
+    const quantity = document.getElementById('quantity').value;
+    
+    if (!materialName) {
+        showToast('请输入物料名称');
+        document.getElementById('materialName').focus();
+        return false;
+    }
+    
+    if (!quantity || parseFloat(quantity) <= 0) {
+        showToast('请输入有效的数量');
+        document.getElementById('quantity').focus();
+        return false;
+    }
+    
+    return true;
+}
+
+// 提交物料采购申请
+async function submitMaterialRequest() {
+    if (!validateForm()) return;
+    
+    // 防止多次点击 - 禁用提交按钮
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = '提交中...';
+    
+    const formData = new FormData();
+    formData.append('material_name', document.getElementById('materialName').value.trim());
+    formData.append('quantity', parseFloat(document.getElementById('quantity').value));
+    
+    // 只有当选择了特定工单时，才添加work_order_id字段
+    if (workOrderType === 'specific' && selectedWorkOrderId) {
+        formData.append('work_order_id', selectedWorkOrderId);
+    }
+    
+    // 添加图片 - 正确格式用于后端API
+    selectedImages.forEach((image) => {
+        formData.append('images', image);
+    });
+    
+    // 显示加载状态
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    try {
+        const response = await fetch('/api/material-requests/create', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('物料采购申请提交成功');
+            setTimeout(() => {
+                window.location.href = '/mobile-material-requests.html';
+            }, 1500);
+        } else {
+            showToast(result.message || '提交失败，请重试');
+        }
+    } catch (error) {
+        console.error('提交失败:', error);
+        showToast('网络错误，请重试');
+    } finally {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        // 重新启用提交按钮
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = false;
+        submitBtn.innerText = '提交申请';
+    }
+}
+
+        // 防止页面刷新时丢失数据
+        window.addEventListener('beforeunload', function() {
+            const materialName = document.getElementById('materialName').value;
+            const quantity = document.getElementById('quantity').value;
+            
+            if (materialName || quantity) {
+                return '您有未提交的表单数据，确定要离开吗？';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>幸运水果机 - 移动端</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+    <style>
+        html {
+            width: 100%;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            /* 主色调 - 与主页一致的紫色渐变 */
+            --primary-purple-start: #667eea;
+            --primary-purple-end: #764ba2;
+            --primary-purple: #667eea;
+            --primary-purple-dark: #764ba2;
+            --primary-purple-light: rgba(102, 126, 234, 0.1);
+            --primary-purple-medium: rgba(102, 126, 234, 0.2);
+            
+            /* 辅助色 - 与主色调协调 */
+            --secondary-red-start: #F75C76;
+            --secondary-red-end: #F3785C;
+            --secondary-blue-start: #4ECDC4;
+            --secondary-blue-end: #45B7D1;
+            --secondary-green-start: #68D391;
+            --secondary-green-end: #48BB78;
+            
+            /* 中性色 */
+            --neutral-black: #1A1A1A;
+            --neutral-dark: #2D3748;
+            --neutral-medium: #718096;
+            --neutral-light: #A0AEC0;
+            --neutral-gray: #E2E8F0;
+            --neutral-white: #FFFFFF;
+            
+            /* 背景色 - 与主页一致的纯白色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --bg-card: #ffffff;
+            
+            /* 阴影 */
+            --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.12);
+            --shadow-strong: 0 8px 30px rgba(0, 0, 0, 0.18);
+        }
+        
+        body {
+            color: var(--neutral-dark);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            width: 100%;
+        }
+    
+
+        .farm-main {
+            width: 100%;
+        }
+        
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+               
+        .subtitle {
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 5px;
+            color: var(--neutral-dark);
+        }
+        
+        .odds-info {
+            background: var(--primary-purple-light);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            text-align: center;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: var(--neutral-dark);
+        }
+        
+        .game-area {
+            width: 100%;
+            border-radius: 20px;
+            padding: 10px;
+            align-self: stretch;
+        }
+        
+        .fruit-grid {
+            display: grid;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 10px;
+            /* 5列布局 */
+            grid-template-columns: repeat(5, 1fr);
+            max-width: 500px;
+            margin: 0 auto;
+            /*平铺*/
+            /*grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));*/
+            grid-gap: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .fruit-grid1 {
+            display: grid;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 10px;
+            /* 4列布局 */
+            /*grid-template-columns: repeat(4, 1fr);
+            max-width: 400px;
+            margin: 0 auto;*/
+            /*平铺*/           
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            grid-gap: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        
+        .fruit-item {
+            aspect-ratio: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        /* 主水果网格中的点击效果 */
+        .fruit-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-color: var(--primary-purple);
+        }
+        
+        /* 主水果网格中的高亮样式 */
+        .fruit-item.highlighted {
+            background: linear-gradient(135deg, var(--primary-purple-medium), var(--primary-purple-light));
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            transform: scale(1.1);
+            border-color: var(--primary-purple);
+        }
+
+        /* 确保下注水果网格中的水果项目永远不会被高亮或旋转 */
+        #bettingFruitGrid .fruit-item.highlighted {
+            background: inherit;
+            box-shadow: inherit;
+            transform: scale(1);
+            border-color: inherit;
+        }
+
+        /* 移除主水果网格的点击效果 */
+        #fruitGrid .fruit-item {
+            cursor: default;
+        }
+
+        #fruitGrid .fruit-item:hover {
+            transform: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-color: var(--bg-tertiary);
+        }
+        
+        .grid-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+        
+        .grid-button button {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-spin {
+            background: linear-gradient(135deg, #FF416C, #FF4B2B);
+            color: white;
+        }
+        
+        .btn-clear {
+            background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+            color: white;
+        }
+        
+        .btn-reset {
+            background: linear-gradient(135deg, #FFA000, #FF6F00);
+            color: white;
+        }
+        
+        .btn-max {
+            background: linear-gradient(135deg, #9C27B0, #673AB7);
+            color: white;
+        }
+
+        /* 下注水果网格中的高亮样式 */
+        .fruit-item.active {
+            background: linear-gradient(135deg, var(--primary-purple-light), var(--primary-purple-medium));
+            border: 2px solid var(--primary-purple);
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .fruit-item.active .betting-amount {            
+            color: #fff;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 0.6);
+            font-weight: bold;
+            background: #667eea;
+        }
+        
+        .fruit-name {
+            font-size: 0.6rem;
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            text-align: left;
+            padding: 2px 4px;
+            border-radius: 3px;
+            color: #666;
+            z-index: 1;
+        }
+        
+        .fruit-icon {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            z-index: 0;
+            line-height: 1.2;
+        }
+        
+        .betting-section {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .betting-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+            color: var(--primary-purple-dark);
+        }
+        
+        .betting-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .betting-item {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .betting-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-color: var(--primary-purple);
+        }
+        
+        /* 下注项目点击效果 */
+        .betting-item:active {
+            transform: scale(0.95);
+            background: var(--primary-purple-medium);
+        }
+        
+        /* 下注项目选中效果 */
+        .betting-item.active {
+            background: linear-gradient(135deg, var(--primary-purple-light), var(--primary-purple-medium));
+            border: 2px solid var(--primary-purple);
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .betting-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .betting-amount {
+            font-size: 0.6rem;
+            font-weight: bold;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            text-align: center;
+            width: 500px;
+            z-index: 1;
+            margin-top:2px;
+        }
+        
+        .odds-badge {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            color: #FF4B2B;
+            font-size: 0.75rem;
+            font-weight: bold;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+                
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .controls .action-buttons {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            width: 100%;
+        }
+        
+        .balance-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 100%;
+        }
+        
+        .balance {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-purple);
+            text-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+        
+        .total-bet {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-purple);
+            text-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .bet-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            color: var(--neutral-dark);
+        }
+        
+        .bet-controls {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 100%;
+        }
+        
+        .bet-control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .bet-control-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .bet-input-label {
+            font-size: 0.8rem;
+            color: #333;
+        }
+        
+        .bet-input-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .bet-input-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple-start), var(--primary-purple-end));
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .bet-input-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .bet-input {
+            width: 50px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 0.8rem;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .bet-amount-display {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--primary-purple-dark);
+            text-align: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 5px;
+        }
+        
+        .btn {
+            flex: 1;
+            min-width: auto;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--primary-purple-start), var(--primary-purple-end));
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-spin {
+            background: linear-gradient(135deg, #FF416C, #FF4B2B);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 65, 108, 0.3);
+        }
+        
+        .btn-spin:hover {
+            box-shadow: 0 6px 20px rgba(255, 65, 108, 0.4);
+        }
+        
+        .game-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-clear {
+            background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        }
+        
+        .btn-clear:hover {
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-reset:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-max-bet {
+            background: linear-gradient(135deg, #68D391, #48BB78);
+            color: white;
+            box-shadow: 0 4px 15px rgba(104, 211, 145, 0.3);
+        }
+        
+        .btn-max-bet:hover {
+            box-shadow: 0 6px 20px rgba(104, 211, 145, 0.4);
+        }
+        
+        .result-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .result-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--primary-purple-dark);
+        }
+        
+        .result-fruit {
+            font-size: 3.5rem;
+            margin: 10px 0;
+        }
+        
+        .result-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .win {
+            color: #4CAF50;
+        }
+        
+        .lose {
+            color: #FF5252;
+        }
+        
+        #resultModal .win-details {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            width: 100%;
+            text-align: left;
+        }
+        
+        #resultModal .win-details-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+        
+        #resultModal .win-detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        #resultModal .win-detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        #resultModal .win-detail-label {
+            color: #666;
+        }
+        
+        #resultModal .win-detail-value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        #resultModal .win-highlight {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .history {
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .history-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .history-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        
+        .history-item {
+            min-width: 80px;
+            height: 90px;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .history-odds {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #FF4B2B;
+            padding: 2px 6px;
+            border-radius: 8px;
+        }
+        
+        .instructions {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+            line-height: 1.5;
+            padding: 0 10px;
+        }
+        
+        .win-animation {
+            animation: winPulse 0.5s ease-in-out 3;
+        }
+        
+        @keyframes winPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 背景爆闪动画 */
+        @keyframes flash {
+            0%, 50%, 100% { 
+background-color: rgba(255, 223, 0, 0.9); 
+                border-color: #FFD700;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5);
+                transform: scale(1.15);
+
+                
+            }
+            25%, 75% { 
+
+                background-color: rgba(255, 255, 255, 0.8); 
+                border-color: var(--primary-purple);
+                box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+                
+            }
+        }
+        
+        .flash-animation {
+            animation: flash 0.6s ease-out 4;
+            animation-fill-mode: forwards;
+        }
+        
+        .spin-animation {
+            animation: spin 0.1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 微妙的入场动画 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* 按钮点击波纹效果 */
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            pointer-events: none;
+        }
+        
+        .btn:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* 结果数字增长动画 */
+        .number-grow {
+            animation: numberGrow 1s ease-out;
+        }
+        
+        @keyframes numberGrow {
+            from { 
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* 悬停时的微妙阴影变化 */
+        .fruit-item, .betting-item, .btn, .balance-panel, .bet-controls {
+            transition: box-shadow 0.3s ease;
+        }
+        
+        /* 强调元素的呼吸效果 */
+        .highlight-pulse {
+            animation: highlightPulse 2s infinite;
+        }
+        
+        @keyframes highlightPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.show {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        #oddsModal .modal-content,
+        #resultModal .modal-content {
+            backdrop-filter: blur(10px);
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideIn 0.3s ease;
+            color: #333;
+        }
+        
+        #oddsModal .modal-header,
+        #resultModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        #oddsModal .modal-title,
+        #resultModal .modal-title {
+            color: white;
+            margin: 0;
+            font-size: 1.4rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        #oddsModal .modal-body,
+        #resultModal .modal-body {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .modal-fruit {
+            font-size: 5rem;
+            margin: 20px 0;
+            animation: winPulse 0.5s ease-in-out 3;
+        }
+        
+        .modal-text {
+            margin: 20px 0;
+            color: #000;
+        }
+        
+        .modal-text.win {
+            color: #000000;
+        }
+        
+        .modal-text.lose {
+            color: #000000;
+        }
+        
+        #oddsModal .modal-footer,
+        #resultModal .modal-footer {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(248, 249, 250, 0.9);
+        }
+        
+        .modal-btn {
+            background: linear-gradient(to right, #FF416C, #FF4B2B);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .betting-summary {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--primary-purple-dark);
+            padding: 0 10px 10px 10px;
+            width: 100%;
+        }
+        
+        .odds-table {
+            width: 100%;
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        .odds-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .odds-row:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 400px) {
+            .fruit-item {
+                font-size: 1.8rem;
+                padding: 8px;
+            }
+            
+            .betting-item {
+                padding: 8px 5px;
+            }
+            
+            .betting-icon {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                padding: 10px 8px;
+                font-size: 0.8rem;
+            }
+            
+            .odds-badge {
+                width: 16px;
+                height: 16px;
+                font-size: 0.45rem;
+            }
+            
+            .fruit-icon {
+                font-size: 1.3rem;
+                margin: 6px 0;
+            }
+            
+            .betting-amount {
+                font-size: 0.5rem;
+                padding: 2px 5px;
+                margin-top: 2px;
+            }
+            
+            .bet-input {
+                width: 40px;
+                padding: 8px 12px;
+                font-size: 1rem;
+            }
+            
+            .balance-panel {
+                padding: 12px;
+            }
+            
+            .balance, .total-bet {
+                font-size: 1.1rem;
+            }
+            
+            .fruit-grid, .fruit-grid1 {
+                padding: 10px;
+                grid-gap: 10px;
+                max-width: 100%;
+            }
+            
+            .grid-button button {
+                font-size: 0.7rem;
+            }
+            
+            .fruit-name {
+                font-size: 0.5rem;
+            }
+            
+            .grid-button {
+                aspect-ratio: auto;
+                height: 60px;
+            }
+            
+            .bet-input-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 1.2rem;
+            }
+            
+            .result-text {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+  <!-- 幸运水果机头部 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="app-title">幸运水果机</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+      
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>           
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+                        
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 农场主区域 -->
+    <main class="farm-main" style="margin-top: 60px;">
+
+    <div class="container">
+        <div class="game-area">           
+                
+            <!-- 主水果网格区域 -->
+             <div class="fruit-grid" id="fruitGrid">
+                <!-- 水果图标将通过JavaScript动态生成 -->
+            </div>
+            <!-- 余额区域 -->
+               <div class="balance-panel">
+                    <div>
+                        <div class="bet-info">当前余额</div>
+                        <div class="balance"><a id="balance">1000</a></div>
+                    </div>
+                    <div>
+                        <div class="bet-info">本轮下注</div>
+                        <div class="total-bet"><a id="totalBet">0</a></div>
+                    </div>
+                    <div>
+                        <div class="bet-info">每次下注</div>
+                        <div class="total-bet">
+                            <button id="balanceDecreaseBet" class="bet-input-btn">-</button>
+                            <a id="currentBetAmount">10</a>                          
+                            <button id="balanceIncreaseBet" class="bet-input-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- 下注按钮区域 -->
+            <div class="fruit-grid1" id="bettingFruitGrid">
+                <!-- 下注水果网格将通过JavaScript动态生成 - 该网格专注于下注功能，不需要旋转 -->
+            </div>
+
+            <div class="betting-section">                
+                <div class="game-buttons">
+                    <button class="btn btn" id="showOddsButton">查看赔率</button>
+                    <button class="btn btn" id="showHistoryButton">查看历史记录</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 赔率表模态框 -->
+        <div class="modal" id="oddsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">赔率表</h3>
+                    <button class="modal-close" id="closeOddsModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="odds-table" id="modalOddsTable">
+                        <div class="odds-row" style="color: #666; font-weight: bold; border-bottom: 2px solid #ddd;">
+                            <div>水果</div>
+                            <div>赔率</div>
+                        </div>
+                        <!-- 赔率表将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn modal-btn" id="closeOddsModalBtn">关闭</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 历史记录模态框 -->
+        <div class="modal" id="historyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">最近结果</h3>
+                    <button class="modal-close" id="closeHistoryModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="history-list" id="historyList">
+                        <!-- 历史记录将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn modal-btn" id="closeHistoryModalBtn">关闭</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <p><strong>游戏说明：</strong> 1. 使用上方输入框设置每次点击下注金额 2. 点击下方水果图标可增加对该水果的下注 3. 每种水果有不同的赔率 4. 可对多个水果同时下注 5. 点击"开始旋转"启动水果机 6. 中奖后，奖金 = 下注金额 × 水果赔率</p>
+        </div>
+    </div>
+</main>
+  <script src="/js/mobile-common.js?v=1"></script>        
+    <script src="/js/utils.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+            await MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+        });
+
+        // 游戏配置
+        const gameConfig = {
+            initialBalance: 1000,
+            defaultBetAmount: 10, // 默认每次点击下注金额
+            minBetAmount: 1, // 最小下注金额
+            spinDuration: 3000, // 旋转持续时间（毫秒）
+            highlightInterval: 100 // 高亮切换间隔（毫秒）
+        };
+        
+        // 水果数据 - 每种水果有不同的赔率
+        // 水果数组 - 按照5行5列布局顺序排列
+        const fruits = [
+            // 第1行: 1, 2, 3, 4, 5
+            { id: 0, icon: "🍎", name: "苹果", color: "#FF5252", odds: 2 },    // 1
+            { id: 1, icon: "🍌", name: "香蕉", color: "#FFD700", odds: 3 },    // 2
+            { id: 2, icon: "🍇", name: "葡萄", color: "#9C27B0", odds: 5 },    // 3
+            { id: 3, icon: "🍉", name: "西瓜", color: "#4CAF50", odds: 4 },    // 4
+            { id: 4, icon: "🍊", name: "橙子", color: "#FF9800", odds: 2 },    // 5
+            
+            // 第2行: 16, 中奖信息(占3格), 6
+            { id: 15, icon: "🫐", name: "蓝莓", color: "#3F51B5", odds: 8 },   // 16            
+            { id: -1, type: "text", name: "点击启动开始游戏", action: "winInfo", colspan: 3 }, // 中奖信息文本
+            { id: 5, icon: "🍓", name: "草莓", color: "#FF4081", odds: 10 },    // 6
+            
+            // 第3行: 15, 清空(占1格半), 重置(占1格半), 7
+            { id: 14, icon: "🥥", name: "椰子", color: "#795548", odds: 15 },    // 15
+            { id: -2, type: "button", name: "启动", action: "spin", colspan: 3 }, // 启动按钮
+            { id: 6, icon: "🍍", name: "菠萝", color: "#FFEB3B", odds: 4 },    // 7
+            
+            // 第4行: 14, 最大(占3格), 8
+            { id: 13, icon: "🍐", name: "梨子", color: "#CDDC39", odds: 6 },    // 14
+            { id: -3, type: "button", name: "清空", action: "clear", colspan: 1 }, // 清空按钮
+            { id: -4, type: "button", name: "重置", action: "reset", colspan: 1 }, // 重置按钮
+            { id: -5, type: "button", name: "最大", action: "max", colspan: 1 }, // 最大按钮
+            { id: 7, icon: "🥝", name: "猕猴桃", color: "#8BC34A", odds: 6 },    // 8
+            
+            // 第5行: 13, 12, 11, 10, 9
+            { id: 12, icon: "🍈", name: "甜瓜", color: "#8BC34A", odds: 4 },    // 13
+            { id: 11, icon: "🍋", name: "柠檬", color: "#FFEB3B", odds: 3 },    // 12
+            { id: 10, icon: "🥭", name: "芒果", color: "#FF9800", odds: 7 },    // 11
+            { id: 9, icon: "🍒", name: "樱桃", color: "#E91E63", odds: 20 },    // 10
+            { id: 8, icon: "🍑", name: "桃子", color: "#FFCCBC", odds: 5 }      // 9
+        ];
+        
+        // 游戏状态
+        const gameState = {
+            realBalance: gameConfig.initialBalance,  // 真实余额
+            displayBalance: gameConfig.initialBalance,  // 显示余额（包含伪扣除）
+            isSpinning: false,
+            spinInterval: null,
+            currentHighlightIndex: 0,
+            resultHistory: [],
+            // 每个水果的下注金额
+            fruitBets: new Array(fruits.length).fill(0),
+            // 当前每次点击下注金额
+            currentBetAmount: gameConfig.defaultBetAmount,
+            // 当前中奖信息
+            currentWinInfo: null,
+            // 中奖水果信息
+            winningIndex: -1,
+            winningFruit: null,
+            winningBet: 0
+        };
+        
+        // DOM元素
+        const fruitGrid = document.getElementById('fruitGrid');
+        const bettingFruitGrid = document.getElementById('bettingFruitGrid');
+        const balanceElement = document.getElementById('balance');
+        const totalBetElement = document.getElementById('totalBet');
+        const betFruitsCountElement = document.getElementById('betFruitsCount');
+        const totalBetAmountElement = document.getElementById('totalBetAmount');
+        const betAmountInput = document.getElementById('betAmountInput');
+        const currentBetAmountDisplay = document.getElementById('currentBetAmount');
+        const decreaseBetAmountBtn = document.getElementById('decreaseBetAmount');
+        const increaseBetAmountBtn = document.getElementById('increaseBetAmount');
+        const balanceDecreaseBetBtn = document.getElementById('balanceDecreaseBet');
+        const balanceIncreaseBetBtn = document.getElementById('balanceIncreaseBet');
+        const historyList = document.getElementById('historyList');
+        const showOddsButton = document.getElementById('showOddsButton');
+        const oddsModal = document.getElementById('oddsModal');
+        const closeOddsModal = document.getElementById('closeOddsModal');
+        const closeOddsModalBtn = document.getElementById('closeOddsModalBtn');
+        const oddsTable = document.getElementById('modalOddsTable');
+        
+        // 保存动态创建的按钮引用
+        let dynamicSpinButton = null;
+        let dynamicClearButton = null;
+        let dynamicResetButton = null;
+        let dynamicMaxButton = null;
+        // 历史记录模态框元素
+        const showHistoryButton = document.getElementById('showHistoryButton');
+        const historyModal = document.getElementById('historyModal');
+        const closeHistoryModal = document.getElementById('closeHistoryModal');
+        const closeHistoryModalBtn = document.getElementById('closeHistoryModalBtn');
+        
+        // 初始化游戏
+        function initGame() {
+            // 生成水果网格
+            renderFruitGrid();
+            
+            // 生成下注面板
+            renderBettingFruitGrid();
+            
+            // 生成赔率表
+            renderOddsTable();
+            
+            // 设置初始余额
+            updateBalanceDisplay();
+            updateBettingSummary();
+            
+            // 设置下注金额输入框
+            updateBetAmountDisplay();
+            
+            // 绑定事件监听器
+            bindEventListeners();
+            
+            // 更新历史记录显示
+            updateHistoryDisplay();
+        }
+        
+        // 渲染下注水果网格
+        function renderBettingFruitGrid() {
+            if (!bettingFruitGrid) return;
+            
+            bettingFruitGrid.innerHTML = '';
+            
+            fruits.forEach((fruit, index) => {
+                // 只渲染水果项目，不渲染按钮或文本元素
+                if (fruit.type !== undefined) return;
+                
+                const gridElement = document.createElement('div');
+                gridElement.className = 'fruit-item';
+                gridElement.dataset.index = index;
+                
+                // 如果有下注，添加active类
+                if (gameState.fruitBets[index] > 0) {
+                    gridElement.classList.add('active');
+                }
+                
+                gridElement.innerHTML = `
+                    <div class="fruit-name">${fruit.name}</div>
+                    <div class="fruit-icon">${fruit.icon}</div>
+                    <div class="odds-badge">${fruit.odds}x</div>
+                    <div class="betting-amount">${gameState.fruitBets[index]}</div>
+                `;
+                
+                // 主水果网格不支持点击下注功能，下注功能仅在下注水果网格中可用
+                
+                // 添加点击事件处理（下注）
+                gridElement.addEventListener('click', () => {
+                    if (gameState.isSpinning) return;
+                    
+                    // 检查显示余额是否足够（伪余额检查）
+                    if (gameState.displayBalance < gameState.currentBetAmount) {
+                        showResult("余额不足！", false);
+                        return;
+                    }
+                    
+                    // 增加下注
+                    gameState.fruitBets[index] += gameState.currentBetAmount;
+                    
+                    // 伪扣除显示余额
+                    gameState.displayBalance -= gameState.currentBetAmount;
+                    
+                    // 更新显示
+                    updateBalanceDisplay();
+                    updateBettingSummary();
+                    
+                    // 重新渲染水果网格和下注水果网格以显示新的下注金额和激活状态
+                    renderFruitGrid();
+                    renderBettingFruitGrid();
+                    
+                    // 播放点击音效
+                    playClickSound();
+                });
+                
+                bettingFruitGrid.appendChild(gridElement);
+            });
+        }
+
+        // 渲染水果网格
+        function renderFruitGrid() {
+            fruitGrid.innerHTML = '';
+            
+            fruits.forEach((fruit, index) => {
+                const gridElement = document.createElement('div');
+                
+                // 根据元素类型渲染不同内容
+                if (fruit.type === 'button') {
+                    // 渲染按钮
+                    gridElement.className = 'grid-button';
+                    gridElement.style.gridColumn = `span ${fruit.colspan}`;
+                    gridElement.style.aspectRatio = 'auto';
+                    
+                    const button = document.createElement('button');
+                    button.className = `btn btn-${fruit.action}`;
+                    button.textContent = fruit.name;
+                    
+                    // 根据按钮类型绑定不同事件并保存引用
+                    switch (fruit.action) {
+                        case 'spin':
+                            button.addEventListener('click', startSpin);
+                            dynamicSpinButton = button;
+                            break;
+                        case 'clear':
+                            button.addEventListener('click', clearBets);
+                            dynamicClearButton = button;
+                            break;
+                        case 'reset':
+                            button.addEventListener('click', resetGame);
+                            dynamicResetButton = button;
+                            break;
+                        case 'max':
+                            button.addEventListener('click', placeMaxBets);
+                            dynamicMaxButton = button;
+                            break;
+                    }
+                    
+                    gridElement.appendChild(button);
+                } else if (fruit.type === 'text') {
+                    // 渲染文本元素
+                    gridElement.className = 'grid-text';
+                    gridElement.style.gridColumn = `span ${fruit.colspan}`;
+                    gridElement.style.aspectRatio = 'auto';
+                    gridElement.style.display = 'flex';
+                    gridElement.style.alignItems = 'center';
+                    gridElement.style.justifyContent = 'center';
+                    gridElement.style.fontSize = '0.8rem';
+                    gridElement.style.fontWeight = 'bold';
+                    gridElement.style.color = '#FF4B2B';
+                    gridElement.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                    gridElement.style.borderRadius = '8px';
+                    gridElement.style.border = '2px solid #FF4B2B';
+                    gridElement.style.padding = '6px 8px';
+                    gridElement.style.wordWrap = 'break-word';
+                    gridElement.style.textAlign = 'center';
+                    gridElement.style.overflow = 'visible';
+                    gridElement.style.height = 'auto';
+                    gridElement.style.minHeight = '60px';
+                    // 如果有当前中奖信息，使用它，否则使用默认文本
+                    gridElement.textContent = gameState.currentWinInfo || fruit.name;
+                } else {
+                    // 渲染水果
+                    gridElement.className = 'fruit-item';
+                    gridElement.dataset.index = index;
+                    
+                    // 如果有下注，添加active类
+                    if (gameState.fruitBets[index] > 0) {
+                        gridElement.classList.add('active');
+                    }
+                    
+                    gridElement.innerHTML = `
+                        <div class="fruit-name">${fruit.name}</div>
+                        <div class="fruit-icon">${fruit.icon}</div>
+                        <div class="odds-badge">${fruit.odds}x</div>
+                        <div class="betting-amount">${gameState.fruitBets[index]}</div>
+                    `;
+                    
+                    // 主水果网格不再支持点击下注功能，下注功能仅在下注水果网格中可用
+                }
+                
+                fruitGrid.appendChild(gridElement);
+            });
+        }
+        
+ 
+        
+        // 渲染赔率表
+        function renderOddsTable() {
+            // 清空赔率表（除了标题行）
+            const oddsRows = oddsTable.querySelectorAll('.odds-row:not(:first-child)');
+            oddsRows.forEach(row => row.remove());
+            
+            // 只选择真正的水果元素（排除按钮）
+            const realFruits = fruits.filter(fruit => !fruit.type || fruit.type !== 'button');
+            
+            // 按赔率排序
+            const sortedFruits = [...realFruits].sort((a, b) => b.odds - a.odds);
+            
+            // 添加赔率行
+            sortedFruits.forEach(fruit => {
+                const oddsRow = document.createElement('div');
+                oddsRow.className = 'odds-row';
+                oddsRow.innerHTML = `
+                    <div>${fruit.icon} ${fruit.name}</div>
+                    <div style="color: #333; font-weight: bold;">${fruit.odds}倍</div>
+                `;
+                oddsTable.appendChild(oddsRow);
+            });
+        }
+        
+        // 绑定事件监听器
+        function bindEventListeners() {
+            // 下注金额控制按钮 - 检查元素是否存在
+            if (decreaseBetAmountBtn) {
+                decreaseBetAmountBtn.addEventListener('click', () => {
+                    if (gameState.isSpinning) return;
+                    
+                    let newAmount = gameState.currentBetAmount - 1;
+                    if (newAmount < gameConfig.minBetAmount) {
+                        newAmount = gameConfig.minBetAmount;
+                    }
+                    updateBetAmount(newAmount);
+                });
+            }
+            
+            if (increaseBetAmountBtn) {
+                increaseBetAmountBtn.addEventListener('click', () => {
+                    if (gameState.isSpinning) return;
+                    
+                    let newAmount = gameState.currentBetAmount + 1;
+                    updateBetAmount(newAmount);
+                });
+            }
+            
+            // 余额面板中的下注金额控制按钮
+            if (balanceDecreaseBetBtn) {
+                balanceDecreaseBetBtn.addEventListener('click', () => {
+                    if (gameState.isSpinning) return;
+                    
+                    let newAmount = gameState.currentBetAmount - 1;
+                    if (newAmount < gameConfig.minBetAmount) {
+                        newAmount = gameConfig.minBetAmount;
+                    }
+                    updateBetAmount(newAmount);
+                });
+            }
+            
+            if (balanceIncreaseBetBtn) {
+                balanceIncreaseBetBtn.addEventListener('click', () => {
+                    if (gameState.isSpinning) return;
+                    
+                    let newAmount = gameState.currentBetAmount + 1;
+                    updateBetAmount(newAmount);
+                });
+            }
+            
+  
+            
+            // 按钮事件监听器已经在renderFruitGrid函数中动态绑定
+        }
+        
+        // 更新下注金额
+        function updateBetAmount(newAmount) {
+            gameState.currentBetAmount = newAmount;
+            updateBetAmountDisplay();
+        }
+        
+        // 更新下注金额显示
+        function updateBetAmountDisplay() {
+            const elements = document.querySelectorAll('#currentBetAmount');
+            elements.forEach(element => {
+                element.textContent = gameState.currentBetAmount;
+            });
+        }
+        
+        // 更新余额显示
+        function updateBalanceDisplay() {
+            balanceElement.textContent = `${gameState.displayBalance}`;
+        }
+        
+        // 更新下注摘要
+        function updateBettingSummary() {
+            const totalBet = getTotalBet();
+            const betFruitsCount = gameState.fruitBets.filter(bet => bet > 0).length;
+            
+            totalBetElement.textContent = `${totalBet}`;
+        }
+        
+        // 获取总下注金额
+        function getTotalBet() {
+            return gameState.fruitBets.reduce((sum, bet) => sum + bet, 0);
+        }
+        
+        // 清空下注
+        function clearBets() {
+            if (gameState.isSpinning) return;
+            
+            // 清空所有下注
+            gameState.fruitBets = new Array(fruits.length).fill(0);
+            
+            // 恢复显示余额为真实余额
+            gameState.displayBalance = gameState.realBalance;
+            
+            // 更新显示
+            updateBalanceDisplay();
+            updateBettingSummary();
+            renderFruitGrid();
+            renderBettingFruitGrid();
+            
+            showResult("已清空所有下注！", true);
+        }
+        
+        // 最大下注
+        function placeMaxBets() {
+            if (gameState.isSpinning) return;
+            
+            // 计算可以下注的最大数量
+            let betsPlaced = 0;
+            let totalBetIncrement = 0;
+            
+            // 为每个水果下注，直到显示余额不足
+            for (let i = 0; i < gameState.fruitBets.length; i++) {
+                if (gameState.displayBalance >= gameState.currentBetAmount) {
+                    // 使用当前设置的下注金额，不超过显示余额
+                    const betIncrement = Math.min(gameState.currentBetAmount, gameState.displayBalance);
+                    gameState.fruitBets[i] += betIncrement;
+                    betsPlaced += betIncrement;
+                    totalBetIncrement += betIncrement;
+                    gameState.displayBalance -= betIncrement;
+                }
+            }
+            
+            if (betsPlaced > 0) {
+                updateBalanceDisplay();
+                updateBettingSummary();
+                renderFruitGrid();
+                renderBettingFruitGrid();
+                showResult(`已下注 ${betsPlaced} 金币到多个水果！`, true);
+            } else {
+                showResult("余额不足！", false);
+            }
+        }
+        
+        // 开始旋转
+        function startSpin() {
+            // 检查是否正在旋转
+            if (gameState.isSpinning) return;
+            
+            // 检查是否有下注
+            const totalBet = getTotalBet();
+            if (totalBet === 0) {
+                showResult("请先对水果下注！", false);
+                return;
+            }
+            
+            // 真实扣除金币
+            const newBalance = gameState.realBalance - totalBet;
+            
+            // 先将余额变化同步到farm_players数据表
+            updatePlayerGold(newBalance);
+            
+            // 更新游戏状态
+            gameState.realBalance = newBalance;
+            gameState.displayBalance = newBalance;
+            
+            // 更新显示
+            updateBalanceDisplay();
+            
+            // 重置中奖信息
+            gameState.winningIndex = -1;
+            gameState.winningFruit = null;
+            gameState.winningBet = 0;
+            
+            // 开始旋转
+            gameState.isSpinning = true;
+            if (dynamicSpinButton) {
+                dynamicSpinButton.disabled = true;
+                dynamicSpinButton.textContent = '旋转...';
+            }
+            
+            // 重置高亮索引
+            gameState.currentHighlightIndex = 0;
+            
+            // 高亮循环
+            gameState.spinInterval = setInterval(highlightNextFruit, gameConfig.highlightInterval);
+            
+            // 先运行5秒
+            const initialRunTime = 5000;
+            
+            // 5秒后确定中奖水果
+            setTimeout(() => {
+                // 只从真正的水果元素中选择，排除按钮和文本
+                const realFruitIndices = fruits.map((fruit, index) => 
+                    !fruit.type || (fruit.type !== 'button' && fruit.type !== 'text') ? index : null
+                ).filter(index => index !== null);
+                
+                const randomFruitIndex = Math.floor(Math.random() * realFruitIndices.length);
+                gameState.winningIndex = realFruitIndices[randomFruitIndex];
+                gameState.winningFruit = fruits[gameState.winningIndex];
+                gameState.winningBet = gameState.fruitBets[gameState.winningIndex];
+                
+                // 现在跑马灯会在highlightNextFruit函数中实时检测是否到达中奖水果位置
+            }, initialRunTime);
+        }
+        
+        // 高亮下一个水果 - 按照id顺序
+        function highlightNextFruit() {
+            // 移除所有高亮 - 只影响主水果网格
+            document.querySelectorAll('#fruitGrid .fruit-item').forEach(item => {
+                item.classList.remove('highlighted');
+            });
+            
+            // 获取所有水果元素并按照id顺序排序 - 只选择主水果网格中的水果
+            const fruitItems = Array.from(document.querySelectorAll('#fruitGrid .fruit-item'));
+            const sortedItems = fruitItems.sort((a, b) => {
+                const indexA = parseInt(a.dataset.index);
+                const indexB = parseInt(b.dataset.index);
+                const idA = fruits[indexA].id;
+                const idB = fruits[indexB].id;
+                return idA - idB;
+            });
+            
+            // 高亮当前水果（按照id顺序）
+            const currentItem = sortedItems[gameState.currentHighlightIndex];
+            currentItem.classList.add('highlighted');
+            
+            // 播放旋转音效
+            playSpinSound();
+            
+            // 检查是否已经确定了中奖水果，并且当前高亮的就是中奖水果
+            if (gameState.winningIndex !== -1) {
+                const currentIndex = parseInt(currentItem.dataset.index);
+                if (currentIndex === gameState.winningIndex) {
+                    // 如果当前高亮的就是中奖水果，添加爆闪动画
+                    currentItem.classList.add('flash-animation');
+                    
+                    // 停止旋转
+                    clearInterval(gameState.spinInterval);                    
+                  
+                    stopSpin();
+                    return;
+                }
+            }
+            
+            // 更新索引
+            gameState.currentHighlightIndex = (gameState.currentHighlightIndex + 1) % sortedItems.length;
+        }
+        
+        // 停止旋转
+        function stopSpin() {
+            // 使用在startSpin中预存的中奖水果信息
+            const winningIndex = gameState.winningIndex;
+            const winningFruit = gameState.winningFruit;
+            const winningBet = gameState.winningBet;
+            
+            // 计算奖金
+            let winAmount = 0;
+            let isWin = false;
+            
+            if (winningBet > 0) {
+                isWin = true;
+                winAmount = winningBet * winningFruit.odds; // 使用水果的赔率
+                
+                // 先调用updatePlayerGold添加奖金，然后再更新本地状态
+                const newBalance = gameState.realBalance + winAmount;
+                updatePlayerGold(newBalance);
+                
+                gameState.realBalance = newBalance;
+                gameState.displayBalance = newBalance;
+            }
+            
+            // 更新余额
+            updateBalanceDisplay();
+            
+            // 清空下注
+            gameState.fruitBets = new Array(fruits.length).fill(0);
+            
+            // 显示结果
+            showSpinResult(winningFruit, isWin, winAmount, winningBet);
+            
+            // 添加到历史记录
+            addToHistory(winningFruit, isWin, winningBet, winAmount);
+            
+            // 重置游戏状态
+            gameState.isSpinning = false;
+            if (dynamicSpinButton) {
+                dynamicSpinButton.disabled = false;
+                dynamicSpinButton.textContent = '启动';
+            }
+            
+            updateBettingSummary();
+            
+            // 只重新渲染下注水果网格，确保下注区域被正确重置
+            renderBettingFruitGrid();
+        }
+        
+        // 显示旋转结果
+        function showSpinResult(winningFruit, isWin, winAmount, winningBet) {
+            // 保存中奖信息到gameState
+            if (isWin) {
+                gameState.currentWinInfo = `中奖：${winningFruit.icon}${winningFruit.name} ${winningBet}×${winningFruit.odds}=${winAmount}金币`;
+            } else {
+                gameState.currentWinInfo = `未中奖：${winningFruit.icon}${winningFruit.name}`;
+            }
+            
+            // 直接更新网格文本信息，避免重新渲染导致动画丢失
+            const winInfoElement = document.querySelector('.grid-text');
+            if (winInfoElement) {
+                winInfoElement.textContent = gameState.currentWinInfo;
+                
+                // 添加动画效果
+                if (isWin) {
+                    // 添加爆闪动画
+                    winInfoElement.classList.add('flash-animation');
+                    // 动画结束后移除类，以便下次可以重新应用
+                    setTimeout(() => {
+                        winInfoElement.classList.remove('flash-animation');
+                    }, 1500); // 动画持续时间（0.5s × 3次）
+                }
+            }
+            
+            if (isWin) {
+                // 添加中奖音效
+                playWinSound();
+            } else {
+                // 添加未中奖音效
+                playLoseSound();
+            }
+        }
+        
+        // 获取模态框元素
+        const resultModal = document.getElementById('resultModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalFruit = document.getElementById('modalFruit');
+        const modalText = document.getElementById('modalText');
+        const modalWinDetails = document.getElementById('modalWinDetails');
+        
+        // 显示普通结果消息
+        function showResult(message, isSuccess) {
+            // 使用模态框显示结果
+            showResultModal(
+                isSuccess ? "成功" : "提示",
+                message,
+                isSuccess
+            );
+        }
+                
+        // 显示结果模态框
+        function showResultModal(title, message, isSuccess) {
+            if (modalTitle) {
+                modalTitle.textContent = title;
+                // 设置标题颜色
+                modalTitle.style.color = isSuccess ? '#4CAF50' : '#FF9800';
+            }
+            
+            if (modalText) {
+                modalText.textContent = message;
+            }
+            
+            if (resultModal) {
+                resultModal.classList.add('show');
+            }
+        }
+        
+        // 隐藏结果模态框
+        function hideResultModal() {
+            if (resultModal) {
+                resultModal.classList.remove('show');
+            }
+        }
+        
+        // ESC键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (resultModal.classList.contains('show')) {
+                    hideResultModal();
+                } else if (oddsModal.classList.contains('show')) {
+                    hideOddsModal();
+                } else if (historyModal.classList.contains('show')) {
+                    hideHistoryModal();
+                }
+            }
+        });
+        
+        // 赔率表模态框控制函数
+        function showOddsModal() {
+            oddsModal.classList.add('show');
+        }
+        
+        function hideOddsModal() {
+            oddsModal.classList.remove('show');
+        }
+        
+        // 赔率表模态框事件监听器
+        showOddsButton.addEventListener('click', showOddsModal);
+        closeOddsModal.addEventListener('click', hideOddsModal);
+        closeOddsModalBtn.addEventListener('click', hideOddsModal);
+        
+        // 点击赔率表模态框外部关闭
+        oddsModal.addEventListener('click', (e) => {
+            if (e.target === oddsModal) {
+                hideOddsModal();
+            }
+        });
+        
+        // 历史记录模态框控制函数
+        function showHistoryModal() {
+            historyModal.classList.add('show');
+        }
+        
+        function hideHistoryModal() {
+            historyModal.classList.remove('show');
+        }
+        
+        // 历史记录模态框事件监听器
+        showHistoryButton.addEventListener('click', showHistoryModal);
+        closeHistoryModal.addEventListener('click', hideHistoryModal);
+        closeHistoryModalBtn.addEventListener('click', hideHistoryModal);
+        
+        // 点击历史记录模态框外部关闭
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) {
+                hideHistoryModal();
+            }
+        });
+        
+        // 添加到历史记录
+        function addToHistory(fruit, isWin, betAmount, winAmount) {
+            // 添加到历史记录数组开头
+            gameState.resultHistory.unshift({
+                fruit: fruit,
+                isWin: isWin,
+                betAmount: betAmount,
+                winAmount: winAmount,
+                timestamp: new Date()
+            });
+            
+            // 限制历史记录长度
+            if (gameState.resultHistory.length > 20) {
+                gameState.resultHistory.pop();
+            }
+            
+            // 更新历史记录显示
+            updateHistoryDisplay();
+        }
+        
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            historyList.innerHTML = '';
+            
+            gameState.resultHistory.forEach(record => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const resultText = record.isWin ? 
+                    `+${record.winAmount}` : 
+                    `-${record.betAmount}`;
+                
+                const resultColor = record.isWin ? '#4CAF50' : '#FF5252';
+                
+                historyItem.innerHTML = `
+                    <div>${record.fruit.icon}</div>
+                    <div class="history-odds">${record.fruit.odds}x</div>
+                    <div style="position: absolute; bottom: 5px; font-size: 0.8rem; font-weight: bold; color: ${resultColor}; padding: 2px 8px; border-radius: 10px;">
+                        ${resultText}
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // 重置游戏
+        async function resetGame() {
+            if (gameState.isSpinning) {
+                clearInterval(gameState.spinInterval);
+                gameState.isSpinning = false;
+                if (dynamicSpinButton) {
+                    dynamicSpinButton.disabled = false;
+                    dynamicSpinButton.textContent = '启动';
+                }
+            }
+            
+            // 重置游戏状态
+            gameState.realBalance = gameConfig.initialBalance;
+            gameState.displayBalance = gameConfig.initialBalance;
+            gameState.isSpinning = false;
+            gameState.spinInterval = null;
+            gameState.currentHighlightIndex = 0;
+            gameState.resultHistory = [];
+            gameState.fruitBets = new Array(fruits.length).fill(0);
+            gameState.currentBetAmount = gameConfig.defaultBetAmount;
+            
+            // 更新显示
+            updateBalanceDisplay();
+            updateBettingSummary();
+            updateBetAmountDisplay();
+            renderFruitGrid();
+            renderBettingFruitGrid();
+            updateHistoryDisplay();
+            
+            // 显示重置消息
+            showResult("游戏已重置，请对水果下注并开始游戏", true);
+            
+            // 将重置后的余额同步到farm_players数据表
+            await updatePlayerGold(gameState.realBalance);
+        }
+        
+        // 全局AudioContext实例，只创建一次
+        let audioContext = null;
+        
+        // 初始化AudioContext（确保在用户交互后调用）
+        function initAudioContext() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('音频上下文不支持:', e);
+                }
+            }
+            
+            // 如果AudioContext处于suspended状态，恢复它
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+        
+        // 播放点击音效
+        function playClickSound() {
+            try {
+                initAudioContext();
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 261.63; // C4
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                // 音频播放失败
+            }
+        }
+        
+        // 播放中奖音效
+        function playWinSound() {
+            try {
+                initAudioContext();
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 523.25; // C5
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 1);
+            } catch (e) {
+                // 音频播放失败
+            }
+        }
+        
+        // 播放旋转音效
+        function playSpinSound() {
+            try {
+                initAudioContext();
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // 快速变化的频率，模拟跑马灯音效
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.05);
+                oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+                oscillator.type = 'sawtooth';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                // 音频播放失败
+            }
+        }
+        
+        // 播放未中奖音效
+        function playLoseSound() {
+            try {
+                initAudioContext();
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // 下降的频率，模拟未中奖音效
+                oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                // 音频播放失败
+            }
+        }
+        
+        // 为所有交互元素添加点击事件，确保AudioContext在用户交互后初始化
+        document.addEventListener('click', initAudioContext, { once: true });
+        document.addEventListener('touchstart', initAudioContext, { once: true });
+        
+        // 从farm_players数据表获取玩家当前金币数量
+        async function getPlayerGold() {
+            try {
+                const user = Utils.getUser();
+                if (!user) return gameConfig.initialBalance;
+                
+                const response = await Utils.get('/farm/player');
+                return response.data.player.gold || gameConfig.initialBalance;
+            } catch (error) {
+                console.error('获取玩家金币失败:', error);
+                return gameConfig.initialBalance;
+            }
+        }
+        
+        // 更新玩家金币到farm_players数据表
+        async function updatePlayerGold(newGold) {
+            try {
+                const user = Utils.getUser();
+                if (!user) return false;
+                
+                // 计算金币变化量
+                const delta = newGold - gameState.realBalance;
+                if (delta === 0) return true; // 没有变化，不需要更新
+                
+                // 确定操作类型和金额
+                const operation = delta > 0 ? 'add' : 'subtract';
+                const amount = Math.abs(delta);
+                
+                await Utils.post('/farm/player/gold', { amount, operation });
+                return true;
+            } catch (error) {
+                console.error('更新玩家金币失败:', error);
+                return false;
+            }
+        }
+        
+        // 初始化游戏（包含从数据库获取金币）
+        async function initGameWithDB() {
+            try {
+                // 获取玩家当前金币数量
+                const playerGold = await getPlayerGold();
+                
+                // 更新游戏配置和状态
+                gameConfig.initialBalance = playerGold;
+                gameState.realBalance = playerGold;
+                gameState.displayBalance = playerGold;
+                
+                // 初始化游戏
+                initGame();
+            } catch (error) {
+                console.error('初始化游戏失败:', error);
+                // 即使失败也尝试初始化游戏
+                initGame();
+            }
+        }
+        
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', initGameWithDB);
+    </script>
+</body>
+</html>

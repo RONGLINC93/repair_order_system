@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>网址收藏 - 维修工单系统</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+</head>
+
+<style>
+    body {
+       overflow: hidden;
+    }
+</style>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+            <h1 class="app-title">网址收藏</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage"
+                        style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                        alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item" id="chatLink">
+                <i class="fas fa-comment"></i>
+                <span>内部聊天</span>
+                <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+            <a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 收藏列表区域 -->
+        <section class="favorites-section">
+            <div class="bookmarks-layout">
+                <!-- 左侧文件夹列表 -->
+                <div class="folders-sidebar">
+                    <div class="folders-header">
+                        <h4 class="folders-title">文件夹</h4>
+                        <div class="folder-header-actions">
+                            <button class="folder-action-btn" id="folderBatchSelectBtn" onclick="toggleFolderBatchSelectMode()">
+                                <i class="fas fa-check-square"></i>
+                            </button>
+                            <button class="folder-add-btn" onclick="openAddFolderModal()">
+                                <i class="fas fa-folder-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="folders-list" id="foldersList">
+                        <!-- 加载动画 -->
+                        <div class="loading-spinner small">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <!-- 文件夹批量操作栏 -->
+                    <div class="folder-batch-actions" id="folderBatchActions" style="display: none;">
+                        <div class="folder-batch-actions-content">
+                            <!-- 第一行：全选和按钮 -->
+                            <div class="folder-batch-actions-row">
+                                <div class="folder-batch-select-all">
+                                    <input type="checkbox" id="folderSelectAllCheckbox" onchange="toggleFolderSelectAll()">
+                                    <label for="folderSelectAllCheckbox">全选</label>
+                                    <span class="folder-selected-count" id="folderSelectedCount">0</span>
+                                </div>
+                                <div class="folder-batch-action-buttons">
+                                    <button class="btn btn-danger" onclick="batchDeleteFolders()">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="toggleFolderBatchSelectMode()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 第二行：批量删除进度条 -->
+                            <div class="batch-delete-progress" id="folderBatchDeleteProgress" style="display: none;">
+                                <div class="batch-delete-progress-content">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" id="folderDeleteProgressBar"></div>
+                                    </div>
+                                    <div class="batch-delete-progress-stats">
+                                        <div class="batch-delete-progress-text" id="folderBatchDeleteProgressText">0%</div>
+                                        <div class="batch-delete-count" id="folderBatchDeleteCount">已删除 0/0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧收藏内容 -->
+                <div class="bookmarks-content">
+                    <div class="section-header">
+                        <h3 class="section-title">我的收藏</h3>
+                        <div class="section-header-right">
+                           
+                            <div class="action-buttons">
+                                <button class="action-btn" id="batchSelectBtn" onclick="toggleBatchSelectMode()">
+                                    <i class="fas fa-check-square"></i>
+                                    <span>批量</span>
+                                </button>
+                                <button class="action-btn" onclick="openImportBookmarksModal()">
+                                    <i class="fas fa-file-import"></i>
+                                    <span>导入</span>
+                                </button>
+                                <button class="action-btn" onclick="autoOrganizeFavorites()">
+                                    <i class="fas fa-sort"></i>
+                                    <span>整理</span>
+                                </button>
+                                <button class="action-btn" onclick="openAddFavoriteModal()">
+                                    <i class="fas fa-plus"></i>
+                                    <span>添加</span>
+                                </button>
+                            </div>
+                             <div class="view-toggle">
+                                <button class="view-toggle-btn active" id="cardViewBtn" onclick="toggleView('card')">
+                                    <i class="fas fa-th"></i>
+                                </button>
+                                <button class="view-toggle-btn" id="tableViewBtn" onclick="toggleView('table')">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="favorites-list" id="favoritesList">
+                        <!-- 加载动画 -->
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 批量操作栏 -->
+        <div class="batch-actions" id="batchActions" style="display: none;">
+            <div class="batch-actions-content">
+                <!-- 第一行：全选和按钮 -->
+                <div class="batch-actions-row">
+                    <div class="batch-select-all">
+                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                        <label for="selectAllCheckbox">全选</label>
+                        <span class="selected-count" id="selectedCount">0</span>
+                    </div>
+                    <div class="batch-action-buttons">
+                        <button class="btn btn-danger" onclick="batchDelete()">
+                            <i class="fas fa-trash"></i>
+                            <span>删除</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="toggleBatchSelectMode()">
+                            <i class="fas fa-times"></i>
+                            <span>取消</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- 第二行：批量删除进度条 -->
+                <div class="batch-delete-progress" id="batchDeleteProgress" style="display: none;">
+                    <div class="batch-delete-progress-content">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="deleteProgressBar"></div>
+                        </div>
+                        <div class="batch-delete-progress-stats">
+                            <div class="batch-delete-progress-text" id="batchDeleteProgressText">0%</div>
+                            <div class="batch-delete-count" id="batchDeleteCount">已删除 0/0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 添加收藏模态框 -->
+    <div class="modal" id="addFavoriteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">添加网址收藏</h3>
+                <button class="close-btn" onclick="closeAddFavoriteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addFavoriteForm">
+                    <div class="form-group">
+                        <label for="favoriteName">网站名称</label>
+                        <input type="text" id="favoriteName" class="form-control" placeholder="请输入网站名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="favoriteUrl">网站地址</label>
+                        <input type="url" id="favoriteUrl" class="form-control"
+                            placeholder="请输入网站地址（http://或https://开头）" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="favoriteDescription">描述（可选）</label>
+                        <textarea id="favoriteDescription" class="form-control" rows="3"
+                            placeholder="请输入网站描述"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="favoriteFolder">文件夹</label>
+                        <select id="favoriteFolder" class="form-control">
+                            <option value="">无（默认文件夹）</option>
+                            <!-- 文件夹选项将通过JavaScript动态加载 -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddFavoriteModal()">取消</button>
+                <button class="btn btn-primary" onclick="addFavorite()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改收藏模态框 -->
+    <div class="modal" id="editFavoriteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">修改网址收藏</h3>
+                <button class="close-btn" onclick="closeEditFavoriteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editFavoriteForm">
+                    <input type="hidden" id="editFavoriteId">
+                    <div class="form-group">
+                        <label for="editFavoriteName">网站名称</label>
+                        <input type="text" id="editFavoriteName" class="form-control" placeholder="请输入网站名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFavoriteUrl">网站地址</label>
+                        <input type="url" id="editFavoriteUrl" class="form-control"
+                            placeholder="请输入网站地址（http://或https://开头）" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFavoriteDescription">描述（可选）</label>
+                        <textarea id="editFavoriteDescription" class="form-control" rows="3"
+                            placeholder="请输入网站描述"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFavoriteFolder">文件夹</label>
+                        <select id="editFavoriteFolder" class="form-control">
+                            <option value="">无（默认文件夹）</option>
+                            <!-- 文件夹选项将通过JavaScript动态加载 -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditFavoriteModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEditFavorite()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加文件夹模态框 -->
+    <div class="modal" id="addFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">添加文件夹</h3>
+                <button class="close-btn" onclick="closeAddFolderModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addFolderForm">
+                    <div class="form-group">
+                        <label for="folderName">文件夹名称</label>
+                        <input type="text" id="folderName" class="form-control" placeholder="请输入文件夹名称" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddFolderModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveFolder()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑文件夹模态框 -->
+    <div class="modal" id="editFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">修改文件夹</h3>
+                <button class="close-btn" onclick="closeEditFolderModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editFolderForm">
+                    <input type="hidden" id="editFolderId">
+                    <div class="form-group">
+                        <label for="editFolderName">文件夹名称</label>
+                        <input type="text" id="editFolderName" class="form-control" placeholder="请输入文件夹名称" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditFolderModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEditFolder()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入书签模态框 -->
+    <div class="modal" id="importBookmarksModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">导入浏览器书签</h3>
+                <button class="close-btn" onclick="closeImportBookmarksModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bookmarksFile">选择书签文件</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="bookmarksFile" accept=".html" onchange="handleBookmarkFileSelect(event)"
+                            style="display: none;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="document.getElementById('bookmarksFile').click()">
+                            <i class="fas fa-file-upload"></i> 选择文件
+                        </button>
+                        <span id="selectedFileName" class="file-name"></span>
+                    </div>
+                    <small class="form-text">支持从浏览器导出的HTML格式书签文件</small>
+                </div>
+                <div class="form-group">
+                    <label for="importFolder">导入到文件夹</label>
+                    <select id="importFolder" class="form-control">
+                        <option value="">无（默认文件夹）</option>
+                        <!-- 文件夹选项将通过JavaScript动态加载 -->
+                    </select>
+                </div>
+                <!-- 导入进度条 -->
+                <div class="import-progress" id="importProgress" style="display: none;">
+                    <div class="progress-label">导入进度：</div>
+                    <div class="progress-text" id="progressText">0%</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+                <div class="import-preview" id="importPreview" style="display: none;">
+                    <h4>预览</h4>
+                    <div id="previewContent"></div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeImportBookmarksModal()">取消</button>
+                <button class="btn btn-primary" id="importBtn" onclick="importBookmarks()" disabled>
+                    <i class="fas fa-file-import"></i> 导入
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 自动整理进度悬浮栏 -->
+    <div class="auto-organize-progress" id="autoOrganizeProgress" style="display: none;">
+        <div class="auto-organize-progress-content">
+            <div class="progress-label">自动整理</div>
+            <div class="progress-info">
+                <div class="progress-text" id="organizeProgressText">0%</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="organizeProgressBar"></div>
+                </div>
+                <div class="progress-status" id="organizeStatus">准备整理...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/mobile-common.js?v=1"></script>
+    <script src="/js/utils.js"></script>
+    <script>
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function () {
+            // 初始化侧边栏和菜单
+            MobileCommon.checkAuth();
+            await MobileCommon.loadSidebarAvatar();
+            MobileCommon.setupNavigation();
+            await loadFolders();
+            loadFavorites();
+        });
+        
+        // 打开自动整理进度悬浮栏
+        function openAutoOrganizeProgress() {
+            const progressBar = document.getElementById('autoOrganizeProgress');
+            progressBar.style.display = 'flex';
+        }
+        
+        // 关闭自动整理进度悬浮栏
+        function closeAutoOrganizeProgress() {
+            const progressBar = document.getElementById('autoOrganizeProgress');
+            progressBar.style.display = 'none';
+        }
+        
+        // 视图切换函数
+        function toggleView(mode) {
+            currentViewMode = mode;
+            
+            // 更新按钮状态
+            document.getElementById('cardViewBtn').classList.toggle('active', mode === 'card');
+            document.getElementById('tableViewBtn').classList.toggle('active', mode === 'table');
+            
+            // 重新加载收藏列表
+            loadFavorites();
+        }
+
+        // 全局变量
+        let currentFolderId = null;
+        let folders = [];
+        let importBookmarksData = [];
+        let isBatchSelectMode = false;
+        let isFolderBatchSelectMode = false;
+        let currentViewMode = 'card'; // 'card' 或 'table'
+
+        // 加载文件夹列表
+        async function loadFolders() {
+            try {
+                const container = document.getElementById('foldersList');
+                container.innerHTML = `
+                    <div class="loading-spinner small">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                `;
+
+                folders = await Utils.get('/favorites/folders');
+                renderFolders();
+                updateFolderSelect();
+            } catch (error) {
+                console.error('加载文件夹失败:', error);
+                document.getElementById('foldersList').innerHTML = `
+                    <div class="empty-state small">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染文件夹列表
+        function renderFolders() {
+            const container = document.getElementById('foldersList');
+
+            // 添加默认文件夹（无）
+            let html = `
+                <div class="bookmark-folder-item ${currentFolderId === null ? 'active' : ''}">
+                    <div class="bookmark-folder-info" onclick="selectFolder(null)">
+                        <i class="fas fa-folder-open"></i>
+                        <span>所有收藏</span>
+                    </div>
+                </div>
+            `;
+
+            folders.forEach((folder) => {
+                html += `
+                    <div class="bookmark-folder-item ${currentFolderId === folder.id ? 'active' : ''}">
+                        <div class="folder-checkbox-container" style="display: none;">
+                            <input type="checkbox" class="folder-checkbox" data-id="${folder.id}" onchange="updateFolderSelectedCount()">
+                        </div>
+                        <div class="bookmark-folder-info" onclick="selectFolder(${folder.id})">
+                            <i class="fas fa-folder"></i>
+                            <span>${folder.name}</span>
+                        </div>
+                        <div class="folder-actions">
+                            <button class="folder-edit-btn" onclick="openEditFolderModal(${folder.id}, '${folder.name}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="folder-delete-btn" onclick="deleteFolder(${folder.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 选择文件夹
+        function selectFolder(folderId) {
+            currentFolderId = folderId;
+            renderFolders();
+            loadFavorites();
+        }
+
+        // 更新文件夹选择下拉框
+        function updateFolderSelect() {
+            const selectElements = ['favoriteFolder', 'editFavoriteFolder', 'importFolder'];
+
+            selectElements.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    // 保留第一个选项
+                    const firstOption = select.firstElementChild;
+                    select.innerHTML = '';
+                    select.appendChild(firstOption);
+
+                    // 添加文件夹选项
+                    folders.forEach(folder => {
+                        const option = document.createElement('option');
+                        option.value = folder.id;
+                        option.textContent = folder.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // 切换批量选择模式
+        function toggleBatchSelectMode() {
+            isBatchSelectMode = !isBatchSelectMode;
+
+            const checkboxes = document.querySelectorAll('.favorite-card-checkbox');
+            const batchActions = document.getElementById('batchActions');
+            const batchSelectBtn = document.getElementById('batchSelectBtn');
+
+            if (isBatchSelectMode) {
+                // 进入批量选择模式
+                checkboxes.forEach(checkbox => {
+                    checkbox.style.display = 'block';
+                });
+                batchActions.style.display = 'block';
+                batchSelectBtn.innerHTML = '<i class="fas fa-times"></i><span>取消</span>';
+
+                // 更新主内容区的margin，为底部操作栏留出空间
+                document.querySelector('.main-content').style.marginBottom = '60px';
+            } else {
+                // 退出批量选择模式
+                checkboxes.forEach(checkbox => {
+                    checkbox.style.display = 'none';
+                });
+                batchActions.style.display = 'none';
+                batchSelectBtn.innerHTML = '<i class="fas fa-check-square"></i><span>批量</span>';
+
+                // 恢复主内容区的margin
+                document.querySelector('.main-content').style.marginBottom = '0';
+
+                // 清除所有选择
+                clearAllSelections();
+
+                // 隐藏并重置进度条
+                const batchDeleteProgress = document.getElementById('batchDeleteProgress');
+                const deleteProgressBar = document.getElementById('deleteProgressBar');
+                const batchDeleteProgressText = document.getElementById('batchDeleteProgressText');
+                batchDeleteProgress.style.display = 'none';
+                deleteProgressBar.style.width = '0%';
+                batchDeleteProgressText.textContent = '0%';
+            }
+        }
+
+        // 切换文件夹批量选择模式
+        function toggleFolderBatchSelectMode() {
+            isFolderBatchSelectMode = !isFolderBatchSelectMode;
+
+            const checkboxes = document.querySelectorAll('.folder-checkbox');
+            const batchActions = document.getElementById('folderBatchActions');
+            const batchSelectBtn = document.getElementById('folderBatchSelectBtn');
+
+            if (isFolderBatchSelectMode) {
+                // 进入批量选择模式
+                checkboxes.forEach(checkbox => {
+                    checkbox.parentElement.style.display = 'flex';
+                });
+                batchActions.style.display = 'flex';
+                batchSelectBtn.innerHTML = '<i class="fas fa-times"></i>';
+            } else {
+                // 退出批量选择模式
+                checkboxes.forEach(checkbox => {
+                    checkbox.parentElement.style.display = 'none';
+                    checkbox.checked = false;
+                });
+                batchActions.style.display = 'none';
+                batchSelectBtn.innerHTML = '<i class="fas fa-check-square"></i>';
+
+                // 清除所有选择
+                updateFolderSelectedCount();
+
+                // 隐藏并重置进度条
+                const batchDeleteProgress = document.getElementById('folderBatchDeleteProgress');
+                const deleteProgressBar = document.getElementById('folderDeleteProgressBar');
+                const batchDeleteProgressText = document.getElementById('folderBatchDeleteProgressText');
+                batchDeleteProgress.style.display = 'none';
+                deleteProgressBar.style.width = '0%';
+                batchDeleteProgressText.textContent = '0%';
+            }
+        }
+
+        // 更新选中数量
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.favorite-checkbox:checked');
+            const selectedCount = checkboxes.length;
+
+            document.getElementById('selectedCount').textContent = `${selectedCount}`;
+
+            // 更新全选复选框的状态
+            const allCheckboxes = document.querySelectorAll('.favorite-checkbox');
+            document.getElementById('selectAllCheckbox').checked = selectedCount === allCheckboxes.length && allCheckboxes.length > 0;
+        }
+
+        // 更新文件夹选中数量
+        function updateFolderSelectedCount() {
+            const checkboxes = document.querySelectorAll('.folder-checkbox:checked');
+            const selectedCount = checkboxes.length;
+
+            document.getElementById('folderSelectedCount').textContent = `${selectedCount}`;
+
+            // 更新全选复选框的状态
+            const allCheckboxes = document.querySelectorAll('.folder-checkbox');
+            document.getElementById('folderSelectAllCheckbox').checked = selectedCount === allCheckboxes.length && allCheckboxes.length > 0;
+        }
+
+        // 切换全选
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.favorite-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+
+            updateSelectedCount();
+        }
+
+        // 切换文件夹全选
+        function toggleFolderSelectAll() {
+            const selectAllCheckbox = document.getElementById('folderSelectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.folder-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+
+            updateFolderSelectedCount();
+        }
+
+        // 清除所有选择
+        function clearAllSelections() {
+            const checkboxes = document.querySelectorAll('.favorite-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            document.getElementById('selectAllCheckbox').checked = false;
+            updateSelectedCount();
+        }
+
+        // 打开导入书签模态框
+        function openImportBookmarksModal() {
+            const modal = document.getElementById('importBookmarksModal');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            document.getElementById('selectedFileName').textContent = '';
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importBtn').disabled = true;
+        }
+
+        // 关闭导入书签模态框
+        function closeImportBookmarksModal() {
+            const modal = document.getElementById('importBookmarksModal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            document.getElementById('bookmarksFile').value = '';
+
+            // 隐藏并重置进度条
+            const importProgress = document.getElementById('importProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            importProgress.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+
+            importBookmarksData = [];
+        }
+
+        // 处理书签文件选择
+        function handleBookmarkFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('selectedFileName').textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const content = e.target.result;
+                    const parseResult = parseBookmarkHTML(content);
+                    importBookmarksData = parseResult.bookmarks;
+                    // 保存找到的文件夹信息
+                    window.foundBookmarkFolders = parseResult.folders;
+                    showImportPreview();
+                    document.getElementById('importBtn').disabled = false;
+                } catch (error) {
+                    console.error('解析书签文件失败:', error);
+                    Utils.showError('解析书签文件失败，请确保选择的是正确的HTML书签文件');
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        // 解析浏览器书签HTML文件
+        function parseBookmarkHTML(htmlContent) {
+            // 创建临时DOM元素来解析HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+
+            // 解析书签数据
+            const bookmarks = [];
+            const foundFolders = new Set();
+
+            // 递归解析DL元素
+            function parseDL(dl, folderPath = '') {
+                const children = dl.childNodes;
+
+                for (let i = 0; i < children.length; i++) {
+                    const child = children[i];
+
+                    if (child.nodeType !== 1) continue; // 跳过非元素节点
+
+                    if (child.tagName.toLowerCase() === 'dt') {
+                        // 检查是否是文件夹
+                        const h3Element = child.querySelector('h3');
+                        const folderDd = child.nextElementSibling;
+
+                        if (h3Element && folderDd && folderDd.tagName.toLowerCase() === 'dd') {
+                            // 这是一个文件夹（Chrome/Firefox格式）
+                            const folderName = h3Element.textContent.trim();
+                            const subDl = folderDd.querySelector('dl');
+                            if (subDl) {
+                                const subFolderPath = folderPath ? `${folderPath}/${folderName}` : folderName;
+                                // 记录找到的文件夹
+                                foundFolders.add(subFolderPath);
+                                parseDL(subDl, subFolderPath);
+                            }
+                        } else {
+                            // 检查是否是带链接的书签
+                            const aElement = child.querySelector('a');
+                            if (aElement) {
+                                // 这是一个书签
+                                const name = aElement.textContent.trim();
+                                const url = aElement.getAttribute('href');
+                                if (url) {
+                                    bookmarks.push({
+                                        name,
+                                        url,
+                                        folder: folderPath
+                                    });
+                                }
+                            } else if (folderDd && folderDd.tagName.toLowerCase() === 'dd') {
+                                // 检查是否是没有H3的文件夹
+                                const subDl = folderDd.querySelector('dl');
+                                if (subDl) {
+                                    // 这是一个文件夹
+                                    let folderName = child.textContent.trim();
+                                    const subFolderPath = folderPath ? `${folderPath}/${folderName}` : folderName;
+                                    // 记录找到的文件夹
+                                    foundFolders.add(subFolderPath);
+                                    parseDL(subDl, subFolderPath);
+                                }
+                            }
+                        }
+                    } else if (child.tagName.toLowerCase() === 'dl') {
+                        // 如果遇到嵌套的dl元素，直接递归解析
+                        parseDL(child, folderPath);
+                    }
+                }
+            }
+
+            // 查找所有的DL元素（书签列表）并解析所有
+            const dlElements = doc.querySelectorAll('dl');
+            if (dlElements.length === 0) {
+                throw new Error('无效的书签文件格式');
+            }
+
+            // 解析所有找到的dl元素
+            dlElements.forEach(dl => {
+                parseDL(dl);
+            });
+
+            // 去除重复的书签
+            const uniqueBookmarks = [];
+            const seenUrls = new Set();
+
+            bookmarks.forEach(bookmark => {
+                if (!seenUrls.has(bookmark.url)) {
+                    seenUrls.add(bookmark.url);
+                    uniqueBookmarks.push(bookmark);
+                }
+            });
+
+            // 返回书签和文件夹信息
+            return {
+                bookmarks: uniqueBookmarks,
+                folders: Array.from(foundFolders)
+            };
+        }
+
+        // 显示导入预览
+        function showImportPreview() {
+            const previewContainer = document.getElementById('importPreview');
+            const previewContent = document.getElementById('previewContent');
+
+            if (importBookmarksData.length === 0) {
+                previewContent.innerHTML = '<p>未找到书签</p>';
+                previewContainer.style.display = 'block';
+                return;
+            }
+
+            let html = `<p>共找到 ${importBookmarksData.length} 个书签</p>`;
+            html += '<ul class="import-preview-list">';
+
+            importBookmarksData.forEach(bookmark => {
+                html += `
+                    <li class="import-preview-item">
+                        <i class="fas fa-globe"></i>
+                        <div class="preview-item-content">
+                            <div class="preview-item-name">${bookmark.name}</div>
+                            <div class="preview-item-url">${bookmark.url}</div>
+                            ${bookmark.folder ? `<div class="preview-item-folder">文件夹: ${bookmark.folder}</div>` : ''}
+                        </div>
+                    </li>
+                `;
+            });
+
+            html += '</ul>';
+            previewContent.innerHTML = html;
+            previewContainer.style.display = 'block';
+        }
+
+        // 加载收藏列表
+        async function loadFavorites() {
+            try {
+                const container = document.getElementById('favoritesList');
+                container.innerHTML = `
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>加载中...</span>
+                    </div>
+                `;
+
+                const url = currentFolderId ? `/favorites?folder_id=${currentFolderId}` : '/favorites';
+                const favorites = await Utils.get(url);
+
+                if (favorites.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <p>${currentFolderId ? '该文件夹中暂无收藏' : '暂无收藏的网址'}</p>
+                            <button class="action-btn" onclick="openAddFavoriteModal()">
+                                <i class="fas fa-plus"></i>
+                                <span>${currentFolderId ? '添加收藏' : '添加第一个收藏'}</span>
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 渲染收藏列表
+                let html = '';
+                
+                if (currentViewMode === 'table') {
+                    // 表格视图
+                    html += `
+                        <div class="favorite-table-container">
+                            <table class="favorite-table">
+                                <thead>
+                                    <tr>
+                                        <th class="favorite-table-checkbox" style="display: none;">
+                                            <input type="checkbox" id="tableSelectAll" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th class="favorite-table-name">名称</th>
+                                        <th class="favorite-table-url">网址</th>
+                                        <th class="favorite-table-description">描述</th>
+                                        <th class="favorite-table-actions">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    favorites.forEach((favorite) => {
+                        html += `
+                                    <tr class="favorite-table-row">
+                                        <td class="favorite-table-checkbox" style="display: none;">
+                                            <input type="checkbox" class="favorite-checkbox" data-id="${favorite.id}" onchange="updateSelectedCount()">
+                                        </td>
+                                        <td class="favorite-table-name" onclick="openFavorite('${favorite.url}')">
+                                            <div class="favorite-table-cell-content">
+                                                <div class="favorite-table-icon">
+                                                    <i class="fas fa-globe"></i>
+                                                </div>
+                                                <div class="favorite-table-cell-text">${favorite.name}</div>
+                                            </div>
+                                        </td>
+                                        <td class="favorite-table-url" onclick="openFavorite('${favorite.url}')">
+                                            <div class="favorite-table-cell-content">
+                                                <div class="favorite-table-cell-text">${favorite.url}</div>
+                                            </div>
+                                        </td>
+                                        <td class="favorite-table-description" onclick="openFavorite('${favorite.url}')">
+                                            <div class="favorite-table-cell-content">
+                                                <div class="favorite-table-cell-text">${favorite.description || ''}</div>
+                                            </div>
+                                        </td>
+                                        <td class="favorite-table-actions">
+                                            <div class="favorite-table-actions-content">
+                                                <button class="favorite-table-edit" onclick="openEditFavoriteModal(${favorite.id}, '${favorite.name}', '${favorite.url}', '${favorite.description || ''}', ${favorite.folder_id || 'null'})"><i class="fas fa-edit"></i></button>
+                                                <button class="favorite-table-delete" onclick="deleteFavorite(${favorite.id})"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    // 卡片视图（原有样式）
+                    favorites.forEach((favorite) => {
+                        html += `
+                            <div class="favorite-card">
+                                <div class="favorite-card-checkbox" style="display: none;">
+                                    <input type="checkbox" class="favorite-checkbox" data-id="${favorite.id}" onchange="updateSelectedCount()">
+                                </div>
+                                <div class="favorite-card-header">
+                                    <div onclick="openFavorite('${favorite.url}')" class="favorite-card-header-content">
+                                        <div class="favorite-card-icon">
+                                            <i class="fas fa-globe"></i>
+                                        </div>
+                                        <div class="favorite-card-title">${favorite.name}</div>
+                                    </div>
+                                    <div class="favorite-card-actions">
+                                        <button class="favorite-card-edit" onclick="openEditFavoriteModal(${favorite.id}, '${favorite.name}', '${favorite.url}', '${favorite.description || ''}', ${favorite.folder_id || 'null'})"><i class="fas fa-edit"></i></button>
+                                        <button class="favorite-card-delete" onclick="deleteFavorite(${favorite.id})"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                                <div class="favorite-card-url" onclick="openFavorite('${favorite.url}')">
+                                    ${favorite.url}
+                                </div>
+                                ${favorite.description ? `<div class="favorite-card-description" onclick="openFavorite('${favorite.url}')">${favorite.description}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('加载收藏失败:', error);
+                document.getElementById('favoritesList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败，请稍后重试</p>
+                        <button class="action-btn" onclick="loadFavorites()">
+                            <i class="fas fa-refresh"></i>
+                            <span>重新加载</span>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // 打开添加收藏模态框
+        function openAddFavoriteModal() {
+            const modal = document.getElementById('addFavoriteModal');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            document.getElementById('addFavoriteForm').reset();
+
+            // 默认选择当前文件夹
+            if (currentFolderId) {
+                document.getElementById('favoriteFolder').value = currentFolderId;
+            }
+        }
+
+        // 关闭添加收藏模态框
+        function closeAddFavoriteModal() {
+            const modal = document.getElementById('addFavoriteModal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        }
+
+        // 打开添加文件夹模态框
+        function openAddFolderModal() {
+            const modal = document.getElementById('addFolderModal');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            document.getElementById('addFolderForm').reset();
+        }
+
+        // 关闭添加文件夹模态框
+        function closeAddFolderModal() {
+            const modal = document.getElementById('addFolderModal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        }
+
+        // 打开编辑文件夹模态框
+        function openEditFolderModal(id, name) {
+            document.getElementById('editFolderId').value = id;
+            document.getElementById('editFolderName').value = name;
+            const modal = document.getElementById('editFolderModal');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        }
+
+        // 关闭编辑文件夹模态框
+        function closeEditFolderModal() {
+            const modal = document.getElementById('editFolderModal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            document.getElementById('editFolderForm').reset();
+        }
+
+        // 添加收藏
+        async function addFavorite() {
+            const form = document.getElementById('addFavoriteForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('favoriteName').value.trim();
+            const url = document.getElementById('favoriteUrl').value.trim();
+            const description = document.getElementById('favoriteDescription').value.trim();
+            const folderId = document.getElementById('favoriteFolder').value;
+            const folderIdValue = folderId === '' ? null : parseInt(folderId);
+
+            // 确保URL以http://或https://开头
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                Utils.showError('请输入有效的网址（必须以http://或https://开头）');
+                return;
+            }
+
+            // 验证URL格式
+            try {
+                new URL(url);
+            } catch (error) {
+                Utils.showError('请输入有效的网址');
+                return;
+            }
+
+            try {
+                await Utils.post('/favorites', { name, url, description, folder_id: folderIdValue });
+                closeAddFavoriteModal();
+                Utils.showSuccess('添加收藏成功');
+                loadFavorites();
+            } catch (error) {
+                console.error('添加收藏失败:', error);
+                Utils.showError(error.message || '添加收藏失败，请稍后重试');
+            }
+        }
+
+        // 添加文件夹
+        async function saveFolder() {
+            const form = document.getElementById('addFolderForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('folderName').value.trim();
+
+            try {
+                await Utils.post('/favorites/folders', { name });
+                closeAddFolderModal();
+                Utils.showSuccess('添加文件夹成功');
+                await loadFolders();
+            } catch (error) {
+                console.error('添加文件夹失败:', error);
+                Utils.showError(error.message || '添加文件夹失败，请稍后重试');
+            }
+        }
+
+        // 删除收藏
+        async function deleteFavorite(id) {
+            Utils.confirm('删除收藏', '确定要删除这个收藏吗？', async () => {
+                try {
+                    await Utils.delete(`/favorites/${id}`);
+                    Utils.showSuccess('删除收藏成功');
+                    loadFavorites();
+                } catch (error) {
+                    console.error('删除收藏失败:', error);
+                    Utils.showError(error.message || '删除收藏失败，请稍后重试');
+                }
+            });
+        }
+
+        // 打开收藏的网址
+        function openFavorite(url) {
+            window.open(url, '_blank');
+        }
+
+        // 打开修改收藏模态框
+        function openEditFavoriteModal(id, name, url, description, folderId) {
+            document.getElementById('editFavoriteId').value = id;
+            document.getElementById('editFavoriteName').value = name;
+            document.getElementById('editFavoriteUrl').value = url;
+            document.getElementById('editFavoriteDescription').value = description;
+            document.getElementById('editFavoriteFolder').value = folderId || '';
+            const modal = document.getElementById('editFavoriteModal');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        }
+
+        // 关闭修改收藏模态框
+        function closeEditFavoriteModal() {
+            const modal = document.getElementById('editFavoriteModal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            document.getElementById('editFavoriteForm').reset();
+        }
+
+        // 保存修改收藏
+        async function saveEditFavorite() {
+            const id = document.getElementById('editFavoriteId').value;
+            const name = document.getElementById('editFavoriteName').value.trim();
+            const url = document.getElementById('editFavoriteUrl').value.trim();
+            const description = document.getElementById('editFavoriteDescription').value.trim();
+            const folderId = document.getElementById('editFavoriteFolder').value;
+            const folderIdValue = folderId === '' ? null : parseInt(folderId);
+
+            if (!name || !url) {
+                Utils.showError('请填写完整的网站信息');
+                return;
+            }
+
+            try {
+                new URL(url);
+            } catch (error) {
+                Utils.showError('请输入有效的网址');
+                return;
+            }
+
+            try {
+                await Utils.put(`/favorites/${id}`, { name, url, description, folder_id: folderIdValue });
+                closeEditFavoriteModal();
+                Utils.showSuccess('修改收藏成功');
+                loadFavorites();
+            } catch (error) {
+                console.error('修改收藏失败:', error);
+                Utils.showError(error.message || '修改收藏失败，请稍后重试');
+            }
+        }
+
+        // 保存修改文件夹
+        async function saveEditFolder() {
+            const id = document.getElementById('editFolderId').value;
+            const name = document.getElementById('editFolderName').value.trim();
+
+            if (!name) {
+                Utils.showError('请填写文件夹名称');
+                return;
+            }
+
+            try {
+                await Utils.put(`/favorites/folders/${id}`, { name });
+                closeEditFolderModal();
+                Utils.showSuccess('修改文件夹成功');
+                await loadFolders();
+            } catch (error) {
+                console.error('修改文件夹失败:', error);
+                Utils.showError(error.message || '修改文件夹失败，请稍后重试');
+            }
+        }
+
+        // 删除文件夹
+        async function deleteFolder(id) {
+            Utils.confirm('删除文件夹', '确定要删除这个文件夹吗？文件夹中的收藏将移到默认文件夹。', async () => {
+                try {
+                    await Utils.delete(`/favorites/folders/${id}`);
+                    Utils.showSuccess('删除文件夹成功');
+
+                    // 如果删除的是当前选中的文件夹，切换到默认文件夹
+                    if (currentFolderId === id) {
+                        currentFolderId = null;
+                    }
+
+                    await loadFolders();
+                    loadFavorites();
+                } catch (error) {
+                    console.error('删除文件夹失败:', error);
+                    Utils.showError(error.message || '删除文件夹失败，请稍后重试');
+                }
+            });
+        }
+
+        // 导入书签到系统
+        async function importBookmarks() {
+            if (importBookmarksData.length === 0) {
+                Utils.showError('没有可导入的书签');
+                return;
+            }
+
+            const importBtn = document.getElementById('importBtn');
+            const originalText = importBtn.innerHTML;
+            const parentFolderId = document.getElementById('importFolder').value;
+            const parentFolderIdValue = parentFolderId === '' ? null : parseInt(parentFolderId);
+
+            // 显示进度条
+            const importProgress = document.getElementById('importProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            importProgress.style.display = 'block';
+
+            // 禁用按钮并显示加载状态
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 导入中...';
+
+            let successCount = 0;
+            let errorCount = 0;
+            let errors = [];
+            let folderIdMap = new Map(); // 存储文件夹路径到ID的映射
+            let totalSteps = 2 + (importBookmarksData.length || 1); // 文件夹操作 + 书签导入
+            let currentStep = 0;
+
+            // 更新进度条
+            function updateProgress(current, total, stepName) {
+                const progress = Math.round((current / total) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}% (${stepName})`;
+            }
+
+            try {
+                // 步骤1: 加载当前所有文件夹
+                updateProgress(currentStep++, totalSteps, '加载文件夹');
+                await loadFolders();
+
+                // 步骤2: 解析并创建书签文件中的文件夹结构
+                const foundFolders = window.foundBookmarkFolders || [];
+                if (foundFolders.length > 0) {
+                    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 创建文件夹...';
+
+                    // 先加载所有已存在的文件夹，构建ID映射
+                    folders.forEach(folder => {
+                        folderIdMap.set(folder.name, folder.id);
+                    });
+
+                    // 按文件夹路径深度排序，确保父文件夹先创建
+                    foundFolders.sort((a, b) => {
+                        const depthA = a.split('/').length;
+                        const depthB = b.split('/').length;
+                        return depthA - depthB;
+                    });
+
+                    // 创建所有需要的文件夹
+                    for (const folderPath of foundFolders) {
+                        const pathParts = folderPath.split('/');
+                        let currentParentId = parentFolderIdValue;
+                        let currentPath = '';
+
+                        for (const folderName of pathParts) {
+                            currentPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+
+                            // 如果文件夹已存在，直接获取ID
+                            if (folderIdMap.has(currentPath)) {
+                                currentParentId = folderIdMap.get(currentPath);
+                                continue;
+                            }
+
+                            try {
+                                // 创建文件夹
+                                const newFolder = await Utils.post('/favorites/folders', {
+                                    name: folderName,
+                                    parent_id: currentParentId // 如果API支持嵌套文件夹，使用这个参数
+                                });
+
+                                // 更新映射和列表
+                                folderIdMap.set(currentPath, newFolder.id);
+                                currentParentId = newFolder.id;
+
+                                // 将新文件夹添加到本地列表
+                                folders.push(newFolder);
+                            } catch (error) {
+                                console.error(`创建文件夹失败 (${folderName}):`, error);
+                                // 如果创建失败，使用当前父文件夹
+                                break;
+                            }
+                        }
+                    }
+
+                    // 重新加载文件夹列表，确保所有新文件夹都可见
+                    await loadFolders();
+                }
+
+                // 步骤3: 导入所有书签
+                importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 导入书签...';
+
+                for (let i = 0; i < importBookmarksData.length; i++) {
+                    const bookmark = importBookmarksData[i];
+
+                    try {
+                        // 确保URL以http://或https://开头
+                        let url = bookmark.url;
+                        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                            url = 'http://' + url;
+                        }
+
+                        // 验证URL格式
+                        new URL(url);
+
+                        // 确定书签应该保存到的文件夹ID
+                        let bookmarkFolderId = parentFolderIdValue;
+                        if (bookmark.folder && folderIdMap.has(bookmark.folder)) {
+                            bookmarkFolderId = folderIdMap.get(bookmark.folder);
+                        }
+
+                        // 保存书签
+                        await Utils.post('/favorites', {
+                            name: bookmark.name,
+                            url: url,
+                            description: '',
+                            folder_id: bookmarkFolderId
+                        });
+
+                        successCount++;
+                    } catch (error) {
+                        console.error(`导入书签失败 (${bookmark.name}):`, error);
+                        errorCount++;
+                        errors.push(`<span class="error-item">${bookmark.name}: ${error.message || '未知错误'}</span>`);
+                    }
+
+                    // 更新进度
+                    updateProgress(currentStep + i, totalSteps, `导入书签 ${i + 1}/${importBookmarksData.length}`);
+                }
+
+                // 更新进度为100%
+                updateProgress(totalSteps, totalSteps, '完成');
+
+                // 步骤4: 显示导入结果
+                let message = `成功导入 ${successCount} 个书签`;
+                if (errorCount > 0) {
+                    message += `，失败 ${errorCount} 个`;
+                    Utils.showError(message, 5000);
+                    if (errors.length > 0) {
+                        console.error('导入失败详情:', errors.join('\n'));
+                    }
+                } else {
+                    Utils.showSuccess(message);
+                }
+
+                // 关闭模态框并刷新列表
+                setTimeout(() => {
+                    closeImportBookmarksModal();
+                    loadFavorites();
+                }, 500); // 延迟关闭，让用户看到100%进度
+            } finally {
+                // 恢复按钮状态
+                importBtn.innerHTML = originalText;
+                importBtn.disabled = false;
+                // 清除临时数据
+                window.foundBookmarkFolders = [];
+            }
+        }
+
+        // 自动整理收藏
+        async function autoOrganizeFavorites() {
+            // 显示确认对话框
+            Utils.confirm('自动整理', '确定要根据域名自动整理所有收藏吗？这将根据网站域名创建文件夹并移动相应的收藏。', async () => {
+                try {
+                    // 打开自动整理进度悬浮栏
+                    openAutoOrganizeProgress();
+                    
+                    // 获取进度元素
+                    const organizeProgressBar = document.getElementById('organizeProgressBar');
+                    const organizeProgressText = document.getElementById('organizeProgressText');
+                    const organizeStatus = document.getElementById('organizeStatus');
+                    
+                    // 重置进度
+                    organizeProgressBar.style.width = '0%';
+                    organizeProgressText.textContent = '0%';
+                    organizeStatus.textContent = '准备整理...';
+                    
+                    // 步骤1: 获取所有收藏
+                    organizeStatus.textContent = '获取收藏列表...';
+                    const allFavorites = await Utils.get('/favorites');
+                    
+                    if (allFavorites.length === 0) {
+                        Utils.showError('没有收藏需要整理');
+                        closeAutoOrganizeProgress();
+                        return;
+                    }
+                    
+                    // 步骤2: 提取域名并创建文件夹映射
+                    organizeStatus.textContent = '分析收藏域名...';
+                    const domainMap = new Map();
+                    const domains = [];
+                    
+                    allFavorites.forEach(favorite => {
+                        try {
+                            const url = new URL(favorite.url);
+                            const domain = url.hostname;
+                            // 移除www.前缀
+                            const cleanDomain = domain.replace(/^www\./, '');
+                            
+                            if (!domainMap.has(cleanDomain)) {
+                                domainMap.set(cleanDomain, []);
+                                domains.push(cleanDomain);
+                            }
+                            
+                            domainMap.get(cleanDomain).push(favorite);
+                        } catch (error) {
+                            console.error(`无法解析URL (${favorite.url}):`, error);
+                        }
+                    });
+                    
+                    if (domains.length === 0) {
+                        Utils.showError('没有可整理的收藏');
+                        closeAutoOrganizeProgress();
+                        return;
+                    }
+                    
+                    // 步骤3: 获取现有文件夹
+                    organizeStatus.textContent = '检查现有文件夹...';
+                    const existingFolders = await Utils.get('/favorites/folders');
+                    const folderNameMap = new Map();
+                    existingFolders.forEach(folder => {
+                        folderNameMap.set(folder.name, folder.id);
+                    });
+                    
+                    // 步骤4: 创建新文件夹并移动收藏
+                    let successCount = 0;
+                    let errorCount = 0;
+                    let currentStep = 0;
+                    const totalSteps = domains.length;
+                    
+                    for (const domain of domains) {
+                        const favorites = domainMap.get(domain);
+                        
+                        // 更新进度
+                        currentStep++;
+                        const progress = Math.round((currentStep / totalSteps) * 100);
+                        organizeProgressBar.style.width = `${progress}%`;
+                        organizeProgressText.textContent = `${progress}%`;
+                        organizeStatus.textContent = `整理 ${domain}...`;
+                        
+                        try {
+                            // 创建文件夹（如果不存在）
+                            let folderId;
+                            if (folderNameMap.has(domain)) {
+                                folderId = folderNameMap.get(domain);
+                            } else {
+                                const newFolder = await Utils.post('/favorites/folders', { name: domain });
+                                folderNameMap.set(domain, newFolder.id);
+                                folderId = newFolder.id;
+                            }
+                            
+                            // 移动收藏到文件夹
+                            for (const favorite of favorites) {
+                                await Utils.put(`/favorites/${favorite.id}`, {
+                                    name: favorite.name,
+                                    url: favorite.url,
+                                    description: favorite.description,
+                                    folder_id: folderId
+                                });
+                                successCount++;
+                            }
+                        } catch (error) {
+                            console.error(`整理域名 ${domain} 失败:`, error);
+                            errorCount++;
+                        }
+                    }
+                    
+                    // 更新进度为100%
+                    organizeProgressBar.style.width = '100%';
+                    organizeProgressText.textContent = '100%';
+                    organizeStatus.textContent = '整理完成';
+                    
+                    // 显示结果
+                    let message = `成功整理 ${successCount} 个收藏`;
+                    if (errorCount > 0) {
+                        message += `，失败 ${errorCount} 个`;
+                        Utils.showError(message, 5000);
+                    } else {
+                        Utils.showSuccess(message);
+                    }
+                    
+                    // 刷新数据
+                    setTimeout(async () => {
+                        await loadFolders();
+                        loadFavorites();
+                        // 数据刷新完成后关闭进度条
+                        closeAutoOrganizeProgress();
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('自动整理失败:', error);
+                    Utils.showError(error.message || '自动整理失败，请稍后重试');
+                    closeAutoOrganizeProgress();
+                }
+            });
+        }
+        
+        // 批量删除书签
+        async function batchDelete() {
+            const checkboxes = document.querySelectorAll('.favorite-checkbox:checked');
+            const selectedIds = Array.from(checkboxes).map(checkbox => parseInt(checkbox.dataset.id));
+            
+            if (selectedIds.length === 0) {
+                Utils.showError('请先选择要删除的书签');
+                return;
+            }
+            
+            // 显示确认对话框
+            Utils.confirm('批量删除', `确定要删除选中的 ${selectedIds.length} 个书签吗？`, async () => {
+                const deleteBtn = document.querySelector('.batch-action-buttons .btn-danger');
+                const originalText = deleteBtn.innerHTML;
+                
+                // 显示进度条
+                const batchDeleteProgress = document.getElementById('batchDeleteProgress');
+                const deleteProgressBar = document.getElementById('deleteProgressBar');
+                const batchDeleteProgressText = document.getElementById('batchDeleteProgressText');
+                const batchDeleteCount = document.getElementById('batchDeleteCount');
+                batchDeleteProgress.style.display = 'block';
+                
+                // 初始化删除数量显示
+                batchDeleteCount.textContent = `已删除 0/${selectedIds.length}`;
+                
+                // 禁用按钮并显示加载状态
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 删除中...';
+                
+                let successCount = 0;
+                let errorCount = 0;
+                let errors = [];
+                
+                // 更新进度条和数值
+                function updateDeleteProgress(current, total) {
+                    const progress = Math.round((current / total) * 100);
+                    deleteProgressBar.style.width = `${progress}%`;
+                    batchDeleteProgressText.textContent = `${progress}%`;
+                    batchDeleteCount.textContent = `已删除 ${current}/${total}`;
+                }
+
+                try {
+                    // 逐一删除选中的书签
+                    for (let i = 0; i < selectedIds.length; i++) {
+                        const id = selectedIds[i];
+                        try {
+                            await Utils.delete(`/favorites/${id}`);
+                            successCount++;
+                        } catch (error) {
+                            console.error(`删除书签失败 (ID: ${id}):`, error);
+                            errorCount++;
+                            errors.push(`<span class="error-item">ID ${id}: ${error.message || '未知错误'}</span>`);
+                        }
+
+                        // 更新进度
+                        updateDeleteProgress(i + 1, selectedIds.length);
+                    }
+
+                    // 更新进度为100%
+                    updateDeleteProgress(selectedIds.length, selectedIds.length);
+
+                    // 显示删除结果
+                    let message = `成功删除 ${successCount} 个书签`;
+                    if (errorCount > 0) {
+                        message += `，失败 ${errorCount} 个`;
+                        Utils.showError(message, 5000);
+                        if (errors.length > 0) {
+                            console.error('删除失败详情:', errors.join('\n'));
+                        }
+                    } else {
+                        Utils.showSuccess(message);
+                    }
+
+                    // 延迟关闭，让用户看到100%进度
+                    setTimeout(() => {
+                        // 退出批量选择模式并刷新列表
+                        toggleBatchSelectMode();
+                        loadFavorites();
+                    }, 500);
+                } finally {
+                    // 恢复按钮状态
+                    deleteBtn.innerHTML = originalText;
+                    deleteBtn.disabled = false;
+                    // 隐藏进度条并重置数值
+                    batchDeleteProgress.style.display = 'none';
+                    deleteProgressBar.style.width = '0%';
+                    batchDeleteProgressText.textContent = '0%';
+                }
+            });
+        }
+
+        // 批量删除文件夹
+        async function batchDeleteFolders() {
+            const checkboxes = document.querySelectorAll('.folder-checkbox:checked');
+            const selectedIds = Array.from(checkboxes).map(checkbox => parseInt(checkbox.dataset.id));
+            
+            if (selectedIds.length === 0) {
+                Utils.showError('请先选择要删除的文件夹');
+                return;
+            }
+            
+            // 显示确认对话框
+            Utils.confirm('批量删除文件夹', `确定要删除选中的 ${selectedIds.length} 个文件夹吗？文件夹中的收藏将移到默认文件夹。`, async () => {
+                const deleteBtn = document.querySelector('.folder-batch-action-buttons .btn-danger');
+                const originalText = deleteBtn.innerHTML;
+                
+                // 显示进度条
+                const batchDeleteProgress = document.getElementById('folderBatchDeleteProgress');
+                const deleteProgressBar = document.getElementById('folderDeleteProgressBar');
+                const batchDeleteProgressText = document.getElementById('folderBatchDeleteProgressText');
+                const batchDeleteCount = document.getElementById('folderBatchDeleteCount');
+                batchDeleteProgress.style.display = 'block';
+                
+                // 初始化删除数量显示
+                batchDeleteCount.textContent = `已删除 0/${selectedIds.length}`;
+                
+                // 禁用按钮并显示加载状态
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                let successCount = 0;
+                let errorCount = 0;
+                let errors = [];
+                
+                // 更新进度条和数值
+                function updateDeleteProgress(current, total) {
+                    const progress = Math.round((current / total) * 100);
+                    deleteProgressBar.style.width = `${progress}%`;
+                    batchDeleteProgressText.textContent = `${progress}%`;
+                    batchDeleteCount.textContent = `已删除 ${current}/${total}`;
+                }
+
+                try {
+                    // 逐一删除选中的文件夹
+                    for (let i = 0; i < selectedIds.length; i++) {
+                        const id = selectedIds[i];
+                        try {
+                            await Utils.delete(`/favorites/folders/${id}`);
+                            successCount++;
+                        } catch (error) {
+                            console.error(`删除文件夹失败 (ID: ${id}):`, error);
+                            errorCount++;
+                            errors.push(`<span class="error-item">ID ${id}: ${error.message || '未知错误'}</span>`);
+                        }
+
+                        // 更新进度
+                        updateDeleteProgress(i + 1, selectedIds.length);
+                    }
+
+                    // 更新进度为100%
+                    updateDeleteProgress(selectedIds.length, selectedIds.length);
+
+                    // 显示删除结果
+                    let message = `成功删除 ${successCount} 个文件夹`;
+                    if (errorCount > 0) {
+                        message += `，失败 ${errorCount} 个`;
+                        Utils.showError(message, 5000);
+                        if (errors.length > 0) {
+                            console.error('删除失败详情:', errors.join('\n'));
+                        }
+                    } else {
+                        Utils.showSuccess(message);
+                    }
+
+                    // 延迟关闭，让用户看到100%进度
+                    setTimeout(() => {
+                        // 退出批量选择模式并刷新列表
+                        toggleFolderBatchSelectMode();
+                        loadFolders();
+                        loadFavorites();
+                    }, 500);
+                } finally {
+                    // 恢复按钮状态
+                    deleteBtn.innerHTML = originalText;
+                    deleteBtn.disabled = false;
+                    // 隐藏进度条并重置数值
+                    batchDeleteProgress.style.display = 'none';
+                    deleteProgressBar.style.width = '0%';
+                    batchDeleteProgressText.textContent = '0%';
+                }
+            });
+        }
+
+    </script>
+</body>
+
+</html>

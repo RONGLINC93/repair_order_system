@@ -1,0 +1,2947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>消息通知 - 工单管理</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+    <link rel="stylesheet" href="/css/mobile-style.css">
+    <link rel="stylesheet" href="/fontawesome-free-6.6.0-web/css/all.min.css">
+     <style>
+        /* 全局样式 - 隐藏滚动条 */
+        html, body {
+            overflow: hidden;
+            -ms-overflow-style: none;  /* IE和Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        /* 隐藏Chrome、Safari和Opera的滚动条 */
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* 聊天界面样式 */
+        
+        /* 聊天头部样式 - 覆盖外部CSS以确保固定定位 */
+        .chat-header {
+            position: fixed !important;
+            top: 60px !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white !important;
+            padding: 16px !important;
+            border-bottom: 1px solid #e9ecef !important;
+            z-index: 1001 !important; /* 比批量操作栏更高的层级 */
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            height: 40px !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            color: #333 !important;
+        }
+        
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-toggle {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: none;
+            display: inline-block;
+            margin: 0;
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .dropdown-toggle:hover {
+            background: none;
+            color: #333;
+            text-decoration: none;
+        }
+        
+        .dropdown-toggle:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 8px 0;
+            min-width: 120px;
+            z-index: 1001; /* 比批量操作栏更高的层级 */
+            display: none;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        
+        .dropdown-item i {
+            font-size: 12px;
+        }
+        
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .mark-all-read-btn {
+            background: white;
+            color: #667eea;
+            border: 1px solid #667eea;
+            border-radius: 4px;
+            font-size: 13px;
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .mark-all-read-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* 聊天消息列表样式 */
+        .chat-messages-container {        
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* 消息气泡样式 */
+        .message-group {
+            margin-bottom: 20px;
+        }
+        
+        .message-user {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .message-bot {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .message-content {
+            max-width: 70%;
+        }
+        
+        .message-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;                  
+            font-size: 14px;
+            font-weight: 500;      
+        }
+        
+        .message-user .message-bubble {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            /* 添加更多差异化样式 */
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message-bot .message-bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+            /* 添加更多差异化样式 */
+            box-shadow: 0 1px 2px rgba(0, 123, 255, 0.3);
+            font-weight: 600;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            padding: 0 8px;
+        }
+        
+        .message-user .message-time {
+            text-align: left;
+        }
+        
+        .message-bot .message-time {
+            text-align: right;
+        }
+        
+        /* 未读消息样式 */
+        .message-unread .message-bubble {
+            border: 2px solid #ffc107;
+            position: relative;
+        }
+        
+        .message-unread .message-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            right: -14px;
+            width: 12px;
+            height: 12px;
+            background: #ff4757;
+            border-radius: 50%;
+        }
+        
+        /* 消息输入区域样式 - 固定在底部且输入框和发送按钮并行 */
+        
+        .recipient-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .recipient-selector label {
+            font-size: 14px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .recipient-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            color: #495057;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 130px; /* 统一宽度 */
+            box-sizing: border-box; /* 确保padding不影响总宽度 */
+        }
+
+        .reset-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 36px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            color: #6c757d;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .reset-btn:hover {
+            background: #f0f0f0;
+            color: #667eea;
+            border-color: #667eea;
+        }
+        
+        #recipientType {
+            height: 38px; /* 统一高度 */
+        }
+        
+        /* 多选用户选择框的样式优化 */
+        #userSelect[multiple] {
+            min-height: 100px;
+            font-size: 14px; /* 统一字体大小 */
+        }
+        
+        /* 重置按钮样式 */
+        .reset-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            color: #6c757d;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            height: 38px;
+            box-sizing: border-box;
+            display: none; /* 默认隐藏 */
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .reset-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+            border-color: #667eea;
+        }
+        
+        #userSelect[multiple] option {
+            padding: 5px 8px;
+        }
+        
+        #userSelect[multiple]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+
+        
+        .chat-input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            padding: 10px 16px;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin: 0;
+            width: 100%;
+        }
+        
+        #messageInput {
+            flex-grow: 1;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            resize: none;
+            overflow: hidden;
+            min-height: 44px;
+            max-height: 100px;
+            line-height: 20px;
+            box-sizing: border-box;
+        }
+        
+        .input-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .input-action-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .input-action-btn:hover {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+        
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #667eea;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .send-btn:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+      
+        
+        
+        /* 聊天消息列表基础样式 */
+        .chat-messages {
+            transition: height 0.3s ease;
+        }
+        
+
+        
+
+        
+        /* 附件预览样式 */
+        .attachment-preview {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .attachment-icon {
+            font-size: 24px;
+            color: #6c757d;
+        }
+        
+        .attachment-info {
+            flex-grow: 1;
+        }
+        
+        .attachment-name {
+            font-size: 13px;
+            color: #333;
+            margin: 0 0 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .attachment-size {
+            font-size: 11px;
+            color: #999;
+            margin: 0;
+        }
+        
+        .remove-attachment-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+        
+        /* 消息状态指示器 */
+        .message-status {
+            font-size: 10px;
+            color: #999;
+            margin-left: 4px;
+        }
+        
+        .message-status.sent {
+            color: #667eea;
+        }
+        
+        .message-status.read {
+            color: #28a745;
+        }
+        
+        /* 通知接收者选择区域收起功能样式 */
+        .notification-recipient-container {
+            position: fixed;
+            bottom: 60px;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            padding: 10px 16px;
+            z-index: 999;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .notification-recipient-container.collapsed {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .recipient-toggle-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+        }
+        
+        .recipient-toggle-btn:hover {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+        
+        .recipient-toggle-btn i {
+            transition: transform 0.3s ease;
+        }
+        
+        .recipient-toggle-btn i.rotated {
+            transform: rotate(180deg);
+        }
+        
+
+        
+        .recipient-content {
+            transition: opacity 0.3s ease;
+            opacity: 1;
+        }
+        
+        .notification-recipient-container.collapsed .recipient-content {
+            opacity: 0;
+        }
+     
+        
+        /* 加载动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* 删除按钮强制右对齐 */
+        .notification-delete-btn {
+            background: #dc3545;
+            color: white;
+            border: 1px solid #dc3545;
+            font-size: 12px;
+            padding: 4px 8px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            z-index: 10;
+            margin-left: auto; /* 强制推到右边 */
+            flex-shrink: 0; /* 防止收缩 */
+        }
+        
+        .notification-delete-btn:hover {
+            background: #c82333;
+            border-color: #c82333;
+        }
+        
+        /* 消息气泡内链接和承接按钮统一样式 */
+        .message-bubble a,
+        .accept-order-btn {
+            background: none;
+            border: none;
+            color: #1714d3;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: inherit;
+            font-weight: inherit;
+            display: inline;
+            margin-left: 5px;
+        }
+        
+        .message-bubble a:hover,
+        .accept-order-btn:hover {
+            text-decoration: underline;
+        }
+        
+        /* 聊天消息列表专用样式类 - 移除统一样式限制 */
+        .mobile-chat-messages {
+            /* 移除所有!important标记，让样式更灵活 */
+            position: fixed;
+            top: 100px; /* 60px (mobile-header) + 40px (chat-header) */
+            left: 0;
+            right: 0;
+            /* 移除bottom: 0，避免与height冲突 */
+            height: calc(100vh - 160px); /* 默认高度：100vh - 顶部100px - 底部输入区域60px */
+            overflow-y: auto;
+            padding: 0px; /* 恢复内边距，避免内容紧贴边缘 */
+            background: white;
+            z-index: 999;
+        }
+        
+        /* 非管理员用户的聊天消息列表样式 - 充满整个可用空间 */
+        .mobile-chat-messages.non-admin {
+            height: calc(100vh - 100px) !important; /* 没有输入区域，所以高度为屏幕高度减去顶部100px */
+        }
+        
+        /* 非管理员用户的聊天列表在批量操作栏显示时的样式 */
+        .mobile-chat-messages.non-admin.with-batch-actions {
+            top: 150px !important; /* 100px (原顶部) + 50px (批量操作栏高度) */
+            height: calc(100vh - 150px) !important; /* 没有输入和接收者区域，所以高度为屏幕高度减去新的顶部位置 */
+        }
+        
+        /* 复选框容器样式优化 */
+        .notification-checkbox-container {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            z-index: 10;
+        }
+        
+        .notification-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .notification-item {
+            padding-right: 45px; /* 为复选框留出空间 */
+        }
+        
+        /* 批量操作栏样式 */
+        .batch-actions-bar {
+            position: fixed;
+            top: 100px; /* 60px (mobile-header) + 40px (chat-header) */
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 10px 16px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .batch-actions-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        
+        /* 确保批量删除按钮靠右显示 */
+        .batch-delete-action {
+            margin-left: auto !important;
+        }
+        
+        /* 为第二个批量操作栏的删除按钮添加样式 */
+        .batch-delete-btn {
+            margin-left: auto !important;
+        }
+        
+        .batch-actions-right {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+        
+        .batch-select-all {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .batch-select-all input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .batch-delete-action {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+        
+        .batch-delete-action:hover {
+            background: #c82333;
+        }
+        
+        .batch-reset-action {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+        
+        .batch-reset-action:hover {
+            background: #5a6268;
+        }
+        
+        /* 调整消息列表位置，当批量操作栏显示时 */
+        .chat-messages.mobile-chat-messages.with-batch-actions {
+            top: 150px !important; /* 100px (原顶部) + 50px (批量操作栏高度) */
+        }
+        
+        /* 非管理员用户：批量操作栏显示时 */
+        .chat-messages.mobile-chat-messages.non-admin.with-batch-actions {
+            top: 150px !important; /* 100px (原顶部) + 50px (批量操作栏高度) */
+            height: calc(100vh - 150px) !important; /* 非管理员没有输入和接收者区域 */
+        }
+        
+        /* 响应式适配 */
+        @media (max-width: 480px) {
+            .notification-list-section {
+                padding: 0 12px;
+            }
+            
+            .notification-item {
+                padding: 10px;
+                padding-right: 36px;
+                margin-bottom: 6px;
+            }
+            
+            .notification-title {
+                font-size: 15px;
+                color: #818181;
+                margin-bottom: 4px;
+            }
+            
+            .notification-message {
+                font-size: 13px;
+            }
+            
+            .notification-checkbox-container {
+                right: 8px;
+                top: 8px;
+            }
+            
+            .notification-checkbox {
+                width: 16px;
+                height: 16px;
+            }
+            
+            .notification-footer {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            
+            .notification-related {
+                flex: 1;
+            }
+            
+            .notification-delete-btn {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+    }
+    
+    /* 删除通知按钮样式 */
+    .delete-notification-btn {   
+    
+       background: none;
+        color: rgb(175, 175, 175);
+        border: none;   
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.2s ease;
+    }
+    
+    .delete-notification-btn:hover {
+        opacity: 1;
+        color: #dc3545;
+        transform: scale(1.1);
+    }
+    
+    /* 确保消息容器相对定位，以便删除按钮和选中框绝对定位生效 */
+    .message-container {
+        position: relative;
+        margin-bottom: 10px;
+        padding: 10px 10px 10px 35px; /* 左侧留空给选中框 */
+        transition: all 0.3s ease;
+    }
+    
+    /* 通知选中框样式 */
+    .notification-checkbox {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    /* 调整消息气泡的位置，为删除按钮留出空间 */
+    .message-bubble {
+        position: relative;
+        padding-right: 30px;
+    }
+    
+    /* 删除动画 - 向左滑走效果 */
+    @keyframes deleteAnimation {
+        0% {
+            opacity: 1;
+            transform: translateX(0);
+            height: auto;
+            margin-bottom: 16px;
+            padding: 10px;
+        }
+        50% {
+            opacity: 0.8;
+            transform: translateX(-20%);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-100%);
+            height: 0;
+            margin-bottom: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    }
+    
+    .message-container.deleting {
+        animation: deleteAnimation 0.6s cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+
+     </style>
+ </head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+                <span class="unread-badge" id="menuChatBadge" style="display: none;"></span>
+            </button>
+              <button class="menu-btn" onclick="Utils.goBackWithRefresh()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="app-title">消息通知</h1>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon" onclick="window.location.href='/mobile-notifications.html'">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="mobileNotificationBadge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar" onclick="window.location.href='/mobile-profile.html'">
+                    <i class="fas fa-user" id="sidebarAvatarIcon"></i>
+                    <img id="sidebarAvatarImage" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="用户头像">
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="mobileUserName">用户</div>
+                    <div class="user-role" id="mobileUserRole">角色</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/mobile-index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/mobile-my-orders.html" class="nav-item" id="myOrdersLink">
+                <i class="fas fa-tasks"></i>
+                <span>我的工单</span>
+            </a>
+            <a href="/mobile-orders.html" class="nav-item">
+                <i class="fas fa-list"></i>
+                <span>所有工单</span>
+            </a>
+            <a href="/mobile-material-requests.html" class="nav-item" id="materialRequestsLink">
+                <i class="fas fa-box"></i>
+                <span>物料管理</span>
+            </a>
+            <a href="/mobile-chat.html" class="nav-item">
+                <i class="fas fa-comments"></i>
+                <span>内部聊天</span>
+                 <span class="unread-badge" id="unreadChatCount" style="display: none;"></span>
+            </a>
+            <a href="/mobile-admin.html" class="nav-item" id="adminLink" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <span>系统管理</span>
+            </a>
+            
+            <a href="/mobile-app-center.html" class="nav-item">
+                <i class="fas fa-th"></i>
+                <span>应用中心</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="/mobile-settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
+<a href="/mobile-about.html" class="nav-item" id="aboutLink">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="#" class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+
+
+        <!-- 通知界面主体 -->
+        <section class="chat-container" style="margin-bottom: 10px;">
+            <!-- 通知头部信息 -->
+            <!-- 固定在顶部的通知头部 -->
+            <div class="chat-header">
+                <h2 class="chat-title">消息中心</h2>
+                
+                <!-- 下拉菜单 -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle" id="headerDropdownBtn">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-menu" id="headerDropdownMenu">
+                        <a href="#" class="dropdown-item" id="markAllReadBtn">
+                            <i class="fas fa-check"></i>
+                            <span>全部已读</span>
+                        </a>
+                        <a href="#" class="dropdown-item" id="batchDeleteBtn">
+                            <i class="fas fa-trash-alt"></i>
+                            <span>批量删除</span>
+                        </a>
+                        <a href="#" class="dropdown-item" id="clearMessagesBtn">
+                            <i class="fas fa-trash"></i>
+                            <span>清空</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 批量操作栏 -->
+            <div class="batch-actions-bar" id="batchActionsBar" style="display: none;">
+                <div class="batch-actions-container">
+                    <label class="batch-select-all">
+                        <!-- 全选复选框 -->
+                        <input type="checkbox" id="selectAllCheckbox">
+                    </label>
+                    <button class="batch-delete-action" id="batchDeleteActionBtn" style="margin-left: auto !important;">
+                        <!-- 删除按钮 -->
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button class="batch-reset-action" id="batchResetActionBtn">
+                        <!-- 取消按钮 -->
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 通知消息列表 - 固定到通知头部下方并启用滚动条 -->
+            <div class="chat-messages mobile-chat-messages" id="chatMessages">
+                <div class="loading">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                        <div class="loading-text">
+                            加载消息中
+                            <div class="loading-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知接收者选择区域 -->
+            <div class="notification-recipient-container" id="notificationRecipientContainer">
+                <div class="recipient-content">
+                    <div class="recipient-selector">
+                        <label for="recipientType">发送给：</label>
+                        <select id="recipientType" onchange="toggleRecipientSelect()" defaultValue="all">
+                            <option value="all">所有人</option>
+                            <option value="user">指定用户</option>
+                        </select>
+                        <select id="userSelect" multiple style="display: none; max-height: 200px; overflow-y: auto;">
+                            <!-- 用户列表将通过JavaScript动态加载 -->
+                        </select>
+                        <a href="#" class="reset-btn" id="resetRecipientBtn"><i class="fas fa-sync"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 消息输入区域 -->
+            <div class="chat-input-container" id="chatInputContainer">
+                <div class="input-wrapper">
+                    <!-- 收起/展开按钮移到输入框前面 -->
+                    <button class="recipient-toggle-btn input-action-btn" id="recipientToggleBtn" title="收起/展开通知设置">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <textarea id="messageInput" placeholder="输入通知内容..." rows="1"></textarea>
+                    <div class="input-actions">
+                        <button class="send-btn" id="sendMessageBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <script src="/js/utils.js"></script>
+    <script>
+        let messages = [];
+        let currentUser = null;
+        let isLoading = false;
+        let isLoadingMore = false;
+        let currentPage = 1;
+        let hasMoreMessages = true;
+        let typingTimer = null;
+        
+        // 模拟用户信息
+        const BOT_USER = {
+            id: 'bot',
+            name: '系统助手',
+            avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg' // 系统机器人图标作为头像
+        };
+        
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查认证
+            await checkAuth();
+            
+            // 设置导航菜单
+            setupNavigation();
+            
+            // 禁用浏览器下拉刷新
+            preventPullToRefresh();
+            
+            // 加载用户列表
+            await loadUsers();
+            
+            // 初始化聊天功能
+            initChat();
+            
+            // 恢复通知接收者选择区域的状态
+            restoreRecipientContainerState();
+            
+            // 加载消息列表
+            await loadChatMessages();
+        });
+        
+        // 禁用浏览器下拉刷新功能
+        function preventPullToRefresh() {
+            let touchStartY = 0;
+            let isDocumentPull = false;
+            
+            // 监听触摸开始事件
+            document.addEventListener('touchstart', function(e) {
+                // 检查是否在页面顶部（整个文档的滚动位置为0）
+                // 并且触摸目标不是可滚动的聊天容器
+                const chatMessages = document.getElementById('chatMessages');
+                const isTouchingChatArea = chatMessages && chatMessages.contains(e.target);
+                
+                if (window.scrollY === 0 && !isTouchingChatArea) {
+                    touchStartY = e.touches[0].pageY;
+                    isDocumentPull = true;
+                }
+            }, { passive: true });
+            
+            // 监听触摸移动事件
+            document.addEventListener('touchmove', function(e) {
+                if (!isDocumentPull || touchStartY === 0) return;
+                
+                const currentY = e.touches[0].pageY;
+                const pullDistance = currentY - touchStartY;
+                
+                // 只有在页面顶部且尝试下拉时才阻止默认行为
+                // 同时确保不是在聊天容器内的滚动
+                const chatMessages = document.getElementById('chatMessages');
+                const isTouchingChatArea = chatMessages && chatMessages.contains(e.target);
+                
+                if (pullDistance > 0 && window.scrollY === 0 && !isTouchingChatArea) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // 监听触摸结束事件
+            document.addEventListener('touchend', function() {
+                // 重置状态
+                isDocumentPull = false;
+                touchStartY = 0;
+            }, { passive: true });
+        }
+        
+            // 初始化聊天功能
+        function initChat() {
+            // 监听通知接收者区域收起/展开按钮
+            const recipientToggleBtn = document.getElementById('recipientToggleBtn');
+            if (recipientToggleBtn) {
+                recipientToggleBtn.addEventListener('click', toggleRecipientContainer);
+            }
+            
+            // 监听发送按钮点击
+            const sendBtn = document.getElementById('sendMessageBtn');
+            if (sendBtn) {
+                sendBtn.addEventListener('click', sendNotification);
+            }
+            
+            // 监听输入框回车发送
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendNotification();
+                    }
+                });
+                
+                // 监听输入变化，启用/禁用发送按钮并自动调整高度
+                messageInput.addEventListener('input', function() {
+                    if (sendBtn) {
+                        sendBtn.disabled = this.value.trim() === '';
+                    }
+                    // 自动调整textarea高度
+                    this.style.height = 'auto'; // 重置高度
+                    this.style.height = Math.min(this.scrollHeight, 100) + 'px'; // 设置新高度，不超过最大高度
+                });
+            }
+            
+            // 监听附件按钮
+            const attachBtn = document.getElementById('attachFileBtn');
+            if (attachBtn) {
+                attachBtn.addEventListener('click', handleAttachFile);
+            }
+            
+            // 监听全部已读按钮
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {                
+                markAllReadBtn.addEventListener('click', markAllMessagesAsRead);
+            }
+            
+            // 监听滚动事件，实现滚动到顶部加载更多
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.addEventListener('scroll', handleScroll);
+                
+                // 监听承接按钮点击（事件委托）
+                chatMessages.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('accept-order-btn')) {
+                        const orderId = e.target.dataset.orderId;
+                        acceptOrder(orderId, e.target);
+                    }
+                });
+            }
+            
+            // 监听下拉菜单按钮
+            const dropdownBtn = document.getElementById('headerDropdownBtn');
+            const dropdownMenu = document.getElementById('headerDropdownMenu');
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function() {
+                    dropdownMenu.classList.toggle('show');
+                });
+                
+                // 点击页面其他地方关闭下拉菜单
+                document.addEventListener('click', function(e) {
+                    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+            
+            // 监听清空通知按钮
+            const clearMessagesBtn = document.getElementById('clearMessagesBtn');
+            if (clearMessagesBtn) {
+                clearMessagesBtn.addEventListener('click', clearLoadedNotifications);
+            }
+            
+            // 监听重置按钮点击
+            const resetBtn = document.getElementById('resetRecipientBtn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    // 重置接收者选择为默认值
+                    const recipientType = document.getElementById('recipientType');
+                    const userSelect = document.getElementById('userSelect');
+                    
+                    // 设置接收者类型为"所有人"
+                    recipientType.value = 'all';
+                    
+                    // 清空用户选择框的所有选中项
+                    if (userSelect) {
+                        for (let i = 0; i < userSelect.options.length; i++) {
+                            userSelect.options[i].selected = false;
+                        }
+                    }
+                    
+                    // 切换用户选择框的显示状态
+                    toggleRecipientSelect();
+                    
+                    // 重置后隐藏重置按钮
+                    this.style.display = 'none';
+                });
+            }
+            
+            // 自动滚动到最新消息
+            scrollToBottom();
+        }
+        
+        // 显示提示信息
+        function showToast(message, targetElement = null) {
+            // 创建提示元素
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            
+            // 添加到页面
+            document.body.appendChild(toast);
+            
+            // 设置样式
+            toast.style.position = 'fixed';
+            
+            // 如果是对号或叉号，使用特殊样式
+            if (message === '√' || message === 'X') {
+                // 对号使用绿色，叉号使用红色
+                toast.style.backgroundColor = message === '√' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)';
+                toast.style.color = 'white';
+                toast.style.padding = '8px 16px';
+                toast.style.fontSize = '20px';
+                toast.style.borderRadius = '50%'; // 圆形
+                toast.style.width = '40px';
+                toast.style.height = '40px';
+                toast.style.display = 'flex';
+                toast.style.alignItems = 'center';
+                toast.style.justifyContent = 'center';
+            } else {
+                // 默认样式
+                toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                toast.style.color = 'white';
+                toast.style.padding = '10px 20px';
+                toast.style.borderRadius = '4px';
+            }
+            
+            toast.style.zIndex = '1000';
+            
+            // 如果提供了目标元素，则在该元素附近显示
+            if (targetElement) {
+                const rect = targetElement.getBoundingClientRect();
+                toast.style.left = `${rect.left + rect.width / 2}px`;
+                toast.style.top = `${rect.top - toast.offsetHeight - 10}px`;
+                toast.style.transform = 'translateX(-50%)';
+            } else {
+                // 默认位置
+                toast.style.top = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+            }
+            
+            // 3秒后移除
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // 承接工单
+        async function acceptOrder(orderId, buttonElement) {
+            if (!orderId) return;
+            
+            try {
+                // 禁用按钮，防止重复点击
+                buttonElement.disabled = true;
+                buttonElement.textContent = '处理中...';
+                
+                // 调用API接口承接工单
+               await Utils.post(`/work-orders/${orderId}/assign`);
+                    Utils.showSuccess('承接工单成功');  
+            } catch (error) {
+                 Utils.showError(error.message || '承接工单失败');
+            }
+            buttonElement.disabled = false;
+                buttonElement.textContent = '承接';
+        }
+        
+        // 处理滚动事件，实现滚动到顶部加载更多
+        function handleScroll() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages && chatMessages.scrollTop === 0 && !isLoadingMore && hasMoreMessages) {
+                loadMoreMessages();
+            }
+        }
+        
+        // 加载更多历史消息
+        async function loadMoreMessages() {
+            if (isLoadingMore || !hasMoreMessages) return;
+            
+            isLoadingMore = true;
+            
+            // 隐藏没有更多消息提示
+            hideNoMoreMessagesIndicator();
+            
+            // 显示顶部加载指示器
+            showTopLoadingIndicator();
+            
+            try {
+                // 添加调试日志
+                console.log('加载更多消息前 - currentPage:', currentPage);
+                const nextPage = currentPage + 1;
+                console.log('请求的下一页页码:', nextPage);
+                
+                // 请求下一页数据 - 只使用page参数进行分页，确保一致性
+                // 添加时间戳参数避免缓存问题
+                const timestamp = new Date().getTime();
+                console.log('发送请求 - page:', nextPage, 'timestamp:', timestamp);
+                // 手动构建URL查询字符串，因为Utils.get只接受一个参数
+                // 注意：加载更多时使用降序，获取更早的消息
+                const queryParams = new URLSearchParams({
+                    limit: '10',
+                    sort: 'desc',  // 加载更多时使用降序，获取更早的消息
+                    page: nextPage.toString(),
+                    _t: timestamp.toString() // 添加时间戳避免缓存
+                }).toString();
+                const response = await Utils.get(`/notifications?${queryParams}`);
+                
+                    
+                let moreMessages = response.notifications || [];
+                console.log('收到响应 - page:', response.page, 'totalPages:', response.totalPages, '数据量:', moreMessages.length);
+                // 根据后端返回的totalPages判断是否还有更多消息
+                console.log('分页检查 - 当前页:', response.page, '总页数:', response.totalPages, '消息数量:', moreMessages.length);
+                
+                // 先处理当前页的数据，即使这是最后一页
+                if (moreMessages.length > 0) {
+                    console.log('加载更多消息:', moreMessages);
+                    // 转换数据格式
+                    moreMessages = moreMessages.map(notification => ({
+                        id: notification.id.toString(),
+                        sender: 'bot',
+                        senderName: notification.type === 'system' ? '系统通知' : '系统助手',
+                        title: notification.title,
+                        content: notification.content || notification.title,
+                        timestamp: Utils.formatDateTime(notification.created_at) || Utils.formatDateTime(new Date()),
+                        read: notification.is_read || false,
+                        avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg', // 系统通知头像
+                        ordersid: notification.related_id || '', // 工单ID
+                        ordertype: notification.type || '', // 工单类型
+                        userid: notification.user_id || '' // 用户ID
+                    }));
+                    
+                    // 保存当前滚动位置和相对位置
+                    const chatMessages = document.getElementById('chatMessages');
+                    const currentScrollHeight = chatMessages.scrollHeight;
+                    const currentScrollTop = chatMessages.scrollTop;
+                    const scrollFromBottom = currentScrollHeight - currentScrollTop;
+                    console.log('保存滚动状态 - 总高度:', currentScrollHeight, '顶部位置:', currentScrollTop, '距底部:', scrollFromBottom);
+                    
+                    // 将新加载的消息添加到消息列表的开头（更早的消息）
+                    // 后端返回的数据已经是按时间降序排列的，直接添加到开头即可
+                    console.log('加载更多消息:', moreMessages.length, '条');
+                    console.log('添加前当前消息数量:', messages.length);
+                    messages = [...moreMessages, ...messages];
+                    console.log('添加后总消息数量:', messages.length);
+                    
+                    // 确保所有消息按时间升序排列（最旧的在顶部，最新的在底部）
+                    messages.sort((a, b) => {
+                        try {
+                            const dateA = new Date(Utils.formatDateTime(a.timestamp));
+                            const dateB = new Date(Utils.formatDateTime(b.timestamp));
+                            return dateA.getTime() - dateB.getTime();
+                        } catch (error) {
+                            return new Date(a.timestamp) - new Date(b.timestamp);
+                        }
+                    });
+                    
+                    // 渲染消息
+                    renderMessages(messages);
+                    
+                    // 更新页码
+                    currentPage = nextPage; // 直接使用nextPage更新，确保页码一致
+                    console.log('更新后的currentPage:', currentPage);
+                    
+                    // 恢复滚动位置，保持用户浏览位置
+                    setTimeout(() => {
+                        const newScrollHeight = chatMessages.scrollHeight;
+                        const newScrollTop = newScrollHeight - scrollFromBottom;
+                        chatMessages.scrollTop = newScrollTop;
+                        console.log('恢复滚动位置 - 新高度:', newScrollHeight, '新顶部位置:', newScrollTop, '距底部:', scrollFromBottom);
+                    }, 0);
+                }
+                
+                // 检查是否还有更多消息（在处理完当前页数据后）
+                if (moreMessages.length === 0 || (response.totalPages && response.page >= response.totalPages)) {
+                    console.log('设置hasMoreMessages为false - 原因:', moreMessages.length === 0 ? '无数据返回' : '已到最后一页');
+                    hasMoreMessages = false;
+                    showNoMoreMessagesIndicator();
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('加载更多消息失败:', error);
+                Utils.showError('加载更多消息失败');
+            } finally {
+                isLoadingMore = false;
+                // 隐藏顶部加载指示器
+                hideTopLoadingIndicator();
+            }
+        }
+        
+        // 显示顶部加载指示器
+        function showTopLoadingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            let loadingIndicator = document.getElementById('topLoadingIndicator');
+            
+            if (!loadingIndicator) {
+                loadingIndicator = document.createElement('div');
+                loadingIndicator.id = 'topLoadingIndicator';
+                loadingIndicator.className = 'loading top-loading';
+                loadingIndicator.style = 'text-align: center; padding: 10px; color: #6c757d; font-size: 12px;';
+                loadingIndicator.innerHTML = '<div class="spinner" style="display: inline-block; width: 12px; height: 12px; border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px;"></div>加载更多消息...';
+                chatMessages.insertBefore(loadingIndicator, chatMessages.firstChild);
+            } else {
+                loadingIndicator.style.display = 'block';
+            }
+        }
+        
+        // 隐藏顶部加载指示器
+        function hideTopLoadingIndicator() {
+            const loadingIndicator = document.getElementById('topLoadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // 如果没有更多消息，显示提示
+            if (!hasMoreMessages && messages.length > 0) {
+                showNoMoreMessagesIndicator();
+            }
+        }
+        
+        // 显示没有更多消息的提示
+        function showNoMoreMessagesIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            let noMoreIndicator = document.getElementById('noMoreMessagesIndicator');
+            
+            if (!noMoreIndicator) {
+                noMoreIndicator = document.createElement('div');
+                noMoreIndicator.id = 'noMoreMessagesIndicator';
+                noMoreIndicator.className = 'no-more-messages';
+                noMoreIndicator.style = 'text-align: center; padding: 10px; color: #999; font-size: 12px;';
+                noMoreIndicator.textContent = '没有更多历史记录';
+                chatMessages.insertBefore(noMoreIndicator, chatMessages.firstChild);
+            } else {
+                noMoreIndicator.style.display = 'block';
+            }
+        }
+        
+        // 隐藏没有更多消息的提示
+        function hideNoMoreMessagesIndicator() {
+            const noMoreIndicator = document.getElementById('noMoreMessagesIndicator');
+            if (noMoreIndicator) {
+                noMoreIndicator.style.display = 'none';
+            }
+        }
+        
+        // 加载历史消息
+        async function loadChatMessages() {
+            // 将此函数暴露到window对象，以便utils.js可以调用它来刷新通知列表
+            window.loadChatMessages = loadChatMessages;
+            try {
+                showLoadingState();
+                // 重置分页状态
+                currentPage = 1;
+                hasMoreMessages = true;
+                console.log('初始化分页状态 - currentPage:', currentPage, 'hasMoreMessages:', hasMoreMessages);
+                
+                // 隐藏没有更多消息提示
+                hideNoMoreMessagesIndicator();
+                
+                // 这里应该从API获取历史消息，现在使用模拟数据
+                // Utils.request方法会自动拼接'/api'前缀
+                // 添加时间戳参数避免缓存问题
+                const timestamp = new Date().getTime();
+                console.log('初始加载发送请求 - page: 1, timestamp:', timestamp);
+                // 手动构建URL查询字符串，因为Utils.get只接受一个参数
+                // 注意：这里使用sort: 'desc'获取最新消息，然后在前端重新排序为时间升序
+                const queryParams = new URLSearchParams({
+                    limit: '10',
+                    sort: 'desc', // 获取最新消息
+                    page: '1',
+                    _t: timestamp.toString() // 添加时间戳避免缓存
+                }).toString();
+                const response = await Utils.get(`/notifications?${queryParams}`);
+                
+                console.log('初始加载API响应:', response);
+                console.log('响应中的page:', response.page);
+                console.log('响应中的totalPages:', response.totalPages);
+                console.log('响应中的通知数量:', response.notifications?.length || 0);
+                console.log('响应中的通知类型:', response.notifications?.map(n => n.type) || []);
+                console.log('响应中的所有通知:', response.notifications || []);
+         
+                // 将后端返回的数据转换为前端需要的格式
+                // 根据后端路由实现，数据直接在response对象中，不需要通过data属性
+                let apiMessages = response.notifications || [];
+                               
+                // 转换数据格式
+                messages = apiMessages.map(notification => ({
+                    id: notification.id.toString(),
+                    sender: 'bot', // 系统通知统一使用bot作为发送者
+                    senderName: notification.type === 'system' ? '系统通知' : '系统助手',
+                    title: notification.title,
+                    content: notification.content || notification.title,
+                    timestamp: Utils.formatDateTime(notification.created_at) || Utils.formatDateTime(new Date()),
+                    read: notification.is_read || false,
+                    avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg', // 系统通知头像
+                    ordersid: notification.related_id || '', // 工单ID
+                    ordertype: notification.type || '', // 工单类型
+                    userid: notification.user_id || '', // 用户ID
+                    work_order_id: notification.work_order_id || '' // 关联的工单ID（用于物料通知）
+                }));
+                
+                // 确保消息按时间升序排列（最旧的在顶部，最新的在底部）
+                // 使用Utils.formatDateTime确保时区一致性
+                messages.sort((a, b) => {
+                    try {
+                        const dateA = new Date(Utils.formatDateTime(a.timestamp));
+                        const dateB = new Date(Utils.formatDateTime(b.timestamp));
+                        return dateA.getTime() - dateB.getTime();
+                    } catch (error) {
+                        return new Date(a.timestamp) - new Date(b.timestamp);
+                    }
+                });
+                
+                console.log('转换后的消息:', messages);
+                
+                // 根据后端返回的totalPages判断是否还有更多消息
+                if (response.totalPages && response.page >= response.totalPages) {
+                    hasMoreMessages = false;
+                } else if (messages.length < 10) {
+                    hasMoreMessages = false;
+                }
+                
+                // 如果没有数据，使用模拟数据作为备用
+                if (messages.length === 0) {
+                    messages = [
+                         {
+                            id: 'welcome',
+                            sender: 'bot',
+                            senderName: '系统助手',
+                            content: '欢迎使用维修工单系统的消息中心！您可以在这里查看系统通知。',
+                            timestamp: Utils.formatDateTime(new Date(Date.now() - 7200000)), // 2小时前
+                            read: true,
+                            avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg' // 系统助手头像
+                        },
+                        {
+                            id: 'notification_1',
+                            sender: 'bot',
+                            senderName: '系统通知',
+                            content: '您的账户信息已成功更新，新的联系方式已生效。',
+                            timestamp: Utils.formatDateTime(new Date(Date.now() - 3600000)), // 1小时前
+                            read: false,
+                            avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg' // 系统通知头像
+                        },
+                        {
+                            id: 'notification_2',
+                            sender: 'bot',
+                            senderName: '系统通知',
+                            content: '系统将于今天23:00-次日01:00进行例行维护，期间可能会出现短暂服务中断。',
+                            timestamp: Utils.formatDateTime(new Date(Date.now() - 1800000)), // 30分钟前
+                            read: false,
+                            avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg' // 系统通知头像
+                        },
+                        {
+                            id: 'notification_3',
+                            sender: 'bot',
+                            senderName: '系统通知',
+                            content: '您的工单 #WO-20240625-001 已被分配给技术员张三，预计今天下午上门服务。',
+                            timestamp: Utils.formatDateTime(new Date(Date.now() - 300000)), // 5分钟前
+                            read: false,
+                            avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg' // 系统通知头像
+                        }
+                       
+                    ];
+                    hasMoreMessages = false; // 模拟数据不支持分页
+                }
+                
+                // 确保所有消息按时间升序排列（最旧的在顶部，最新的在底部）
+                messages.sort((a, b) => {
+                    try {
+                        const dateA = new Date(Utils.formatDateTime(a.timestamp));
+                        const dateB = new Date(Utils.formatDateTime(b.timestamp));
+                        return dateA.getTime() - dateB.getTime();
+                    } catch (error) {
+                        return new Date(a.timestamp) - new Date(b.timestamp);
+                    }
+                });
+                
+                // 渲染消息
+                renderMessages(messages);
+                
+                // 如果没有更多消息且有数据，显示提示
+                if (!hasMoreMessages && messages.length > 0) {
+                    showNoMoreMessagesIndicator();
+                }
+                
+                // 加载完成后自动滚动到最下面
+                scrollToBottom();
+                
+                // 添加最新的3条模拟通知消息数据
+                /*
+                messages = [
+                    {
+                        id: 'notification_3',
+                        sender: 'bot',
+                        senderName: '系统通知',
+                        content: '您的工单 #WO-20240625-001 已被分配给技术员张三，预计今天下午上门服务。',
+                        timestamp: new Date(Date.now() - 300000).toISOString(), // 5分钟前
+                        read: false
+                    },
+                    {
+                        id: 'notification_2',
+                        sender: 'bot',
+                        senderName: '系统通知',
+                        content: '系统将于今天23:00-次日01:00进行例行维护，期间可能会出现短暂服务中断。',
+                        timestamp: new Date(Date.now() - 1800000).toISOString(), // 30分钟前
+                        read: false
+                    },
+                    {
+                        id: 'notification_1',
+                        sender: 'bot',
+                        senderName: '系统通知',
+                        content: '您的账户信息已成功更新，新的联系方式已生效。',
+                        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1小时前
+                        read: false
+                    },
+                    {
+                        id: 'welcome',
+                        sender: 'bot',
+                        senderName: '系统助手',
+                        content: '欢迎使用维修工单系统的消息中心！您可以在这里查看系统通知和与客服沟通。',
+                        timestamp: new Date(Date.now() - 7200000).toISOString(), // 2小时前
+                        read: true
+                    }
+                ];*/
+                
+                renderMessages(messages);
+            } catch (error) {
+                console.error('加载消息失败:', error);
+                Utils.showError('加载消息失败');
+                showEmptyState();
+            } finally {
+                hideLoadingState();
+            }
+        }
+        
+        // 加载用户列表
+        async function loadUsers() {
+            try {
+                // 使用Utils.request方法发送请求，确保携带认证token
+                const users = await apiRequest('/chat/users', 'GET');
+                const userSelect = document.getElementById('userSelect');
+                
+                // 清空现有选项
+                userSelect.innerHTML = '';
+                
+                // 检查返回的数据是否是数组
+                if (!Array.isArray(users)) {
+                    console.error('加载用户列表失败: 返回的数据不是数组类型');
+                    return;
+                }
+                
+                // 添加用户选项
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.full_name || user.username;
+                    userSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载用户列表失败:', error);
+                // 显示错误提示给用户
+                Utils.showError('加载用户列表失败，请稍后重试');
+            }
+        }
+        
+        // 切换接收者选择
+        function toggleRecipientSelect() {
+            const recipientType = document.getElementById('recipientType');
+            const userSelect = document.getElementById('userSelect');
+            const resetBtn = document.getElementById('resetRecipientBtn');
+            
+            if (recipientType.value === 'user') {
+                userSelect.style.display = 'inline-block';
+                // 当选择"指定用户"时显示重置按钮
+                if (resetBtn) {
+                    resetBtn.style.display = 'inline-flex';
+                }
+            } else {
+                userSelect.style.display = 'none';
+                // 当选择"所有人"时，如果不是默认状态则显示重置按钮
+                if (resetBtn && recipientType.defaultValue !== recipientType.value) {
+                    resetBtn.style.display = 'inline-flex';
+                }
+            }
+        }
+        
+        // 切换通知接收者选择区域的收起/展开状态
+        function toggleRecipientContainer() {
+            const container = document.getElementById('notificationRecipientContainer');
+            const toggleBtn = document.getElementById('recipientToggleBtn');
+            const icon = toggleBtn.querySelector('i');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 检查是否为管理员，只有管理员需要调整聊天消息列表的高度
+            const isAdmin = Utils.hasAccountType('admin');
+            // 检查批量操作栏是否显示
+            const isBatchMode = chatMessages.classList.contains('with-batch-actions');
+            
+            if (container.classList.contains('collapsed')) {
+                // 展开状态
+                container.classList.remove('collapsed');
+                icon.classList.remove('rotated');
+                icon.className = 'fas fa-chevron-up';
+                
+                // 调整聊天消息列表高度：考虑通知接收者选择区域的高度（仅管理员）
+                if (chatMessages && isAdmin) {
+                    if (isBatchMode) {
+                        // 批量操作栏显示 + 接收者选择区域展开
+                        chatMessages.style.height = 'calc(100vh - 270px)'; // mobile-header(60px) + chat-header(40px) + batch-actions(50px) + recipient-container(80px) + input-container(60px)
+                    } else {
+                        // 仅接收者选择区域展开
+                        chatMessages.style.height = 'calc(100vh - 220px)'; // mobile-header(60px) + chat-header(40px) + recipient-container(80px) + input-container(60px)
+                    }
+                }
+                
+                // 保存展开状态到本地存储
+                localStorage.setItem('recipientContainerCollapsed', 'false');
+            } else {
+                // 收起状态
+                container.classList.add('collapsed');
+                icon.classList.add('rotated');
+                icon.className = 'fas fa-chevron-down';
+                
+                // 调整聊天消息列表高度，充分利用收起后腾出的空间（仅管理员）
+                if (chatMessages && isAdmin) {
+                    if (isBatchMode) {
+                        // 仅批量操作栏显示
+                        chatMessages.style.height = 'calc(100vh - 210px)'; // mobile-header(60px) + chat-header(40px) + batch-actions(50px) + input-container(60px)
+                    } else {
+                        // 正常状态
+                        chatMessages.style.height = 'calc(100vh - 160px)'; // mobile-header(60px) + chat-header(40px) + input-container(60px)
+                    }
+                }
+                
+                // 保存收起状态到本地存储
+                localStorage.setItem('recipientContainerCollapsed', 'true');
+            }
+        }
+        
+        // 恢复通知接收者选择区域的状态
+        function restoreRecipientContainerState() {
+            const isCollapsed = localStorage.getItem('recipientContainerCollapsed') === 'true';
+            const container = document.getElementById('notificationRecipientContainer');
+            const toggleBtn = document.getElementById('recipientToggleBtn');
+            const icon = toggleBtn.querySelector('i');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 检查是否为管理员，只有管理员需要调整聊天消息列表的高度
+            const isAdmin = Utils.hasAccountType('admin');
+            // 检查批量操作栏是否显示
+            const isBatchMode = chatMessages && chatMessages.classList.contains('with-batch-actions');
+            
+            if (isCollapsed && container) {
+                container.classList.add('collapsed');
+                icon.classList.add('rotated');
+                icon.className = 'fas fa-chevron-down';
+                
+                // 如果是收起状态，且是管理员，调整聊天消息列表高度
+                if (chatMessages && isAdmin) {
+                    if (isBatchMode) {
+                        // 批量操作栏显示 + 接收者选择区域收起
+                        chatMessages.style.height = 'calc(100vh - 210px)'; // mobile-header(60px) + chat-header(40px) + batch-actions(50px) + input-container(60px)
+                    } else {
+                        // 仅接收者选择区域收起（正常状态）
+                        chatMessages.style.height = 'calc(100vh - 160px)'; // mobile-header(60px) + chat-header(40px) + input-container(60px)
+                    }
+                }
+            } else if (!isCollapsed && container) {
+                // 确保展开状态时聊天消息列表高度正确
+                icon.classList.remove('rotated');
+                icon.className = 'fas fa-chevron-up';
+                container.classList.remove('collapsed');
+                if (chatMessages && isAdmin) {
+                    if (isBatchMode) {
+                        // 批量操作栏显示 + 接收者选择区域展开
+                        chatMessages.style.height = 'calc(100vh - 270px)'; // mobile-header(60px) + chat-header(40px) + batch-actions(50px) + recipient-container(80px) + input-container(60px)
+                    } else {
+                        // 仅接收者选择区域展开
+                        chatMessages.style.height = 'calc(100vh - 220px)'; // mobile-header(60px) + chat-header(40px) + recipient-container(80px) + input-container(60px)
+                    }
+                }
+            }
+        }
+        
+        // 发送通知
+        async function sendNotification() {
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value.trim();
+            const sendBtn = document.getElementById('sendMessageBtn');
+            const recipientType = document.getElementById('recipientType');
+            const userSelect = document.getElementById('userSelect');
+            
+            if (!content || !currentUser) return;
+            
+            // 禁用发送按钮，防止重复发送
+            if (sendBtn) {
+                sendBtn.disabled = true;
+            }
+            
+            try {
+                // 发送通知
+                
+                const notificationData = {
+                    title: '系统通知',
+                    content: content,
+                    type: 'system'
+                };
+                
+                if (recipientType.value === 'all') {
+                    // 发送给所有人
+                    notificationData.recipient_type = 'all';
+                } else {
+                    // 发送给指定用户
+                    notificationData.recipient_type = 'user';
+                    // 获取所有选中的用户ID
+                    const selectedOptions = Array.from(userSelect.selectedOptions);
+                    notificationData.recipient_ids = selectedOptions.map(option => parseInt(option.value));
+                }
+                
+                // 使用Utils.request发送请求，自动包含认证头
+                const response = await Utils.request('/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(notificationData)
+                });
+                
+                // 清空输入框
+                messageInput.value = '';                
+                
+                // 重置选择框状态
+                if (recipientType) {
+                    recipientType.value = 'all'; // 重置为默认值"所有人"
+                }
+                
+                if (userSelect) {
+                    // 清空所有选中的用户
+                    Array.from(userSelect.options).forEach(option => {
+                        option.selected = false;
+                    });
+                    // 根据recipientType的值控制userSelect的显示/隐藏
+                    toggleRecipientSelect();
+                }
+                       
+                // 显示发送成功提示 - 在发送按钮附近
+                showToast('√', sendBtn);
+             
+            } catch (error) {
+                console.error('发送通知失败:', error);
+                // 显示发送失败提示 - 在发送按钮附近
+                showToast('X', sendBtn);
+            } finally {
+                // 恢复发送按钮状态
+                if (sendBtn) {
+                    sendBtn.disabled = false;
+                }
+            }
+        }
+        
+        // 模拟自动回复
+        function simulateAutoReply(userMessage) {
+            const replyMessage = {
+                id: (Date.now() + 1).toString(),
+                sender: 'bot',
+                senderName: '系统助手',
+                content: getAutoReplyContent(userMessage),
+                timestamp: Utils.formatDateTime(new Date()),
+                read: false,
+                avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg' // 系统助手头像
+            };
+            
+            messages.push(replyMessage);
+            renderMessages(messages);
+            scrollToBottom();
+        }
+        
+        // 获取自动回复内容
+        function getAutoReplyContent(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            
+            if (lowerMessage.includes('你好') || lowerMessage.includes('嗨') || lowerMessage.includes('您好')) {
+                return '您好！有什么可以帮助您的吗？';
+            } else if (lowerMessage.includes('故障') || lowerMessage.includes('维修') || lowerMessage.includes('坏了')) {
+                return '关于维修问题，请您提供设备型号和具体故障描述，我们会尽快安排工程师处理。';
+            } else if (lowerMessage.includes('谢谢') || lowerMessage.includes('感谢')) {
+                return '不客气！如有其他问题，随时为您服务。';
+            } else if (lowerMessage.includes('工单') || lowerMessage.includes('订单')) {
+                return '您可以在"我的工单"页面查看工单状态，如有特殊需求，请详细说明。';
+            } else if (lowerMessage.includes('投诉') || lowerMessage.includes('建议')) {
+                return '非常感谢您的反馈，我们会认真记录并改进。如有具体的投诉或建议，请详细描述。';
+            } else {
+                return '收到您的消息，我们会尽快回复您。如需紧急帮助，请拨打客服热线。';
+            }
+        }
+        
+        // 批量删除状态管理
+        let isBatchMode = false;
+        let selectedNotifications = new Set();
+
+        // 渲染消息列表
+        function renderMessages(messages) {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+            
+            if (messages.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            messages.forEach(message => {
+                const isCurrentUser = message.sender === currentUser?.id;
+                // 交换消息位置：用户消息显示在右侧，机器人消息显示在左侧
+                const messageClass = isCurrentUser ? 'message-bot' : 'message-user';
+                
+                const messageItem = document.createElement('div');
+                messageItem.className = 'message-group';
+                
+                // 构建消息内容
+                let avatarHTML = '';
+                if (message.avatar) {
+                    // 如果有头像，显示头像图片
+                    avatarHTML = `<img src="${message.avatar}" alt="${message.senderName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                } else {
+                    // 否则显示名称首字母
+                    avatarHTML = message.senderName.charAt(0).toUpperCase();
+                }
+                
+                // 检查是否为未读消息
+                const isUnread = !message.read && !isCurrentUser;
+                 const user = Utils.getUser();
+                let messageHTML = `
+                    <div class="message-container ${messageClass} ${isUnread ? 'message-unread' : ''}">
+                        ${isBatchMode ? `<input type="checkbox" class="notification-checkbox" data-notification-id="${message.id}" ${selectedNotifications.has(message.id) ? 'checked' : ''}>` : ''}
+                        <div class="message-avatar">
+                            ${avatarHTML}
+                        </div>
+                        <div class="message-content">
+                            <div class="message-bubble">
+                            ${message.title ? `<strong class="notification-title">${message.title.replace(/\n/g, '<br>')}</strong><br>` : ''}${message.content.replace(/\n/g, '<br>')}
+                            ${message.ordersid ? `<a href="${(message.ordertype === 'material_request' || message.ordertype === 'material_status_update') ? (Utils.hasPermission('仓储管理') ? `/mobile-material-requests.html` : `/mobile-work-order-detail.html?id=${message.work_order_id || message.ordersid}`) : `/mobile-work-order-detail.html?id=${message.ordersid}`}" target="_blank">查看</a>` : ''} 
+                            ${user.accountType==='engineer' ? `${message.ordertype==='new_order' ? `<button class="accept-order-btn" data-order-id="${message.ordersid}">承接</button>` : ''}` : ''}                           
+                        </div>
+                            <div class="message-time">${formatTime(message.timestamp)}</div>
+                        </div>
+                        <button class="delete-notification-btn" data-notification-id="${message.id}" title="删除通知">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                messageItem.innerHTML = messageHTML;
+                container.appendChild(messageItem);
+                
+                // 添加删除按钮事件监听器
+                const deleteBtn = messageItem.querySelector('.delete-notification-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteNotification(message.id);
+                    });
+                }
+                
+                // 添加点击通知标记为已读的事件监听器
+                if (!isCurrentUser && !message.read && message.id && !message.id.toString().includes('_') && !isBatchMode) {
+                    messageItem.addEventListener('click', async () => {
+                        // 标记为已读
+                        await markMessageAsRead(message.id);
+                        // 更新本地消息状态
+                        message.read = true;
+                        // 重新渲染以更新视觉效果
+                        renderMessages(messages);
+                    });
+                }
+
+                // 添加选中框事件监听器
+                if (isBatchMode) {
+                    const checkbox = messageItem.querySelector('.notification-checkbox');
+                    if (checkbox) {
+                        checkbox.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            toggleNotificationSelection(message.id);
+                        });
+                    }
+                }
+             
+
+                 /*   
+                // 自动标记未读消息为已读 - 跳过非真实数据
+                if (isUnread && message.id && !message.id.toString().includes('_')) {
+                    markMessageAsRead(message.id);
+                }*/
+            });
+        }
+
+        // 切换批量删除模式
+        function toggleBatchDeleteMode() {
+            // 关闭下拉菜单
+            const dropdownMenu = document.getElementById('headerDropdownMenu');
+            if (dropdownMenu) {
+                dropdownMenu.classList.remove('show');
+            }
+            
+            isBatchMode = !isBatchMode;
+            selectedNotifications.clear();
+            
+            const batchActionsBar = document.getElementById('batchActionsBar');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 检查是否为管理员，只有管理员需要调整聊天消息列表的高度
+            const isAdmin = Utils.hasAccountType('admin');
+            // 检查通知接收者选择区域是否展开
+            const recipientContainer = document.getElementById('notificationRecipientContainer');
+            const isRecipientExpanded = recipientContainer && !recipientContainer.classList.contains('collapsed');
+            
+            if (isBatchMode) {
+                batchActionsBar.style.display = 'flex';
+                chatMessages.classList.add('with-batch-actions');
+                
+                // 根据管理员状态和接收者选择区域状态调整聊天列表高度
+                if (chatMessages && isAdmin) {
+                    if (isRecipientExpanded) {
+                        // 接收者选择区域展开
+                        chatMessages.style.height = 'calc(100vh - 270px)'; // mobile-header(60px) + chat-header(40px) + batch-actions(50px) + recipient-container(80px) + input-container(60px)
+                    } else {
+                        // 接收者选择区域收起
+                        chatMessages.style.height = 'calc(100vh - 210px)'; // mobile-header(60px) + chat-header(40px) + batch-actions(50px) + input-container(60px)
+                    }
+                }
+                
+                renderMessages(messages);
+            } else {
+                batchActionsBar.style.display = 'none';
+                chatMessages.classList.remove('with-batch-actions');
+                
+                // 根据管理员状态和接收者选择区域状态调整聊天列表高度
+                if (chatMessages && isAdmin) {
+                    if (isRecipientExpanded) {
+                        // 接收者选择区域展开
+                        chatMessages.style.height = 'calc(100vh - 220px)'; // mobile-header(60px) + chat-header(40px) + recipient-container(80px) + input-container(60px)
+                    } else {
+                        // 接收者选择区域收起（正常状态）
+                        chatMessages.style.height = 'calc(100vh - 160px)'; // mobile-header(60px) + chat-header(40px) + input-container(60px)
+                    }
+                }
+                
+                renderMessages(messages);
+            }
+        }
+
+        // 切换通知选中状态
+        function toggleNotificationSelection(notificationId) {
+            if (selectedNotifications.has(notificationId)) {
+                selectedNotifications.delete(notificationId);
+            } else {
+                selectedNotifications.add(notificationId);
+            }
+            
+            // 更新全选状态
+            updateSelectAllState();
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.notification-checkbox');
+            
+            if (selectAllCheckbox.checked) {
+                // 全选
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    selectedNotifications.add(checkbox.dataset.notificationId);
+                });
+            } else {
+                // 取消全选
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    selectedNotifications.delete(checkbox.dataset.notificationId);
+                });
+            }
+        }
+
+        // 更新全选状态
+        function updateSelectAllState() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.notification-checkbox');
+            
+            if (checkboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                return;
+            }
+            
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            selectAllCheckbox.checked = allChecked;
+        }
+
+        // 批量删除选中的通知
+        async function batchDeleteNotifications() {
+            if (selectedNotifications.size === 0) {
+                Utils.showError('请先选择要删除的通知');
+                return;
+            }
+            
+            try {
+                // 显示加载状态
+                const batchDeleteBtn = document.getElementById('batchDeleteActionBtn');
+                const originalText = batchDeleteBtn.innerHTML;
+                batchDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 删除中...';
+                batchDeleteBtn.disabled = true;
+                
+                // 批量删除通知
+                for (const notificationId of selectedNotifications) {
+                    await deleteNotification(notificationId);
+                }
+                
+                // 清除选中状态
+                selectedNotifications.clear();
+                
+                // 退出批量删除模式
+                toggleBatchDeleteMode();
+                
+                // 重新加载消息
+                await loadChatMessages();
+                
+                // 显示成功提示
+                Utils.showSuccess('批量删除成功');
+            } catch (error) {
+                console.error('批量删除失败:', error);
+                Utils.showError('批量删除失败');
+            } finally {
+                // 恢复按钮状态
+                const batchDeleteBtn = document.getElementById('batchDeleteActionBtn');
+                batchDeleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+                batchDeleteBtn.disabled = false;
+            }
+        }
+        
+        // 定期检查新通知的函数
+        let pollInterval = null;
+        let lastNotificationId = null;
+        
+        async function checkForNewNotifications() {
+            try {
+                console.log('检查新通知...');
+                // 获取最新的通知ID
+                const latestNotificationId = messages.length > 0 ? 
+                    Math.max(...messages.map(msg => parseInt(msg.id) || 0)) : 0;
+                
+                // 如果有新通知ID，只获取更新的通知
+                const timestamp = new Date().getTime();
+                const queryParams = new URLSearchParams({
+                    limit: '5',
+                    sort: 'desc', // 降序，获取最新的通知
+                    lastId: latestNotificationId.toString(),
+                    _t: timestamp.toString()
+                }).toString();
+                
+                const response = await Utils.get(`/notifications/new?${queryParams}`);
+                const newNotifications = response.notifications || [];
+                
+                if (newNotifications.length > 0) {
+                    console.log('发现新通知:', newNotifications.length);
+                    
+                    // 转换新通知的数据格式
+                    const formattedNewNotifications = newNotifications.map(notification => ({
+                        id: notification.id.toString(),
+                        sender: 'bot',
+                        senderName: notification.type === 'system' ? '系统通知' : '系统助手',
+                        title: notification.title,
+                        content: notification.content || notification.title,
+                        timestamp: Utils.formatDateTime(notification.created_at) || Utils.formatDateTime(new Date()),
+                        read: notification.is_read || false,
+                        avatar: '/fontawesome-free-6.6.0-web/svgs/solid/robot.svg', // 系统通知头像
+                        ordersid: notification.related_id || '', // 工单ID
+                        ordertype: notification.type || '' // 工单类型
+                    }));
+                    
+                    // 将新通知添加到消息列表
+                    messages.push(...formattedNewNotifications);
+                    
+                    // 按时间排序 - 修复排序逻辑，使用原始日期进行比较
+                    messages.sort((a, b) => {
+                        // 尝试从timestamp直接创建Date对象
+                        const dateA = new Date(a.timestamp);
+                        const dateB = new Date(b.timestamp);
+                        // 如果日期无效，使用ID进行排序
+                        if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+                            return parseInt(a.id) - parseInt(b.id);
+                        }
+                        return dateA.getTime() - dateB.getTime();
+                    });
+                    
+                    // 优化：只将新通知添加到DOM，而不是重新渲染所有消息
+                    const container = document.getElementById('chatMessages');
+                    // 确保容器不为空
+                    if (container.innerHTML.trim() === '') {
+                        renderMessages(messages);
+                    } else {
+                        // 仅添加新通知
+                        formattedNewNotifications.forEach(message => {
+                            const isCurrentUser = message.sender === currentUser?.id;
+                            // 交换消息位置：用户消息显示在右侧，机器人消息显示在左侧
+                            const messageClass = isCurrentUser ? 'message-bot' : 'message-user';
+                            
+                            const messageItem = document.createElement('div');
+                            messageItem.className = 'message-group';
+                            
+                            // 构建消息内容
+                            let avatarHTML = '';
+                            if (message.avatar) {
+                                // 如果有头像，显示头像图片
+                                avatarHTML = `<img src="${message.avatar}" alt="${message.senderName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                            } else {
+                                // 否则显示名称首字母
+                                avatarHTML = message.senderName.charAt(0).toUpperCase();
+                            }
+                            
+                            // 检查是否为未读消息
+                            const isUnread = !message.read && !isCurrentUser;
+                             const user = Utils.getUser();
+                            let messageHTML = `
+                                <div class="${messageClass} ${isUnread ? 'message-unread' : ''}">
+                                    <div class="message-avatar">
+                                        ${avatarHTML}
+                                    </div>
+                                    <div class="message-content">
+                                        <div class="message-bubble">
+                                            ${message.title ? `<strong class="notification-title">${message.title}</strong><br>` : ''}${message.content}
+                                            ${message.ordersid ? `<a href="${message.ordertype === 'material_request' || message.ordertype === 'material_status_update' ? '/mobile-material-requests.html' : `/mobile-work-order-detail.html?id=${message.ordersid}`}" target="_blank">查看</a>` : ''} 
+                                            ${user.accountType==='engineer' ? `${message.ordertype==='new_order' ? `<button class="accept-order-btn" data-order-id="${message.ordersid}">承接</button>` : ''}` : ''}                            
+                                        </div>
+                                        <div class="message-time">${formatTime(message.timestamp)}</div>
+                                    </div>
+                                    <button class="delete-notification-btn" data-notification-id="${message.id}" title="删除通知">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            
+                            messageItem.innerHTML = messageHTML;
+                            container.appendChild(messageItem);
+                            
+                            // 添加删除按钮事件监听器
+                            const deleteBtn = messageItem.querySelector('.delete-notification-btn');
+                            if (deleteBtn) {
+                                deleteBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    deleteNotification(message.id);
+                                });
+                            }
+                            
+                            // 添加点击通知标记为已读的事件监听器
+                            if (!isCurrentUser && !message.read && message.id && !message.id.toString().includes('_')) {
+                                messageItem.addEventListener('click', async () => {
+                                    // 标记为已读
+                                    await markMessageAsRead(message.id);
+                                    // 更新本地消息状态
+                                    message.read = true;
+                                    // 重新渲染以更新视觉效果
+                                    renderMessages(messages);
+                                });
+                            }
+                        });
+                    }
+                    
+                    // 滚动到底部显示新消息
+                    scrollToBottom();
+                    
+                    // 更新未读计数
+                    if (typeof Utils.loadNotificationCount === 'function') {
+                        Utils.loadNotificationCount();
+                    }
+                }
+            } catch (error) {
+                console.error('检查新通知失败:', error);
+            }
+        }
+        
+        // 启动轮询
+        function startNotificationPolling() {
+            // 停止现有轮询
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            
+            // 每5秒检查一次新通知（避免频繁请求导致性能问题）
+            pollInterval = setInterval(checkForNewNotifications, 1000);
+            console.log('已启动通知轮询，每5秒检查一次');
+        }
+        
+        // 停止轮询
+        function stopNotificationPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                console.log('已停止通知轮询');
+            }
+        }
+        
+        // 格式化时间 - 使用Utils.formatDateTime确保时区处理一致
+        function formatTime(time) {
+            if (!time) return '';
+            
+            // 处理时间字符串，确保正确的时区处理
+            let date;
+            
+            // 处理后端存储的'YYYY-MM-DD HH:MM:SS'格式
+            if (typeof time === 'string' && time.includes(' ') && time.includes('-') && time.includes(':')) {
+                const [datePart, timePart] = time.split(' ');
+                const [year, month, day] = datePart.split('-');
+                const [hours, minutes, seconds] = timePart.split(':');
+                // 直接解析为本地时间，避免时区转换问题
+                date = new Date(year, month - 1, day, hours, minutes, seconds);
+            } else {
+                // 处理其他格式的时间字符串
+                date = new Date(time);
+            }
+            
+            // 检查是否为有效日期
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            // 如果是今天，只显示时间
+            if (messageDate.getTime() === today.getTime()) {
+                return `${hours}:${minutes}`;
+            }
+            // 如果是今年，显示月日时间
+            else if (year === now.getFullYear()) {
+                return `${month}-${day} ${hours}:${minutes}`;
+            }
+            // 其他情况显示完整日期时间
+            else {
+                return `${year}-${month}-${day} ${hours}:${minutes}`;
+            }
+        }
+        
+        // 处理附件按钮点击
+        function handleAttachFile() {
+            // 创建隐藏的文件输入框
+            let fileInput = document.getElementById('fileInput');
+            if (!fileInput) {
+                fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.id = 'fileInput';
+                fileInput.style.display = 'none';
+                document.body.appendChild(fileInput);
+                
+                // 添加文件选择事件监听
+                fileInput.addEventListener('change', handleFileUpload);
+            }
+            fileInput.click();
+        }
+        
+        // 处理文件上传
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 这里应该处理文件上传，现在仅显示文件名
+            const fileName = file.name;
+            
+            // 添加文件消息
+            const fileMessage = {
+                id: Date.now().toString(),
+                sender: currentUser.id,
+                senderName: currentUser.name,
+                content: `[文件] ${fileName}`,
+                timestamp: Utils.formatDateTime(new Date()),
+                read: false,
+                isFile: true,
+                fileName: fileName,
+                avatar: currentUser.avatar // 用户头像
+            };
+            
+            messages.push(fileMessage);
+            renderMessages(messages);
+            scrollToBottom();
+            
+            // 清空文件输入
+            event.target.value = '';
+        }
+        
+        // 标记单条消息为已读（包括后端更新）
+        async function markMessageAsRead(messageId) {
+            try {
+                // 检查是否为模拟数据（非数字ID或带有下划线的ID）
+                if (!messageId || isNaN(messageId) || messageId.toString().includes('_')) {
+                    // 对于模拟数据，只需要在前端标记即可
+                    console.log('标记模拟通知为已读:', messageId);
+                    
+                    // 找到对应的消息元素
+                    const messageItem = document.querySelector(`[data-notification-id="${messageId}"]`);
+                    if (messageItem) {
+                        // 找到父级的message-container元素
+                        const messageContainer = messageItem.closest('.message-container');
+                        if (messageContainer) {
+                            // 更新消息的已读状态
+                            const index = messages.findIndex(msg => msg.id === messageId);
+                            if (index > -1) {
+                                messages[index].read = true;
+                            }
+                            
+                            // 更新UI显示
+                            messageContainer.classList.remove('unread');
+                            messageContainer.querySelector('.unread-indicator')?.remove();
+                        }
+                    }
+                    
+                    // 刷新通知数量
+                    await Utils.loadNotificationCount();
+                    return;
+                }
+                
+                // 向后端发送标记已读请求 - 添加/api前缀
+                await Utils.put(`/notifications/${messageId}/read`, {});
+                console.log(`消息 ${messageId} 已标记为已读`);
+                
+                // 标记成功后刷新通知数量
+                await Utils.loadNotificationCount();
+            } catch (error) {
+                console.error(`标记消息 ${messageId} 为已读失败:`, error);
+            }
+        }
+        
+        // 删除通知
+        async function deleteNotification(notificationId) {
+            try {
+                // 跳过模拟数据（非数字ID或带有下划线的ID）
+                if (!notificationId || isNaN(notificationId) || notificationId.toString().includes('_')) {
+                    // 对于模拟数据，只需要在前端删除即可
+                    console.log('删除模拟通知:', notificationId);
+                    
+                    // 找到要删除的消息容器
+                    const messageItems = document.querySelectorAll('.message-container');
+                    let messageToDelete = null;
+                    
+                    messageItems.forEach(item => {
+                        const deleteBtn = item.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (deleteBtn) {
+                            messageToDelete = item;
+                        }
+                    });
+                    
+                    // 添加删除动画类
+                    if (messageToDelete) {
+                        messageToDelete.classList.add('deleting');
+                    }
+                    
+                    // 等待动画完成后再移除消息
+                    setTimeout(() => {
+                        // 从消息列表中移除该通知
+                        const index = messages.findIndex(msg => msg.id === notificationId);
+                        if (index > -1) {
+                            messages.splice(index, 1);
+                        }
+                        
+                        // 重新渲染消息列表
+                        renderMessages(messages);
+                        
+                        // 刷新通知数量
+                        Utils.loadNotificationCount();
+                    }, 500); // 与动画时长一致
+                    
+                    return;
+                }
+                
+                // 找到要删除的消息容器
+                const messageItems = document.querySelectorAll('.message-container');
+                let messageToDelete = null;
+                
+                messageItems.forEach(item => {
+                    const deleteBtn = item.querySelector(`[data-notification-id="${notificationId}"]`);
+                    if (deleteBtn) {
+                        messageToDelete = item;
+                    }
+                });
+                
+                // 添加删除动画类
+                if (messageToDelete) {
+                    messageToDelete.classList.add('deleting');
+                }
+                
+                // 向后端发送删除请求
+                await Utils.delete(`/notifications/${notificationId}`);
+                console.log(`通知 ${notificationId} 已删除`);
+                
+                // 等待动画完成后再移除消息
+                setTimeout(() => {
+                    // 从消息列表中移除该通知
+                    const index = messages.findIndex(msg => msg.id === notificationId);
+                    if (index > -1) {
+                        messages.splice(index, 1);
+                    }
+                    
+                    // 重新渲染消息列表
+                    renderMessages(messages);
+                    
+                    // 刷新通知数量
+                    Utils.loadNotificationCount();
+                }, 500); // 与动画时长一致
+            } catch (error) {
+                console.error(`删除通知 ${notificationId} 失败:`, error);
+                Utils.showError('删除通知失败，请稍后重试');
+            }    
+        }
+
+        // 标记所有消息为已读
+        async function markAllMessagesAsRead() {
+            // 显示确认提示框
+            Utils.confirm('全部标记已读', '确定要将所有通知标记为已读吗？', async () => {
+                const promises = [];
+                messages.forEach(message => {
+                    if (message.sender !== currentUser?.id && !message.read && message.id) {
+                        message.read = true;
+                        // 异步标记为已读，不阻塞渲染
+                        promises.push(markMessageAsRead(message.id));
+                    }
+                });
+                
+                // 等待所有标记已读操作完成
+                await Promise.all(promises);
+                
+                // 重新渲染消息列表以更新已读样式
+                renderMessages(messages);
+                
+                // 刷新通知数量
+                await Utils.loadNotificationCount();
+                
+                // 显示成功提示
+                Utils.showSuccess('全部标记已读成功');
+            });
+        }
+        
+        // 滚动到最新消息
+        function scrollToBottom() {
+            const messageList = document.getElementById('chatMessages');
+            if (messageList) {
+                messageList.scrollTop = messageList.scrollHeight;
+            }
+        }
+        
+        // 显示加载状态
+        function showLoadingState() {
+            const loadingElement = document.querySelector('.loading');
+            if (loadingElement) {
+                loadingElement.style.display = 'block';
+            }
+        }
+        
+        // 隐藏加载状态
+        function hideLoadingState() {
+            const loadingElement = document.querySelector('.loading');
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        // 显示空状态
+        function showEmptyState() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>暂无消息</p>
+                </div>
+            `;
+        }
+        
+        // 清空已加载的通知
+        async function clearLoadedNotifications() {
+            // 确认用户是否真的要清空通知
+          Utils.confirm('提示', '确定要清空所有已加载的通知吗？', async () => {   
+                try {
+                    // 如果没有消息，直接返回
+                    if (messages.length === 0) {
+                        Utils.showInfo('没有通知需要清空');
+                        return;
+                    }
+                    
+                    // 获取所有已加载通知的ID，但过滤掉模拟通知（非数字ID或带有下划线的ID）
+                    const notificationIds = messages
+                        .map(msg => msg.id)
+                        .filter(id => id && !isNaN(id) && !id.toString().includes('_'));
+                    
+                    // 如果没有有效的通知ID（只有模拟通知），直接清空前端显示
+                    if (notificationIds.length === 0) {
+                        // 清空本地消息数组
+                        messages = [];
+                        // 清空DOM，使用统一的空状态格式
+                        showEmptyState();
+                        // 更新通知数量
+                        if (typeof Utils.loadNotificationCount === 'function') {
+                            await Utils.loadNotificationCount();
+                        }
+                        Utils.showSuccess('通知已清空');
+                        return;
+                    }
+                    
+                    // 调用批量删除API (使用POST方法，因为后端API定义如此)
+                    await Utils.post('/notifications/batch/delete', { ids: notificationIds });
+                    
+                    // 显示成功提示
+                    Utils.showSuccess('通知已清空');
+                    
+                    // 更新通知数量
+                    if (typeof Utils.loadNotificationCount === 'function') {
+                        await Utils.loadNotificationCount();
+                    }
+                    
+                    // 重新加载历史通知
+                    await loadChatMessages();
+                } catch (error) {
+                    console.error('清空通知失败:', error);
+                    Utils.showError('清空通知失败');
+                }
+             });
+        }
+        
+        // 检查权限
+        async function checkAuth() {
+            const user = Utils.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            currentUser = {
+                id: user.id,
+                name: user.fullName || user.username,
+                avatar: null
+            };
+
+            const userName = currentUser.name;
+            const userPosition = Utils.getAccountTypeText(user.accountType);
+            document.getElementById('mobileUserName').textContent = userName;
+            document.getElementById('mobileUserRole').textContent = userPosition;
+
+            // 加载侧边栏头像
+            await loadSidebarAvatar();
+            
+            // 检查是否为管理员，只有管理员可以发送系统通知
+            const isAdmin = Utils.hasAccountType('admin');
+            const recipientContainer = document.getElementById('notificationRecipientContainer');
+            const inputContainer = document.getElementById('chatInputContainer');
+            const mainContent = document.querySelector('.main-content');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (!isAdmin) {
+                console.log('非管理员用户，隐藏发送系统通知的相关元素');
+                // 隐藏发送系统通知的相关元素
+                if (recipientContainer) recipientContainer.style.display = 'none';
+                if (inputContainer) inputContainer.style.display = 'none';
+                // 为聊天消息区域添加非管理员样式类，确保充满整个可用空间
+                if (chatMessages) {
+                    chatMessages.classList.add('non-admin');
+                }
+              
+            } else {
+                // 管理员加载用户列表
+                await loadUsers();
+                // 恢复主内容区域原始高度
+                if (recipientContainer) recipientContainer.style.display = 'block';
+                if (inputContainer) inputContainer.style.display = 'block';
+                // 设置聊天消息区域的高度
+                if (chatMessages) {
+                    // 检查接收者选择区域的状态，设置相应的高度
+                    const isCollapsed = localStorage.getItem('recipientContainerCollapsed') === 'true';
+                    if (isCollapsed) {
+                        chatMessages.style.height = 'calc(100vh - 160px)'; // mobile-header(60px) + chat-header(40px) + input-container(60px)
+                    } else {
+                        chatMessages.style.height = 'calc(100vh - 220px)'; // mobile-header(60px) + chat-header(40px) + recipient-container(60px) + input-container(60px)
+                    }
+                }
+                if (mainContent) mainContent.style.height = 'calc(100vh - 120px) !important';
+            }
+        }
+    
+        // 加载侧边栏头像
+        async function loadSidebarAvatar() {
+            try {
+                if (!currentUser) return;
+
+                const response = await Utils.get(`/users/${currentUser.id}/avatar`);
+                const avatarPath = response.avatarPath;
+                
+                if (avatarPath) {
+                    currentUser.avatar = avatarPath;
+                }
+
+                const sidebarAvatarImage = document.getElementById('sidebarAvatarImage');
+                const sidebarAvatarIcon = document.getElementById('sidebarAvatarIcon');
+
+                if (avatarPath) {
+                    sidebarAvatarImage.src = avatarPath;
+                    sidebarAvatarImage.style.display = 'block';
+                    sidebarAvatarIcon.style.display = 'none';
+                } else {
+                    sidebarAvatarImage.style.display = 'none';
+                    sidebarAvatarIcon.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载侧边栏头像失败:', error);
+                // 保持默认头像显示
+            }
+        }
+
+        // 设置导航菜单权限
+        function setupNavigation() {
+            const user = Utils.getUser();
+            if (!user) return;
+
+            // 更新用户信息显示
+            document.getElementById('mobileUserName').textContent = user.fullName || user.username;
+            document.getElementById('mobileUserRole').textContent = Utils.getAccountTypeText(user.accountType);
+
+            // 隐藏没有权限的菜单
+            // 只有工程师才能看到我的工单
+            if (!Utils.hasAccountType('engineer')) {
+                document.getElementById('myOrdersLink')?.remove();
+            }
+                if (!Utils.hasPermission('仓储管理')) {
+                document.getElementById('materialRequestsLink')?.remove();
+            }
+            // 检查是否有系统管理权限
+            if (Utils.hasPermission('用户管理') || Utils.hasPermission('地址管理')) {
+                document.getElementById('adminLink').style.display = 'flex';
+            }
+        }
+    
+        // 侧边栏切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+        
+        // 关闭侧边栏
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+        
+        // 侧边栏遮罩层点击事件
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+    
+        // 退出登录
+        function logout() {
+            Utils.confirm('退出登录', '确定要退出登录吗？', async () => {
+                Utils.removeToken();
+                Utils.setUser(null);
+                Utils.showSuccess('退出登录成功');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            });
+        }
+        
+        // 启动应用
+        async function startApp() {
+            try {
+                // 先检查权限
+                await checkAuth();
+                
+                // 设置导航菜单权限
+                setupNavigation();
+                                
+                // 根据当前页面模式加载相应数据
+                if (document.getElementById('chatMessages')) {
+                    // 聊天界面模式
+                    await loadChatMessages();
+                    
+                    // 启动通知轮询
+                    startNotificationPolling();
+                    console.log('聊天界面模式 - 已启动通知轮询');
+                }
+                
+                // 无论哪种模式，都加载通知列表
+                await loadAllNotifications();
+            } catch (error) {
+                console.error('应用启动失败:', error);
+            }
+        }
+        
+        
+        // 轮询时间优化为5秒，减少服务器压力
+        function startNotificationPolling() {
+            // 停止现有轮询
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            
+            // 每5秒检查一次新通知（减少服务器压力）
+            pollInterval = setInterval(checkForNewNotifications, 5000);
+            console.log('已启动通知轮询，每5秒检查一次');
+        }
+        
+        // 页面卸载时停止轮询
+        window.addEventListener('beforeunload', stopNotificationPolling);
+
+        // 添加批量删除事件监听器
+        document.addEventListener('DOMContentLoaded', () => {
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const batchDeleteActionBtn = document.getElementById('batchDeleteActionBtn');
+            const batchResetActionBtn = document.getElementById('batchResetActionBtn');
+            
+            if (batchDeleteBtn) {
+                batchDeleteBtn.addEventListener('click', toggleBatchDeleteMode);
+            }
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('click', toggleSelectAll);
+            }
+            
+            if (batchDeleteActionBtn) {
+                batchDeleteActionBtn.addEventListener('click', batchDeleteNotifications);
+            }
+            
+            if (batchResetActionBtn) {
+                batchResetActionBtn.addEventListener('click', toggleBatchDeleteMode);
+            }
+        });
+     </script>
+ </body>
+  </html>
