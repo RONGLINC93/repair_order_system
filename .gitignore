@@ -1,8 +1,8 @@
 .env
 .DS_Store
 *.log
-*.rar
 *.zip
+*.rar
 *.tar.gz
 .idea/
 .vscode/
